@@ -162,7 +162,8 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper('/entities/nonexistent-id') })
 
-			expect(screen.getByText('Entity not found')).toBeInTheDocument()
+			// Use getByRole to target the heading specifically (not SVG title)
+			expect(screen.getByRole('heading', { name: 'Entity not found' })).toBeInTheDocument()
 			// The ID is displayed but may be split across elements
 			expect(screen.getByText(/does not exist/)).toBeInTheDocument()
 		})
