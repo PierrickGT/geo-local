@@ -1,0 +1,44 @@
+{
+	"milestone": "search-edits",
+	"round": 1,
+	"status": "pass",
+	"validatorsRun": {
+		"test": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run test",
+			"exitCode": 0,
+			"details": "150 tests passed (16 test files)"
+		},
+		"typecheck": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run typecheck",
+			"exitCode": 0
+		},
+		"lint": {
+			"passed": true,
+			"command": "pnpm biome check packages/explorer",
+			"exitCode": 0,
+			"details": "Checked 50 files, no issues. Note: global lint (pnpm lint) has pre-existing formatting issues in other packages (tsconfig files, api, ingest) that predate this milestone."
+		}
+	},
+	"reviewsSummary": {
+		"total": 3,
+		"passed": 3,
+		"failed": 0,
+		"failedFeatures": []
+	},
+	"blockingIssues": [],
+	"nonBlockingIssues": [
+		{
+			"featureId": "search-page",
+			"severity": "non_blocking",
+			"description": "Property ID uses manual truncation (propertyId.slice(0, 12)...) while Entity ID uses the TruncateId component. For consistency, Property ID should also use TruncateId.",
+			"file": "packages/explorer/src/pages/search-page.tsx",
+			"line": 130
+		}
+	],
+	"appliedUpdates": [],
+	"suggestedGuidanceUpdates": [],
+	"rejectedObservations": [],
+	"previousRound": null
+}
