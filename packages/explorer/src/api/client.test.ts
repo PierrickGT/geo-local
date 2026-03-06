@@ -139,6 +139,37 @@ describe('client', () => {
 				}),
 			)
 		})
+
+		it('throws ApiError on network error (TypeError)', async () => {
+			mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+
+			try {
+				await request('/entities')
+				expect.fail('Should have thrown')
+			} catch (error) {
+				expect(error).toBeInstanceOf(ApiError)
+				expect((error as ApiError).status).toBe(0)
+				expect((error as ApiError).message).toBe(
+					'Network error: Unable to connect to server. Please check your connection.',
+				)
+				expect((error as ApiError).data).toEqual({
+					error: 'Network error',
+					originalError: 'Failed to fetch',
+				})
+			}
+		})
+
+		it('rethrows non-TypeError network errors', async () => {
+			const customError = new Error('Custom error')
+			mockFetch.mockRejectedValueOnce(customError)
+
+			try {
+				await request('/entities')
+				expect.fail('Should have thrown')
+			} catch (error) {
+				expect(error).toBe(customError)
+			}
+		})
 	})
 
 	describe('get', () => {

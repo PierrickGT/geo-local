@@ -46,18 +46,34 @@ const API_BASE = '/api'
  * @param path - API path (e.g., '/entities', '/search?q=foo')
  * @param options - Fetch options (method, body, etc.)
  * @returns Parsed JSON response of type T
- * @throws ApiError on non-2xx responses
+ * @throws ApiError on non-2xx responses or network errors
  */
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const url = `${API_BASE}${path}`
 
-	const response = await fetch(url, {
-		...options,
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers,
-		},
-	})
+	let response: Response
+	try {
+		response = await fetch(url, {
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options.headers,
+			},
+		})
+	} catch (error) {
+		// Handle network errors (TypeError from fetch)
+		if (error instanceof TypeError) {
+			throw new ApiError(
+				0,
+				'Network error: Unable to connect to server. Please check your connection.',
+				{
+					error: 'Network error',
+					originalError: error.message,
+				},
+			)
+		}
+		throw error
+	}
 
 	if (!response.ok) {
 		let errorData: ApiErrorResponse | unknown = {}
