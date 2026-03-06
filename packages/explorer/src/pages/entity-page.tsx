@@ -73,7 +73,10 @@ export function EntityPage() {
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									role="img"
+									aria-label="Entity not found"
 								>
+									<title>Entity not found</title>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
@@ -93,7 +96,10 @@ export function EntityPage() {
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									role="img"
+									aria-label="Error"
 								>
+									<title>Error</title>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
