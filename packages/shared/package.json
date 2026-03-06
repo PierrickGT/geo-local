@@ -1,0 +1,27 @@
+{
+  "name": "@geo-runtime/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "migrate": "tsx src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@geoprotocol/grc-20": "latest",
+    "@geoprotocol/geo-sdk": "latest",
+    "dotenv": "^16.4.0",
+    "pg": "^8.13.0",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0"
+  }
+}
