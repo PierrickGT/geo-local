@@ -5,10 +5,10 @@ Private, self-hosted knowledge graph runtime that replaces IPFS/blockchain with 
 ## Architecture
 
 ```
-┌──────────┐     ┌──────────┐     ┌──────────┐
-│  ingest  │────▶│ Postgres │◀────│   api    │
-│ :3001    │     │  :5433   │     │  :3002   │
-└──────────┘     └────┬─────┘     └──────────┘
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│  ingest  │────▶│ Postgres │◀────│   api    │◀────│ explorer │
+│ :3001    │     │  :5433   │     │  :3002   │     │  :3003   │
+└──────────┘     └────┬─────┘     └──────────┘     └──────────┘
                       │
                  ┌────┴─────┐
                  │ indexer  │
@@ -19,6 +19,7 @@ Private, self-hosted knowledge graph runtime that replaces IPFS/blockchain with 
 - **ingest** — HTTP server accepting GRC-20 encoded edits (binary or JSON mutations)
 - **indexer** — Polls pending edits, decodes ops, materializes entities/relations/triples
 - **api** — Read-only query API for the materialized graph
+- **explorer** — React SPA for browsing the knowledge graph with search and graph visualization
 - **shared** — Config, DB pool, migrations, ID/value utilities
 
 ## Quickstart
@@ -37,6 +38,7 @@ pnpm db:migrate
 pnpm dev:ingest
 pnpm dev:indexer
 pnpm dev:api
+pnpm dev:explorer
 ```
 
 ## Configuration
