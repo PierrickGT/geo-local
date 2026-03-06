@@ -67,6 +67,12 @@ export function GraphPage() {
 	// Track expanded node IDs to prevent re-expanding
 	const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
 
+	// Click delay state for distinguishing click vs double-click
+	const [pendingClick, setPendingClick] = useState<{
+		nodeId: string
+		timer: ReturnType<typeof setTimeout>
+	} | null>(null)
+
 	// ReactFlow state
 	const [nodes, setNodes] = useNodesState<EntityNodeType>([])
 	const [edges, setEdges] = useEdgesState<RelationEdgeType>([])
@@ -178,18 +184,37 @@ export function GraphPage() {
 		}
 	}, [focusId, focusQuery.isError])
 
-	// Click handler: navigate to entity detail
+	// Click handler: navigate to entity detail (with delay to distinguish from double-click)
 	const handleNodeClick = useCallback(
 		(_event: React.MouseEvent, node: EntityNodeType) => {
-			navigate(`/entities/${node.data.entityId}`)
+			const entityId = node.data.entityId
+
+			// Clear any existing pending click
+			if (pendingClick) {
+				clearTimeout(pendingClick.timer)
+			}
+
+			// Start a timer - if no double-click occurs within 250ms, navigate
+			const timer = setTimeout(() => {
+				navigate(`/entities/${entityId}`)
+				setPendingClick(null)
+			}, 250)
+
+			setPendingClick({ nodeId: node.id, timer })
 		},
-		[navigate],
+		[navigate, pendingClick],
 	)
 
 	// Double-click handler: expand neighbors
 	const handleNodeDoubleClick = useCallback(
 		async (_event: React.MouseEvent, node: EntityNodeType) => {
 			const entityId = node.data.entityId
+
+			// Cancel any pending click navigation
+			if (pendingClick) {
+				clearTimeout(pendingClick.timer)
+				setPendingClick(null)
+			}
 
 			// Skip if already expanded
 			if (expandedNodes.has(entityId)) return
@@ -275,8 +300,17 @@ export function GraphPage() {
 				console.error('Error expanding node:', err)
 			}
 		},
-		[graphNodes, graphEdges, setNodes, setEdges, expandedNodes],
+		[graphNodes, graphEdges, setNodes, setEdges, expandedNodes, pendingClick],
 	)
+
+	// Cleanup pending click timer on unmount
+	useEffect(() => {
+		return () => {
+			if (pendingClick) {
+				clearTimeout(pendingClick.timer)
+			}
+		}
+	}, [pendingClick])
 
 	// Drag handler: pin node position
 	const handleNodeDragStop = useCallback(
