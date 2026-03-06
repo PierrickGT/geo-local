@@ -1,0 +1,96 @@
+{
+  "groupId": "graph-interactions",
+  "testedAt": "2026-03-06T16:30:00.000Z",
+  "credentials": {
+    "account": "none",
+    "namespace": "seeded-entities"
+  },
+  "toolsUsed": ["agent-browser"],
+  "assertions": [
+    {
+      "id": "VAL-GRAPH-004",
+      "title": "Click node navigates to entity detail",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to /graph", "expected": "Graph page loads with nodes", "observed": "Graph page loaded with 50 nodes visible" },
+        { "action": "Click on node 6756f5185e554c4a976dd748671cbdc5 (@e5)", "expected": "Navigation to /entities/:id", "observed": "Navigated to /entities/6756f5185e554c4a976dd748671cbdc5" }
+      ],
+      "evidence": {
+        "screenshots": ["graph-initial.png", "after-node-click.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?limit=50&offset=0 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GRAPH-005",
+      "title": "Double-click node expands neighbors",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to /graph", "expected": "Graph page loads with 50 nodes, 0 edges", "observed": "50 nodes, 0 edges" },
+        { "action": "Double-click on node 72096f09e0a0424db7c50a1e198e1860 (@e10)", "expected": "API call to fetch relations, new edges/nodes appear", "observed": "API call made to /api/entities/72096f09e0a0424db7c50a1e198e1860/relations, edge count increased from 0 to 1" }
+      ],
+      "evidence": {
+        "screenshots": ["before-dblclick-2.png", "after-dblclick-2.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities/72096f09e0a0424db7c50a1e198e1860/relations -> 200 with 1 relation",
+        "nodeCount": "50 (unchanged - neighbor already in graph)",
+        "edgeCount": "0 -> 1 (new edge added)"
+      },
+      "issues": null,
+      "notes": "The neighbor entity (4225e7deb1d442f89f1137daa0750d9c) was already in the initial 50-node seed, so only an edge was added. This is correct behavior - the expansion logic adds new nodes only if the neighbor is not already present."
+    },
+    {
+      "id": "VAL-GRAPH-006",
+      "title": "Drag node pins position",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to /graph?focus=72096f09e0a0424db7c50a1e198e1860", "expected": "Focused graph with 2 nodes", "observed": "2 nodes loaded with viewport transform matrix(3.38, 0, 0, 3.38, 307, 293)" },
+        { "action": "Get initial node transform", "expected": "Initial position recorded", "observed": "Node transform before: translate(-34.6691px, -68.6968px)" },
+        { "action": "Perform drag from (650, 129) to (850, 400)", "expected": "Node moves to new position", "observed": "Node transform after: translate(9.67935px, -3.65249px)" },
+        { "action": "Wait 2 seconds", "expected": "Node stays at dropped position (not affected by force simulation)", "observed": "Node transform unchanged: translate(9.67935px, -3.65249px)" }
+      ],
+      "evidence": {
+        "screenshots": ["drag-before.png", "drag-after-success.png"],
+        "consoleErrors": "none",
+        "network": "N/A (drag is client-side only)",
+        "transformBefore": "translate(-34.6691px, -68.6968px)",
+        "transformAfter": "translate(9.67935px, -3.65249px)",
+        "positionHeld": true
+      },
+      "issues": null,
+      "notes": "The focused graph (?focus=:id) was used because the default 50-node graph has very small nodes due to extreme zoom-out. The focused graph provides larger, more interactable nodes for drag testing."
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "title": "Graph to entity detail",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to /graph", "expected": "Graph page loads", "observed": "Graph page loaded with nodes visible" },
+        { "action": "Click on entity node", "expected": "Navigation to entity detail page", "observed": "Navigated to /entities/6756f5185e554c4a976dd748671cbdc5" }
+      ],
+      "evidence": {
+        "screenshots": ["graph-initial.png", "after-node-click.png"],
+        "consoleErrors": "none"
+      },
+      "issues": null,
+      "notes": "This assertion is functionally identical to VAL-GRAPH-004 and was tested simultaneously."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Default 50-node graph renders at 10% zoom level, making nodes very small (12x4 pixels) and difficult to interact with via mouse events",
+      "resolved": true,
+      "resolution": "Used ?focus=:id parameter to load a focused 2-node graph with larger, more interactable nodes (408x135 pixels)",
+      "affectedAssertions": ["VAL-GRAPH-006"]
+    },
+    {
+      "description": "Agent-browser's dblclick command did not trigger ReactFlow's onNodeDoubleClick handler reliably",
+      "resolved": true,
+      "resolution": "Used mouse events (mouse move, mouse down, mouse up) with proper timing to simulate double-click",
+      "affectedAssertions": ["VAL-GRAPH-005"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 assertions: all 4 passed. Graph node interactions (click, double-click, drag) work correctly. Navigation from graph to entity detail works. Double-click correctly fetches relations and adds edges (and new nodes if neighbors not already in graph). Drag correctly pins node position and prevents force simulation from moving it."
+}
