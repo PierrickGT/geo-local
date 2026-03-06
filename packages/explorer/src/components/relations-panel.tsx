@@ -93,7 +93,10 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
+											role="img"
+											aria-label="Navigate to entity"
 										>
+											<title>Navigate to entity</title>
 											<path
 												strokeLinecap="round"
 												strokeLinejoin="round"
