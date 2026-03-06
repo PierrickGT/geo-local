@@ -279,6 +279,24 @@ describe('EditsPage', () => {
 
 			expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
 		})
+
+		it('clicking retry calls refetch', async () => {
+			const user = userEvent.setup()
+
+			mockUseEdits.mockReturnValue({
+				edits: undefined,
+				isLoading: false,
+				isError: true,
+				error: new Error('Network error'),
+				refetch: mockRefetch,
+			})
+
+			render(<EditsPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByRole('button', { name: 'Retry' }))
+
+			expect(mockRefetch).toHaveBeenCalledTimes(1)
+		})
 	})
 
 	describe('URL sync', () => {
