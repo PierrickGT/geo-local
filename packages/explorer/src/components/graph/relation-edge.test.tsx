@@ -79,11 +79,7 @@ describe('RelationEdge', () => {
 		const onClick = vi.fn()
 		render(
 			<TestWrapper>
-				<RelationEdge
-					{...defaultProps}
-					data={{ relationType: 'RELATES_TO' }}
-					onClick={onClick}
-				/>
+				<RelationEdge {...defaultProps} data={{ relationType: 'RELATES_TO' }} onClick={onClick} />
 			</TestWrapper>,
 		)
 
@@ -100,11 +96,7 @@ describe('RelationEdge', () => {
 			<TestWrapper>
 				{/* biome-ignore lint/a11y/useKeyWithClickEvents: test wrapper, not interactive element */}
 				<div onClick={parentClick}>
-					<RelationEdge
-						{...defaultProps}
-						data={{ relationType: 'RELATES_TO' }}
-						onClick={onClick}
-					/>
+					<RelationEdge {...defaultProps} data={{ relationType: 'RELATES_TO' }} onClick={onClick} />
 				</div>
 			</TestWrapper>,
 		)

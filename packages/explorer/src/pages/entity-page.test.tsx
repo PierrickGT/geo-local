@@ -84,9 +84,13 @@ const mockEntityDetail = {
 	},
 }
 
+// Mock refetch function
+const mockRefetch = vi.fn()
+
 describe('EntityPage', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockRefetch.mockClear()
 
 		// Default mock
 		mockUseEntity.mockReturnValue({
@@ -94,6 +98,7 @@ describe('EntityPage', () => {
 			isLoading: false,
 			isError: false,
 			error: null,
+			refetch: mockRefetch,
 		})
 	})
 
@@ -140,6 +145,7 @@ describe('EntityPage', () => {
 				isLoading: true,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper() })
@@ -158,6 +164,7 @@ describe('EntityPage', () => {
 				isLoading: false,
 				isError: true,
 				error: notFoundError,
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper('/entities/nonexistent-id') })
@@ -174,6 +181,7 @@ describe('EntityPage', () => {
 				isLoading: false,
 				isError: true,
 				error: new Error('Network error'),
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper() })
@@ -188,6 +196,7 @@ describe('EntityPage', () => {
 				isLoading: false,
 				isError: true,
 				error: new Error('Network error'),
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper() })
@@ -208,6 +217,7 @@ describe('EntityPage', () => {
 				isLoading: false,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper() })
@@ -254,6 +264,7 @@ describe('EntityPage', () => {
 				isLoading: false,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntityPage />, { wrapper: createWrapper() })
