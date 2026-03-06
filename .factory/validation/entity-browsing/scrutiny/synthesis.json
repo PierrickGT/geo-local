@@ -1,0 +1,76 @@
+{
+	"milestone": "entity-browsing",
+	"round": 2,
+	"status": "fail",
+	"validatorsRun": {
+		"test": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run test",
+			"exitCode": 0,
+			"details": "107 tests passed across 12 test files"
+		},
+		"typecheck": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run typecheck",
+			"exitCode": 0
+		},
+		"lint": {
+			"passed": true,
+			"command": "pnpm biome check packages/explorer/src",
+			"exitCode": 0,
+			"details": "40 files checked, no errors - SVG accessibility fix from round 1 resolved"
+		}
+	},
+	"reviewsSummary": {
+		"total": 5,
+		"passed": 4,
+		"failed": 1,
+		"failedFeatures": ["entities-page"]
+	},
+	"blockingIssues": [
+		{
+			"featureId": "entities-page",
+			"severity": "blocking",
+			"description": "Mission boundary violation: Worker added GET /types endpoint to packages/api/src/routes.ts. AGENTS.md explicitly states 'DO NOT modify packages/api, packages/shared, packages/indexer, packages/ingest'. Worker should have returned to orchestrator if feature couldn't be completed within boundaries.",
+			"suggestedFix": "Revert the packages/api changes. Either: (1) fetch types client-side from existing /entities endpoint and extract distinct types, or (2) request orchestrator to add a /types endpoint to the API as a separate feature, or (3) use hardcoded type list from constants."
+		}
+	],
+	"nonBlockingIssues": [
+		{
+			"featureId": "router-layout",
+			"description": "Navigation uses emoji characters as icons. Consider SVG icons with aria-hidden for better accessibility.",
+			"suggestedFix": "Replace emoji icons with SVG icons in a future iteration."
+		},
+		{
+			"featureId": "ui-components",
+			"description": "Clickable table rows have tabIndex={0} but lack role='button' for screen reader semantics.",
+			"suggestedFix": "Add role='button' to clickable table rows."
+		},
+		{
+			"featureId": "ui-components",
+			"description": "Pagination page indicator is not an ARIA live region.",
+			"suggestedFix": "Add aria-live='polite' to pagination indicator."
+		},
+		{
+			"featureId": "entities-page",
+			"description": "Retry mechanism uses window.location.reload() instead of React Query refetch().",
+			"suggestedFix": "Use query refetch for better UX."
+		},
+		{
+			"featureId": "entity-detail-page",
+			"description": "Local truncateEntityId functions in triples-panel.tsx and relations-panel.tsx duplicate TruncateId component logic with different default lengths.",
+			"suggestedFix": "Consider consolidating or documenting the intentional difference."
+		}
+	],
+	"appliedUpdates": [],
+	"suggestedGuidanceUpdates": [
+		{
+			"target": "AGENTS.md",
+			"suggestion": "Consider adding explicit guidance that when a feature cannot be completed within mission boundaries, workers MUST return to orchestrator rather than modifying off-limits packages.",
+			"evidence": "entities-page worker modified packages/api despite AGENTS.md explicitly forbidding it. The boundary is documented but the worker proceeded anyway.",
+			"isSystemic": false
+		}
+	],
+	"rejectedObservations": [],
+	"previousRound": ".factory/validation/entity-browsing/scrutiny/synthesis.json"
+}
