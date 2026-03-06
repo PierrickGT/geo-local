@@ -1,0 +1,191 @@
+{
+  "groupId": "entities-page",
+  "testedAt": "2026-03-06T04:30:00.000Z",
+  "credentials": {
+    "account": null,
+    "namespace": null
+  },
+  "toolsUsed": ["agent-browser", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-ENTITIES-001",
+      "title": "Initial page load displays entity list",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to http://localhost:3003", "expected": "Page redirects to /entities", "observed": "Page redirected to /entities?limit=20" },
+        { "action": "Wait for page load", "expected": "Entity list renders with columns", "observed": "Table with ID, Status, Created, Updated columns displayed" },
+        { "action": "Check console errors", "expected": "No errors", "observed": "No errors (only React DevTools info message)" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/001-initial-load.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?limit=20 (proxied via Vite)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-002",
+      "title": "Pagination controls reflect current state",
+      "status": "pass",
+      "steps": [
+        { "action": "Check pagination display", "expected": "Page indicator shows position", "observed": "Showing 1 to 20 of 157 results, Page 1 of 8" },
+        { "action": "Check boundary button states", "expected": "First/Prev disabled on page 1", "observed": "First and Prev buttons are disabled, Next and Last enabled" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/001-initial-load.png"],
+        "consoleErrors": "none",
+        "network": null
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-003",
+      "title": "Next page navigation",
+      "status": "pass",
+      "steps": [
+        { "action": "Click Next button", "expected": "URL updates to offset=20, new entities load", "observed": "URL changed to ?limit=20&offset=20, page 2 of 8 shown" },
+        { "action": "Verify pagination state", "expected": "Page indicator shows page 2", "observed": "Showing 21 to 40 of 157 results, Page 2 of 8" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/003-next-page.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?limit=20&offset=20"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-004",
+      "title": "Previous page navigation",
+      "status": "pass",
+      "steps": [
+        { "action": "Click Prev button from page 2", "expected": "URL offset decreases, previous entities load", "observed": "URL changed to ?limit=20 (offset removed), page 1 of 8 shown" },
+        { "action": "Verify first entity matches original", "expected": "First entity is same as initial load", "observed": "First entity e7d737c5... matches initial page" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/004-prev-page.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?limit=20"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-005",
+      "title": "Type filter selection filters entity list",
+      "status": "blocked",
+      "steps": [
+        { "action": "Check type filter dropdown options", "expected": "Multiple type options available", "observed": "Only 'All types' option available" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/001-initial-load.png"],
+        "consoleErrors": "none",
+        "network": null
+      },
+      "issues": "No TYPE relations exist in the seeded data. The type filter dropdown only shows 'All types' option. Cannot test type filtering without typed entities in the database."
+    },
+    {
+      "id": "VAL-ENTITIES-006",
+      "title": "Type filter reset/clear",
+      "status": "blocked",
+      "steps": [
+        { "action": "Attempt to test type filter reset", "expected": "Clear type filter to show all entities", "observed": "Cannot test - no type options available to select in the first place" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/001-initial-load.png"],
+        "consoleErrors": "none",
+        "network": null
+      },
+      "issues": "Blocked by VAL-ENTITIES-005 - no TYPE relations in seeded data to filter by."
+    },
+    {
+      "id": "VAL-ENTITIES-007",
+      "title": "URL state synchronization on load",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to ?limit=20&offset=40", "expected": "Page loads with correct offset", "observed": "URL preserved, page 3 of 8 shown with entities 41-60" },
+        { "action": "Verify correct entities loaded", "expected": "Entities 41-60 displayed", "observed": "Showing 41 to 60 of 157 results" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/007-url-sync.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?limit=20&offset=40"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-008",
+      "title": "Empty results state",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate with non-existent type filter", "expected": "Empty state message displayed", "observed": "Message 'No entities found.' displayed" },
+        { "action": "Verify no table or pagination", "expected": "No table rows, no pagination", "observed": "No table, no pagination controls visible" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/008-empty-state.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities?type=nonexistent_type (returned empty array)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-009",
+      "title": "API failure error state with retry",
+      "status": "fail",
+      "steps": [
+        { "action": "Block API with network route --abort", "expected": "Error message with retry button displayed", "observed": "Page shows completely blank content (only 'document' in accessibility tree)" },
+        { "action": "Check console for errors", "expected": "Error logged", "observed": "Console shows: Failed to load resource: net::ERR_FAILED" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/009-error-state.png"],
+        "consoleErrors": "Failed to load resource: net::ERR_FAILED",
+        "network": "Request aborted via network route"
+      },
+      "issues": "When the API fails (network error), the application shows a blank page instead of displaying an error message with a retry button. This is a bug - the error boundary or error state UI is not rendering properly."
+    },
+    {
+      "id": "VAL-ENTITIES-010",
+      "title": "Entity row click navigation",
+      "status": "pass",
+      "steps": [
+        { "action": "Click on entity row text 'e7d737c5...'", "expected": "Navigate to entity detail page", "observed": "Navigated to /entities/e7d737c536764c609fa16aa64a8c90ad" },
+        { "action": "Verify entity detail page loaded", "expected": "Entity detail page shows entity info", "observed": "Entity header, properties panel, and relations panel displayed" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/010-entity-detail.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities/e7d737c536764c609fa16aa64a8c90ad"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ENTITIES-011",
+      "title": "Status badge display (alive/deleted)",
+      "status": "pass",
+      "steps": [
+        { "action": "Check status column in entity list", "expected": "Status displayed as visual badge", "observed": "Status 'alive' displayed in Status column" },
+        { "action": "Attempt to find deleted entities", "expected": "Both alive and deleted statuses testable", "observed": "All 157 entities have 'alive' status - no deleted entities to test" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/011-status-badge.png"],
+        "consoleErrors": "none",
+        "network": null
+      },
+      "issues": "Cannot test 'deleted' status badge as all entities in the seeded data have 'alive' status. The 'alive' status is displayed in the table."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Type filter testing blocked by lack of TYPE relations in seeded data",
+      "resolved": false,
+      "resolution": null,
+      "affectedAssertions": ["VAL-ENTITIES-005", "VAL-ENTITIES-006"]
+    },
+    {
+      "description": "Deleted status badge cannot be tested as no deleted entities exist in the database",
+      "resolved": false,
+      "resolution": null,
+      "affectedAssertions": ["VAL-ENTITIES-011"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 11 assertions: 8 passed, 1 failed (VAL-ENTITIES-009: API failure shows blank page instead of error UI), 2 blocked (VAL-ENTITIES-005/006: no TYPE relations in data). Key findings: (1) API error handling is broken - shows blank page instead of error message with retry, (2) Type filtering cannot be tested without typed entities in the database."
+}
