@@ -83,7 +83,7 @@ describe('EntityNode', () => {
 			</TestWrapper>,
 		)
 
-		fireEvent.click(screen.getByText('entity-12...'))
+		fireEvent.click(screen.getByText('entity-1...'))
 
 		expect(onClick).toHaveBeenCalledWith('entity-123')
 	})
@@ -100,7 +100,7 @@ describe('EntityNode', () => {
 			</TestWrapper>,
 		)
 
-		fireEvent.doubleClick(screen.getByText('entity-45...'))
+		fireEvent.doubleClick(screen.getByText('entity-4...'))
 
 		expect(onDoubleClick).toHaveBeenCalledWith('entity-456')
 	})
@@ -118,7 +118,7 @@ describe('EntityNode', () => {
 			</TestWrapper>,
 		)
 
-		fireEvent.click(screen.getByText('entity-78...'))
+		fireEvent.click(screen.getByText('entity-7...'))
 
 		expect(onClick).toHaveBeenCalled()
 		expect(parentClick).not.toHaveBeenCalled()
