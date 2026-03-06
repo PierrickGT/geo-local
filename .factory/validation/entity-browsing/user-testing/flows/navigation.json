@@ -1,0 +1,176 @@
+{
+  "groupId": "navigation",
+  "testedAt": "2026-03-06T15:30:00.000Z",
+  "credentials": {
+    "account": "none",
+    "namespace": "none"
+  },
+  "toolsUsed": ["agent-browser"],
+  "assertions": [
+    {
+      "id": "VAL-NAV-001",
+      "title": "Sidebar renders all navigation links",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to http://localhost:3003", "expected": "Sidebar renders with all nav links", "observed": "Sidebar visible with 4 links: Entities, Search, Graph, Edits" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-001-initial.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-002",
+      "title": "Active link indication",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to /entities page", "expected": "Entities link shows active state", "observed": "Entities link has distinct styling: color oklch(0.488 0.243 264.376), background oklch(0.932 0.032 255.585)" },
+        { "action": "Navigate to /search page", "expected": "Search link shows active state", "observed": "Search link has same active styling, other links have transparent background" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-001-initial.png", "screenshots/nav-006-search.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-003",
+      "title": "Root redirect",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate to http://localhost:3003/", "expected": "URL changes to /entities", "observed": "URL changed to http://localhost:3003/entities?limit=20" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-001-initial.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-004",
+      "title": "Direct URL access - entities",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to http://localhost:3003/entities", "expected": "Entities page loads correctly", "observed": "Entities list page loaded with 20 entities, pagination controls visible" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-004-entities.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-005",
+      "title": "Direct URL access - entity detail",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to http://localhost:3003/entities/e7d737c536764c609fa16aa64a8c90ad", "expected": "Entity detail page loads correctly", "observed": "Entity detail page loaded showing entity header, properties panel, and relations tabs" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-005-entity-direct.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities/e7d737c536764c609fa16aa64a8c90ad"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-006",
+      "title": "Direct URL access - search",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to http://localhost:3003/search", "expected": "Search page loads correctly", "observed": "Search page loaded with empty query state" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-006-search.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-007",
+      "title": "Direct URL access - graph",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to http://localhost:3003/graph", "expected": "Graph page loads correctly", "observed": "Graph visualization page loaded" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-007-graph.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/entities for seed data"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-008",
+      "title": "Direct URL access - edits",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate directly to http://localhost:3003/edits", "expected": "Edits page loads correctly", "observed": "Edits page loaded with status filter" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-008-edits.png"],
+        "consoleErrors": "none",
+        "network": "GET /api/edits"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-009",
+      "title": "Browser back navigation",
+      "status": "pass",
+      "steps": [
+        { "action": "Navigate from /edits to /graph to /search via back button", "expected": "Previous pages restored", "observed": "Back navigation from /edits -> /graph -> /search all worked correctly" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-009-back.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-010",
+      "title": "Browser forward navigation",
+      "status": "pass",
+      "steps": [
+        { "action": "Use forward button after going back", "expected": "Next page restored", "observed": "Forward navigation from /search -> /graph worked correctly" }
+      ],
+      "evidence": {
+        "screenshots": ["screenshots/nav-010-forward.png"],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAV-011",
+      "title": "Sidebar persistence",
+      "status": "pass",
+      "steps": [
+        { "action": "Check sidebar visibility on all pages", "expected": "Sidebar visible on all routes", "observed": "Sidebar with all 4 nav links visible on /entities, /search, /graph, /edits, /entities/:id" }
+      ],
+      "evidence": {
+        "screenshots": [
+          "screenshots/nav-001-initial.png",
+          "screenshots/nav-004-entities.png",
+          "screenshots/nav-005-entity-direct.png",
+          "screenshots/nav-006-search.png",
+          "screenshots/nav-007-graph.png",
+          "screenshots/nav-008-edits.png"
+        ],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 11 assertions: all 11 passed. Navigation system works correctly with sidebar visible on all pages, proper active link indication, root redirect to /entities, direct URL access working for all routes, and browser back/forward navigation functioning as expected."
+}

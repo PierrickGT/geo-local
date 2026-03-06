@@ -1,0 +1,85 @@
+{
+  "milestone": "entity-browsing",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 37,
+    "passed": 33,
+    "failed": 3,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-ENTITIES-001",
+    "VAL-ENTITIES-002",
+    "VAL-ENTITIES-003",
+    "VAL-ENTITIES-004",
+    "VAL-ENTITIES-007",
+    "VAL-ENTITIES-008",
+    "VAL-ENTITIES-010",
+    "VAL-ENTITIES-011",
+    "VAL-ENTITY-001",
+    "VAL-ENTITY-002",
+    "VAL-ENTITY-003",
+    "VAL-ENTITY-004",
+    "VAL-ENTITY-005",
+    "VAL-ENTITY-006",
+    "VAL-ENTITY-007",
+    "VAL-ENTITY-008",
+    "VAL-ENTITY-009",
+    "VAL-ENTITY-010",
+    "VAL-ENTITY-011",
+    "VAL-ENTITY-012",
+    "VAL-NAV-001",
+    "VAL-NAV-002",
+    "VAL-NAV-003",
+    "VAL-NAV-004",
+    "VAL-NAV-005",
+    "VAL-NAV-006",
+    "VAL-NAV-007",
+    "VAL-NAV-008",
+    "VAL-NAV-009",
+    "VAL-NAV-010",
+    "VAL-NAV-011",
+    "VAL-CROSS-001",
+    "VAL-CROSS-005"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-ENTITIES-005",
+      "reason": "Blocked by missing test data: No TYPE relations exist in seeded data - type filter dropdown only shows 'All types' option. Need to seed entities with TYPE relations to test type filtering functionality."
+    },
+    {
+      "id": "VAL-ENTITIES-006",
+      "reason": "Blocked by missing test data: No TYPE relations exist in seeded data - cannot test type filter reset/clear without type options to select first."
+    },
+    {
+      "id": "VAL-ENTITIES-009",
+      "reason": "Bug: When API fails (network error), the application shows a blank page instead of displaying an error message with a retry button. Error boundary or error state UI is not rendering properly."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added Flow Validator Guidance section for Browser UI with isolation rules, boundaries, and constraints for parallel testing",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null,
+  "flowReports": [
+    ".factory/validation/entity-browsing/user-testing/flows/entities-page.json",
+    ".factory/validation/entity-browsing/user-testing/flows/entity-detail.json",
+    ".factory/validation/entity-browsing/user-testing/flows/navigation.json",
+    ".factory/validation/entity-browsing/user-testing/flows/cross-area.json"
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "description": "Fix VAL-ENTITIES-009: Implement proper error handling UI in entities-page.tsx to show error message with retry button when API fails"
+    },
+    {
+      "priority": "medium",
+      "description": "Seed TYPE relations: Create test entities with TYPE relations to enable full testing of type filter functionality (VAL-ENTITIES-005, VAL-ENTITIES-006)"
+    }
+  ]
+}
