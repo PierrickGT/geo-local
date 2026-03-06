@@ -25,7 +25,7 @@ export function EntitiesPage() {
 	}, [searchParams])
 
 	// Fetch entities with current filters
-	const { entities, isLoading, isError, error } = useEntities({
+	const { entities, isLoading, isError, error, refetch } = useEntities({
 		type: typeFilter,
 		limit,
 		offset,
@@ -74,7 +74,7 @@ export function EntitiesPage() {
 
 	// Handle retry on error
 	const handleRetry = () => {
-		window.location.reload()
+		refetch()
 	}
 
 	// Sync default limit to URL on mount if not present

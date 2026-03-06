@@ -37,13 +37,14 @@ export interface UseEntitiesReturn {
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 /**
  * Fetch paginated list of entities.
  *
  * @param params - Optional filter and pagination params
- * @returns Query result with entities, total, loading/error states
+ * @returns Query result with entities, total, loading/error states, and refetch
  */
 export function useEntities(params: UseEntitiesParams = {}): UseEntitiesReturn {
 	const { type, limit = 20, offset = 0 } = params
@@ -59,6 +60,9 @@ export function useEntities(params: UseEntitiesParams = {}): UseEntitiesReturn {
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
+		refetch: () => {
+			query.refetch()
+		},
 	}
 }
 
