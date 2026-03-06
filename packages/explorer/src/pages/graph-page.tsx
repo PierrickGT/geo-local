@@ -102,17 +102,19 @@ export function GraphPage() {
 			const entity = focusQuery.entity.entity
 			const relations = focusRelationsQuery.relations?.relations ?? []
 
+			// Focus entity at center
 			const nodes: GraphNode[] = [{ id: entity.id, x: 0, y: 0, fixed: false }]
 
-			// Add connected entities
+			// Add connected entities in a circular layout around the focus
 			const seenIds = new Set([entity.id])
 			const edges: GraphEdge[] = []
+			const neighbors: string[] = []
 
 			for (const rel of relations) {
 				const otherId = rel.fromId === entity.id ? rel.toId : rel.fromId
 				if (!seenIds.has(otherId)) {
 					seenIds.add(otherId)
-					nodes.push({ id: otherId, x: 0, y: 0, fixed: false })
+					neighbors.push(otherId)
 				}
 
 				edges.push({
@@ -123,6 +125,18 @@ export function GraphPage() {
 				})
 			}
 
+			// Place neighbors in a circle around the focus entity
+			const radius = 200
+			neighbors.forEach((id, i) => {
+				const angle = (2 * Math.PI * i) / neighbors.length
+				nodes.push({
+					id,
+					x: radius * Math.cos(angle),
+					y: radius * Math.sin(angle),
+					fixed: false,
+				})
+			})
+
 			return { nodes, edges }
 		}
 
@@ -130,12 +144,20 @@ export function GraphPage() {
 		if (!seedQuery.entities?.entities) return null
 
 		const entities = seedQuery.entities.entities
-		const nodes: GraphNode[] = entities.map((e) => ({
-			id: e.id,
-			x: 0,
-			y: 0,
-			fixed: false,
-		}))
+		const count = entities.length
+		const radius = 200 // Circular layout radius
+
+		// Initialize nodes in a circular layout to prevent force simulation
+		// from pushing them to extreme positions (±20,000 pixels)
+		const nodes: GraphNode[] = entities.map((e, i) => {
+			const angle = (2 * Math.PI * i) / count
+			return {
+				id: e.id,
+				x: radius * Math.cos(angle),
+				y: radius * Math.sin(angle),
+				fixed: false,
+			}
+		})
 
 		// We need to fetch relations for seed entities - but for initial render,
 		// we don't have the relations yet. We'll just show nodes initially.
