@@ -1,0 +1,25 @@
+{
+  "name": "geo-runtime-postgres",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev:ingest": "pnpm --filter @geo-runtime/ingest run dev",
+    "dev:indexer": "pnpm --filter @geo-runtime/indexer run dev",
+    "dev:api": "pnpm --filter @geo-runtime/api run dev",
+    "db:migrate": "pnpm --filter @geo-runtime/shared run migrate",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild"
+    ]
+  }
+}
