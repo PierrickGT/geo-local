@@ -58,9 +58,13 @@ const mockEntities = {
 
 const mockTypes = ['type-1', 'type-2', 'type-3']
 
+// Mock refetch function
+const mockRefetch = vi.fn()
+
 describe('EntitiesPage', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockRefetch.mockClear()
 
 		// Default mocks
 		mockUseEntities.mockReturnValue({
@@ -69,6 +73,7 @@ describe('EntitiesPage', () => {
 			isLoading: false,
 			isError: false,
 			error: null,
+			refetch: mockRefetch,
 		})
 
 		mockUseTypes.mockReturnValue({
@@ -95,6 +100,7 @@ describe('EntitiesPage', () => {
 				isLoading: true,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
@@ -156,6 +162,7 @@ describe('EntitiesPage', () => {
 				isLoading: false,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
@@ -178,6 +185,7 @@ describe('EntitiesPage', () => {
 				isLoading: false,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
@@ -201,6 +209,7 @@ describe('EntitiesPage', () => {
 				isLoading: false,
 				isError: true,
 				error: new Error('Network error'),
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
@@ -216,11 +225,31 @@ describe('EntitiesPage', () => {
 				isLoading: false,
 				isError: true,
 				error: new Error('Network error'),
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
 			expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+		})
+
+		it('clicking retry calls refetch', async () => {
+			const user = userEvent.setup()
+
+			mockUseEntities.mockReturnValue({
+				entities: undefined,
+				total: undefined,
+				isLoading: false,
+				isError: true,
+				error: new Error('Network error'),
+				refetch: mockRefetch,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByRole('button', { name: 'Retry' }))
+
+			expect(mockRefetch).toHaveBeenCalledTimes(1)
 		})
 	})
 
@@ -254,6 +283,7 @@ describe('EntitiesPage', () => {
 				isLoading: false,
 				isError: false,
 				error: null,
+				refetch: mockRefetch,
 			})
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
