@@ -31,6 +31,7 @@ export interface UseEditsReturn {
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 /**
@@ -52,5 +53,6 @@ export function useEdits(params: UseEditsParams = {}): UseEditsReturn {
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
+		refetch: () => query.refetch(),
 	}
 }
