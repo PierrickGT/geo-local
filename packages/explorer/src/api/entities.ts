@@ -4,25 +4,7 @@
  */
 
 import { get } from './client'
-import type {
-	EntitiesResponse,
-	EntityRelationsResponse,
-	EntityResponse,
-	TypesResponse,
-} from './types'
-
-// ---------------------------------------------------------------------------
-// Get Types (distinct entity types from TYPE relations)
-// ---------------------------------------------------------------------------
-
-/**
- * Fetch distinct entity types from TYPE relations.
- *
- * @returns Types response with array of type IDs
- */
-export async function getTypes(): Promise<TypesResponse> {
-	return get<TypesResponse>('/types')
-}
+import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from './types'
 
 // ---------------------------------------------------------------------------
 // Get Entities (list with pagination)

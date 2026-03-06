@@ -56,9 +56,7 @@ const mockEntities = {
 	offset: 0,
 }
 
-const mockTypes = {
-	types: ['type-1', 'type-2', 'type-3'],
-}
+const mockTypes = ['type-1', 'type-2', 'type-3']
 
 describe('EntitiesPage', () => {
 	beforeEach(() => {
