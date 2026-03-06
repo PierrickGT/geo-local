@@ -1,0 +1,57 @@
+{
+  "milestone": "graph-viz",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 13,
+    "passed": 6,
+    "failed": 7,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-GRAPH-001",
+    "VAL-GRAPH-002",
+    "VAL-GRAPH-003",
+    "VAL-GRAPH-007",
+    "VAL-GRAPH-008",
+    "VAL-CROSS-004"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-GRAPH-004",
+      "reason": "Single-click on graph nodes does not trigger navigation to entity detail page. The click event appears to be handled but doesn't navigate."
+    },
+    {
+      "id": "VAL-GRAPH-005",
+      "reason": "Double-click on graph nodes does not trigger expansion. No API request was made to fetch relations, node count remained unchanged."
+    },
+    {
+      "id": "VAL-GRAPH-006",
+      "reason": "Dragging nodes does not change their position. Mouse drag events were executed but the node remained at its original coordinates."
+    },
+    {
+      "id": "VAL-GRAPH-009",
+      "reason": "Blocked: Cannot test empty graph state without clearing all entities from database (violates read-only testing constraints)"
+    },
+    {
+      "id": "VAL-GRAPH-010",
+      "reason": "Blocked: Cannot test API error handling without blocking the API endpoint (would affect other parallel validators)"
+    },
+    {
+      "id": "VAL-GRAPH-011",
+      "reason": "Blocked: Cannot test expansion error handling because expansion feature (double-click) is non-functional"
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "reason": "Cross-flow fails because graph node click does not navigate to entity detail page"
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null,
+  "criticalIssue": {
+    "description": "Graph node interactions (click, double-click, drag) are non-functional. The graph renders correctly with 50 nodes and displays hint text 'Click: view entity | Double-click: expand | Drag: pin' but none of these actions work.",
+    "affectedFeatures": ["graph-page", "graph-reactflow-components"],
+    "suggestedFix": "Review event handlers in EntityNode component and graph-page.tsx. Verify onClick, onDoubleClick, and drag handlers are properly connected to ReactFlow node events."
+  }
+}
