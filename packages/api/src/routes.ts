@@ -195,6 +195,23 @@ export function createRouter(): Router {
 		}
 	})
 
+	// GET /types
+	// Returns distinct entity types (to_id where relation_type='TYPE')
+	router.get('/types', async (req: Request, res: Response) => {
+		try {
+			const pool = getPool()
+			const result = await pool.query(
+				`SELECT DISTINCT r.to_id AS id
+				 FROM relations r
+				 WHERE r.relation_type = 'TYPE' AND r.status = 'alive'
+				 ORDER BY r.to_id`,
+			)
+			res.json({ types: result.rows.map((row) => row.id.trim()) })
+		} catch (err) {
+			res.status(500).json({ error: 'Internal server error' })
+		}
+	})
+
 	// GET /edits
 	router.get('/edits', async (req: Request, res: Response) => {
 		try {

@@ -106,7 +106,7 @@ describe('Pagination', () => {
 	it('handles partial last page correctly', () => {
 		render(<Pagination total={95} limit={20} offset={80} onPageChange={() => {}} />)
 
-		// Check for 81 (start of last page) 
+		// Check for 81 (start of last page)
 		expect(screen.getByText('81')).toBeInTheDocument()
 	})
 })

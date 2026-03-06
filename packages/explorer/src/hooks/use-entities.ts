@@ -1,12 +1,17 @@
 /**
  * Query hooks for entities
- * useEntities, useEntity, useEntityRelations
+ * useEntities, useEntity, useEntityRelations, useTypes
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { getEntities, getEntity, getEntityRelations } from '~/api/entities'
+import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
-import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
+import type {
+	EntitiesResponse,
+	EntityRelationsResponse,
+	EntityResponse,
+	TypesResponse,
+} from '~/api/types'
 
 // ---------------------------------------------------------------------------
 // Query Keys
@@ -18,6 +23,7 @@ export const entityKeys = {
 	detail: (id: string) => [...entityKeys.all, 'detail', id] as const,
 	relations: (id: string, params: GetEntityRelationsParams) =>
 		[...entityKeys.all, 'relations', id, params] as const,
+	types: () => [...entityKeys.all, 'types'] as const,
 }
 
 // ---------------------------------------------------------------------------
@@ -130,6 +136,36 @@ export function useEntityRelations(
 
 	return {
 		relations: query.data,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// useTypes - Entity types from TYPE relations
+// ---------------------------------------------------------------------------
+
+export interface UseTypesReturn {
+	types: TypesResponse | undefined
+	isLoading: boolean
+	isError: boolean
+	error: Error | null
+}
+
+/**
+ * Fetch distinct entity types from TYPE relations.
+ *
+ * @returns Query result with types, loading/error states
+ */
+export function useTypes(): UseTypesReturn {
+	const query = useQuery({
+		queryKey: entityKeys.types(),
+		queryFn: () => getTypes(),
+	})
+
+	return {
+		types: query.data,
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
