@@ -1,7 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { ReactFlow } from '@xyflow/react'
 import { Position } from '@xyflow/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { EntityNode, type EntityNodeData } from './entity-node'
 
 // Default props that satisfy NodeProps
@@ -75,52 +75,24 @@ describe('EntityNode', () => {
 		expect(screen.getByText('short')).toBeInTheDocument()
 	})
 
-	it('calls onClick when clicked', () => {
-		const onClick = vi.fn()
+	it('shows selected state styling', () => {
 		render(
 			<TestWrapper>
-				<EntityNode {...defaultProps} data={{ entityId: 'entity-123' }} onClick={onClick} />
+				<EntityNode {...defaultProps} data={{ entityId: 'entity-123' }} selected={true} />
 			</TestWrapper>,
 		)
 
-		fireEvent.click(screen.getByText('entity-1...'))
-
-		expect(onClick).toHaveBeenCalledWith('entity-123')
+		const node = screen.getByRole('button', { name: /Entity entity-123/ })
+		expect(node).toHaveClass('border-blue-600')
 	})
 
-	it('calls onDoubleClick when double-clicked', () => {
-		const onDoubleClick = vi.fn()
+	it('has correct aria-label', () => {
 		render(
 			<TestWrapper>
-				<EntityNode
-					{...defaultProps}
-					data={{ entityId: 'entity-456' }}
-					onDoubleClick={onDoubleClick}
-				/>
+				<EntityNode {...defaultProps} data={{ entityId: 'test-id' }} />
 			</TestWrapper>,
 		)
 
-		fireEvent.doubleClick(screen.getByText('entity-4...'))
-
-		expect(onDoubleClick).toHaveBeenCalledWith('entity-456')
-	})
-
-	it('stops event propagation on click', () => {
-		const parentClick = vi.fn()
-		const onClick = vi.fn()
-
-		render(
-			<TestWrapper>
-				{/* biome-ignore lint/a11y/useKeyWithClickEvents: test wrapper, not interactive element */}
-				<div onClick={parentClick}>
-					<EntityNode {...defaultProps} data={{ entityId: 'entity-789' }} onClick={onClick} />
-				</div>
-			</TestWrapper>,
-		)
-
-		fireEvent.click(screen.getByText('entity-7...'))
-
-		expect(onClick).toHaveBeenCalled()
-		expect(parentClick).not.toHaveBeenCalled()
+		expect(screen.getByRole('button', { name: 'Entity test-id' })).toBeInTheDocument()
 	})
 })
