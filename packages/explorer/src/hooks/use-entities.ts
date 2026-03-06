@@ -75,13 +75,14 @@ export interface UseEntityReturn {
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 /**
  * Fetch a single entity with its triples, outgoing relations, and incoming relations.
  *
  * @param id - Entity ID
- * @returns Query result with entity, loading/error states
+ * @returns Query result with entity, loading/error states, and refetch
  */
 export function useEntity(id: string): UseEntityReturn {
 	const query = useQuery({
@@ -95,6 +96,9 @@ export function useEntity(id: string): UseEntityReturn {
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
+		refetch: () => {
+			query.refetch()
+		},
 	}
 }
 
@@ -112,6 +116,7 @@ export interface UseEntityRelationsReturn {
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 /**
@@ -119,7 +124,7 @@ export interface UseEntityRelationsReturn {
  *
  * @param id - Entity ID
  * @param params - Optional filter params (direction, type)
- * @returns Query result with relations, loading/error states
+ * @returns Query result with relations, loading/error states, and refetch
  */
 export function useEntityRelations(
 	id: string,
@@ -138,6 +143,9 @@ export function useEntityRelations(
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
+		refetch: () => {
+			query.refetch()
+		},
 	}
 }
 
