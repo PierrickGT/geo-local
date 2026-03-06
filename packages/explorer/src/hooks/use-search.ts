@@ -33,6 +33,7 @@ export interface UseSearchReturn {
 	isDebouncing: boolean
 	isError: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 const DEFAULT_DEBOUNCE_MS = 300
@@ -78,5 +79,6 @@ export function useSearch(params: UseSearchParams): UseSearchReturn {
 		isDebouncing,
 		isError: query.isError,
 		error: query.error,
+		refetch: query.refetch,
 	}
 }
