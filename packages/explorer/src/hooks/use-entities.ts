@@ -4,14 +4,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
+import { getEntities, getEntity, getEntityRelations } from '~/api/entities'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
-import type {
-	EntitiesResponse,
-	EntityRelationsResponse,
-	EntityResponse,
-	TypesResponse,
-} from '~/api/types'
+import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
 
 // ---------------------------------------------------------------------------
 // Query Keys
@@ -143,31 +138,37 @@ export function useEntityRelations(
 }
 
 // ---------------------------------------------------------------------------
-// useTypes - Entity types from TYPE relations
+// useTypes - Known entity types (client-side hardcoded list)
 // ---------------------------------------------------------------------------
 
+/**
+ * Known entity types for the type filter dropdown.
+ * This is a hardcoded list since we cannot modify the API to add a /types endpoint.
+ * Types are entity IDs from TYPE relations.
+ */
+const KNOWN_TYPES: string[] = [
+	// Add known type IDs here as they are discovered
+	// For now, this list is empty and users can filter by typing in the URL
+]
+
 export interface UseTypesReturn {
-	types: TypesResponse | undefined
+	types: string[]
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
 }
 
 /**
- * Fetch distinct entity types from TYPE relations.
+ * Get known entity types for the filter dropdown.
+ * Returns a hardcoded list since API modification is not allowed.
  *
- * @returns Query result with types, loading/error states
+ * @returns Hardcoded list of known type IDs
  */
 export function useTypes(): UseTypesReturn {
-	const query = useQuery({
-		queryKey: entityKeys.types(),
-		queryFn: () => getTypes(),
-	})
-
 	return {
-		types: query.data,
-		isLoading: query.isLoading,
-		isError: query.isError,
-		error: query.error,
+		types: KNOWN_TYPES,
+		isLoading: false,
+		isError: false,
+		error: null,
 	}
 }
