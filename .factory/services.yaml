@@ -1,0 +1,28 @@
+commands:
+  install: pnpm install
+  build: pnpm build
+  typecheck: pnpm --filter @geo-runtime/explorer run typecheck
+  lint: pnpm lint
+  test: pnpm --filter @geo-runtime/explorer run test
+
+services:
+  postgres:
+    start: docker compose up -d postgres
+    stop: docker compose stop postgres
+    healthcheck: pg_isready -h localhost -p 5433
+    port: 5433
+    depends_on: []
+
+  api:
+    start: pnpm dev:api
+    stop: lsof -ti :3002 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3002/api/entities?limit=1
+    port: 3002
+    depends_on: [postgres]
+
+  explorer:
+    start: pnpm dev:explorer
+    stop: lsof -ti :3003 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3003
+    port: 3003
+    depends_on: [api]
