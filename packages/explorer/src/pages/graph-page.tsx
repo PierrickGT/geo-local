@@ -27,6 +27,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { getEntityRelations } from '~/api/entities'
 import {
 	EntityNode,
 	type EntityNode as EntityNodeType,
@@ -80,6 +81,12 @@ export function GraphPage() {
 	// Internal graph state for tracking positions and data
 	const [graphNodes, setGraphNodes] = useState<GraphNode[]>([])
 	const [graphEdges, setGraphEdges] = useState<GraphEdge[]>([])
+
+	// Track TYPE relations fetched for seed entities
+	const [seedTypeRelations, setSeedTypeRelations] = useState<{
+		nodes: GraphNode[]
+		edges: GraphEdge[]
+	} | null>(null)
 
 	// Seed data queries
 	const seedQuery = useEntities({ limit: SEED_LIMIT })
@@ -140,7 +147,7 @@ export function GraphPage() {
 			return { nodes, edges }
 		}
 
-		// Default mode: first N entities
+		// Default mode: first N entities with TYPE relations
 		if (!seedQuery.entities?.entities) return null
 
 		const entities = seedQuery.entities.entities
@@ -159,11 +166,22 @@ export function GraphPage() {
 			}
 		})
 
-		// We need to fetch relations for seed entities - but for initial render,
-		// we don't have the relations yet. We'll just show nodes initially.
-		// Relations will be added when user double-clicks to expand.
-		return { nodes, edges: [] }
-	}, [focusId, focusQuery.entity, focusRelationsQuery.relations, seedQuery.entities])
+		// Add TYPE entity nodes (positioned later by force simulation)
+		if (seedTypeRelations) {
+			nodes.push(...seedTypeRelations.nodes)
+		}
+
+		// Use TYPE relations edges if available
+		const edges = seedTypeRelations?.edges ?? []
+
+		return { nodes, edges }
+	}, [
+		focusId,
+		focusQuery.entity,
+		focusRelationsQuery.relations,
+		seedQuery.entities,
+		seedTypeRelations,
+	])
 
 	// Initialize graph with seed data
 	useEffect(() => {
@@ -205,6 +223,54 @@ export function GraphPage() {
 			setFocusError(null)
 		}
 	}, [focusId, focusQuery.isError])
+
+	// Fetch TYPE relations for seed entities
+	useEffect(() => {
+		// Skip in focus mode or if already fetched
+		if (focusId || seedTypeRelations || !seedQuery.entities?.entities) return
+
+		const entities = seedQuery.entities.entities
+		if (entities.length === 0) return
+
+		// Batch fetch TYPE relations for all seed entities
+		Promise.all(
+			entities.map((entity) =>
+				getEntityRelations(entity.id, { type: 'TYPE' })
+					.then((res) => ({ entityId: entity.id, relations: res.relations ?? [] }))
+					.catch(() => ({ entityId: entity.id, relations: [] })),
+			),
+		).then((results) => {
+			const seenIds = new Set(entities.map((e) => e.id))
+			const newNodes: GraphNode[] = []
+			const newEdges: GraphEdge[] = []
+
+			for (const { entityId, relations } of results) {
+				for (const rel of relations) {
+					// Add edge
+					newEdges.push({
+						id: `${rel.fromId}-${rel.toId}`,
+						source: rel.fromId,
+						target: rel.toId,
+						type: rel.relationType,
+					})
+
+					// Add TYPE entity node if not exists
+					const otherId = rel.fromId === entityId ? rel.toId : rel.fromId
+					if (!seenIds.has(otherId)) {
+						seenIds.add(otherId)
+						newNodes.push({
+							id: otherId,
+							x: 0,
+							y: 0,
+							fixed: false,
+						})
+					}
+				}
+			}
+
+			setSeedTypeRelations({ nodes: newNodes, edges: newEdges })
+		})
+	}, [focusId, seedQuery.entities, seedTypeRelations])
 
 	// Click handler: navigate to entity detail (with delay to distinguish from double-click)
 	const handleNodeClick = useCallback(
