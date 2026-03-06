@@ -151,8 +151,8 @@ export function useEntityRelations(
  * Types are entity IDs from TYPE relations.
  */
 const KNOWN_TYPES: string[] = [
-	// Add known type IDs here as they are discovered
-	// For now, this list is empty and users can filter by typing in the URL
+	// Test type entity for user testing validation
+	'4225e7deb1d442f89f1137daa0750d9c',
 ]
 
 export interface UseTypesReturn {

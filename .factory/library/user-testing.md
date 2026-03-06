@@ -68,7 +68,8 @@ Testing surface: tools, URLs, setup steps, known quirks.
 
 ### Test Data Reference
 
-- 157 entities available in the system
-- Entities have TYPE relations for filtering
+- 160 entities available in the system (157 original + 3 typed entities)
+- Known type entity for filtering: `4225e7deb1d442f89f1137daa0750d9c`
+- 3 entities with TYPE relations to test type filter functionality
 - Some entities have triples (properties) and relations (outgoing/incoming)
 - Entity IDs are 32-char hex strings
