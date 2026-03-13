@@ -14,6 +14,7 @@ export interface Entity {
 	status: EntityStatus
 	createdAt: string
 	updatedAt: string
+	propertiesText?: string | null
 }
 
 export interface EntitiesResponse {

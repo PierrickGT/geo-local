@@ -1,10 +1,26 @@
 import type pg from 'pg'
 import type { DeleteRelation } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import { deleteEntityIfOrphan } from './shared.js'
 
 export async function deleteRelation(client: pg.PoolClient, op: DeleteRelation): Promise<void> {
+	const id = idToHex(op.id)
+
+	// Get from_id and to_id before deleting
+	const result = await client.query(
+		'SELECT from_id, to_id FROM relations WHERE id = $1',
+		[id],
+	)
+
 	await client.query(
 		`UPDATE relations SET status = 'deleted', updated_at = now() WHERE id = $1`,
-		[idToHex(op.id)],
+		[id],
 	)
+
+	// Clean up orphaned entities (no triples, no other relations)
+	if (result.rows.length > 0) {
+		const { from_id, to_id } = result.rows[0]
+		await deleteEntityIfOrphan(client, from_id)
+		await deleteEntityIfOrphan(client, to_id)
+	}
 }

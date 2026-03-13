@@ -1,10 +1,29 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Relation } from '~/api/types'
 import { RelationsPanel } from './relations-panel'
+
+// Mock the usePropertyNames hook
+vi.mock('~/hooks/use-entities', () => ({
+	usePropertyNames: vi.fn(),
+}))
+
+import { usePropertyNames } from '~/hooks/use-entities'
+
+const mockUsePropertyNames = vi.mocked(usePropertyNames)
+
+// Default mock that returns empty map (no names resolved)
+const defaultNamesMap = new Map<string, string | undefined>()
+
+beforeEach(() => {
+	vi.clearAllMocks()
+	mockUsePropertyNames.mockReturnValue({
+		names: defaultNamesMap,
+		isLoading: false,
+	})
+})
 
 // Helper to create wrapper with all providers
 function createWrapper(initialRoute = '/entities/test-entity') {
@@ -54,69 +73,38 @@ describe('RelationsPanel', () => {
 	]
 
 	describe('rendering', () => {
-		it('renders both tabs', () => {
+		it('renders unified header with total count', () => {
 			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
 				wrapper: createWrapper(),
 			})
 
-			expect(screen.getByRole('button', { name: /Outgoing/ })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: /Incoming/ })).toBeInTheDocument()
+			expect(screen.getByRole('heading', { name: /Relations.*3/ })).toBeInTheDocument()
 		})
 
-		it('shows outgoing relations by default', () => {
+		it('shows all relations in a single list', () => {
 			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
 				wrapper: createWrapper(),
 			})
 
+			// Outgoing relations
 			expect(screen.getByText('TYPE')).toBeInTheDocument()
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
-		})
-
-		it('displays relation counts in tab labels', () => {
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
-				wrapper: createWrapper(),
-			})
-
-			// Check tab contains the count - it's part of the button text
-			expect(screen.getByRole('button', { name: /Outgoing.*2/ })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: /Incoming.*1/ })).toBeInTheDocument()
-		})
-	})
-
-	describe('tab switching', () => {
-		it('switches to incoming tab on click', async () => {
-			const user = userEvent.setup()
-
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
-				wrapper: createWrapper(),
-			})
-
-			await user.click(screen.getByRole('button', { name: /Incoming \(1\)/ }))
-
+			// Incoming relation
 			expect(screen.getByText('LINKS_TO')).toBeInTheDocument()
-			expect(screen.queryByText('TYPE')).not.toBeInTheDocument()
 		})
 
-		it('switches back to outgoing tab', async () => {
-			const user = userEvent.setup()
-
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
+		it('displays count as 0 when no relations', () => {
+			render(<RelationsPanel outgoing={[]} incoming={[]} />, {
 				wrapper: createWrapper(),
 			})
 
-			// Switch to incoming
-			await user.click(screen.getByRole('button', { name: /Incoming \(1\)/ }))
-			expect(screen.getByText('LINKS_TO')).toBeInTheDocument()
-
-			// Switch back to outgoing
-			await user.click(screen.getByRole('button', { name: /Outgoing \(2\)/ }))
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			expect(screen.getByRole('heading', { name: 'Relations (0)' })).toBeInTheDocument()
 		})
 	})
 
 	describe('entity navigation', () => {
-		it('displays linked entity IDs as clickable', async () => {
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
+		it('displays outgoing linked entity IDs (toId) as clickable', () => {
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
 				wrapper: createWrapper(),
 			})
 
@@ -125,47 +113,88 @@ describe('RelationsPanel', () => {
 			expect(screen.getByText(/related/)).toBeInTheDocument()
 		})
 
-		it('shows incoming source entities when on incoming tab', async () => {
-			const user = userEvent.setup()
-
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
-				wrapper: createWrapper(),
-			})
-
-			await user.click(screen.getByRole('button', { name: /Incoming \(1\)/ }))
-
-			// Incoming shows fromId
-			expect(screen.getByText(/source-e/)).toBeInTheDocument()
-		})
-	})
-
-	describe('empty states', () => {
-		it('shows empty state when no outgoing relations', () => {
+		it('displays incoming source entities (fromId) as clickable', () => {
 			render(<RelationsPanel outgoing={[]} incoming={mockIncoming} />, {
 				wrapper: createWrapper(),
 			})
 
-			expect(screen.getByText('No outgoing relations found.')).toBeInTheDocument()
+			// Incoming shows fromId
+			expect(screen.getByText(/source-e/)).toBeInTheDocument()
 		})
 
-		it('shows empty state when no incoming relations', async () => {
-			const user = userEvent.setup()
-
-			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
+		it('shows both outgoing and incoming entities when both exist', () => {
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
 				wrapper: createWrapper(),
 			})
 
-			await user.click(screen.getByRole('button', { name: /Incoming \(0\)/ }))
+			// Outgoing toId values
+			expect(screen.getByText(/type-ent/)).toBeInTheDocument()
+			expect(screen.getByText(/related/)).toBeInTheDocument()
+			// Incoming fromId value
+			expect(screen.getByText(/source-e/)).toBeInTheDocument()
+		})
+	})
 
-			expect(screen.getByText('No incoming relations found.')).toBeInTheDocument()
+	describe('direction indicators', () => {
+		it('shows right arrow for outgoing relations', () => {
+			// Use single relation to test direction indicator
+			const singleOutgoing = [mockOutgoing[0]]
+			render(<RelationsPanel outgoing={singleOutgoing} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Check for direction indicator SVG
+			const arrow = screen.getByRole('img', { name: 'points to' })
+			expect(arrow).toBeInTheDocument()
 		})
 
+		it('shows left arrow for incoming relations', () => {
+			render(<RelationsPanel outgoing={[]} incoming={mockIncoming} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Check for direction indicator SVG (rotated for incoming)
+			const arrow = screen.getByRole('img', { name: 'pointed from' })
+			expect(arrow).toBeInTheDocument()
+		})
+
+		it('shows both direction indicators when both exist', () => {
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={mockIncoming} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Use getAllByRole since there are multiple outgoing relations
+			expect(screen.getAllByRole('img', { name: 'points to' }).length).toBeGreaterThan(0)
+			expect(screen.getByRole('img', { name: 'pointed from' })).toBeInTheDocument()
+		})
+	})
+
+	describe('empty states', () => {
 		it('shows empty state when no relations at all', () => {
 			render(<RelationsPanel outgoing={[]} incoming={[]} />, {
 				wrapper: createWrapper(),
 			})
 
-			expect(screen.getByText('No outgoing relations found.')).toBeInTheDocument()
+			expect(screen.getByText('No relations found for this entity.')).toBeInTheDocument()
+		})
+
+		it('shows empty state when only outgoing is empty', () => {
+			render(<RelationsPanel outgoing={[]} incoming={mockIncoming} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should show incoming relation, not empty state
+			expect(screen.getByText('LINKS_TO')).toBeInTheDocument()
+		})
+
+		it('shows empty state when only incoming is empty', () => {
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should show outgoing relations, not empty state
+			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 	})
 
@@ -187,6 +216,90 @@ describe('RelationsPanel', () => {
 			const truncatedText = screen.getByTitle(longTypeRelation.relationType)
 			expect(truncatedText).toBeInTheDocument()
 			expect(truncatedText.textContent).toContain('...')
+		})
+	})
+
+	describe('property name resolution', () => {
+		it('displays resolved name when available', () => {
+			const namesMap = new Map<string, string | undefined>()
+			namesMap.set('property-id-123', 'Has Part')
+
+			mockUsePropertyNames.mockReturnValue({
+				names: namesMap,
+				isLoading: false,
+			})
+
+			const relationWithId: Relation = {
+				fromId: 'test-entity',
+				toId: 'target',
+				relationType: 'property-id-123',
+				status: 'alive',
+				createdAt: '2024-01-01T00:00:00Z',
+			}
+
+			render(<RelationsPanel outgoing={[relationWithId]} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should display the resolved name
+			expect(screen.getByText('Has Part')).toBeInTheDocument()
+			// Title should still show the full ID
+			expect(screen.getByTitle('property-id-123')).toBeInTheDocument()
+		})
+
+		it('falls back to formatted ID when no name resolved', () => {
+			// Empty names map = no resolved names
+			mockUsePropertyNames.mockReturnValue({
+				names: new Map(),
+				isLoading: false,
+			})
+
+			const relationWithId: Relation = {
+				fromId: 'test-entity',
+				toId: 'target',
+				relationType: 'property-id-456',
+				status: 'alive',
+				createdAt: '2024-01-01T00:00:00Z',
+			}
+
+			render(<RelationsPanel outgoing={[relationWithId]} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should display truncated ID (formatPropertyId)
+			expect(screen.getByText(/property-i/)).toBeInTheDocument()
+		})
+
+		it('shows well-known properties directly when no name resolved', () => {
+			// Empty names map
+			mockUsePropertyNames.mockReturnValue({
+				names: new Map(),
+				isLoading: false,
+			})
+
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Well-known properties like TYPE are shown as-is
+			expect(screen.getByText('TYPE')).toBeInTheDocument()
+		})
+
+		it('prefers resolved name over well-known property format', () => {
+			const namesMap = new Map<string, string | undefined>()
+			namesMap.set('TYPE', 'Is Type Of')
+
+			mockUsePropertyNames.mockReturnValue({
+				names: namesMap,
+				isLoading: false,
+			})
+
+			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should display the resolved name even for well-known property
+			expect(screen.getByText('Is Type Of')).toBeInTheDocument()
 		})
 	})
 })

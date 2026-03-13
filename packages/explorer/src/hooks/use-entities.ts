@@ -3,10 +3,11 @@
  * useEntities, useEntity, useEntityRelations, useTypes
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { getEntities, getEntity, getEntityRelations } from '~/api/entities'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
 import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
+import { NAME_PROPERTY_ID } from '~/lib/constants'
 
 // ---------------------------------------------------------------------------
 // Query Keys
@@ -183,4 +184,49 @@ export function useTypes(): UseTypesReturn {
 		isError: false,
 		error: null,
 	}
+}
+
+// ---------------------------------------------------------------------------
+// usePropertyNames - Resolve property IDs to their NAME values
+// ---------------------------------------------------------------------------
+
+export interface UsePropertyNamesReturn {
+	names: Map<string, string | undefined>
+	isLoading: boolean
+}
+
+/**
+ * Resolve property/relation type IDs to their human-readable NAME values.
+ * Fetches each entity in parallel and extracts its NAME triple.
+ *
+ * @param ids - Array of entity IDs to resolve
+ * @returns Map of ID -> NAME value (undefined if no NAME found or loading)
+ */
+export function usePropertyNames(ids: string[]): UsePropertyNamesReturn {
+	// Deduplicate IDs to avoid redundant fetches
+	const uniqueIds = [...new Set(ids)]
+
+	const queries = useQueries({
+		queries: uniqueIds.map((id) => ({
+			queryKey: entityKeys.detail(id),
+			queryFn: () => getEntity(id),
+			enabled: Boolean(id),
+		})),
+	})
+
+	// Build map of ID -> NAME value
+	const names = new Map<string, string | undefined>()
+	const isLoading = queries.some((q) => q.isLoading)
+
+	for (let i = 0; i < uniqueIds.length; i++) {
+		const entity = queries[i]?.data?.entity
+		if (entity) {
+			const nameTriple = entity.triples.find(
+				(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
+			)
+			names.set(uniqueIds[i], nameTriple?.value.value as string | undefined)
+		}
+	}
+
+	return { names, isLoading }
 }

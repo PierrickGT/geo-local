@@ -30,3 +30,15 @@ export async function upsertTriple(
 		[entityId, propId, stored.type, JSON.stringify(stored.payload), language],
 	)
 }
+
+/** Delete an entity if it has no triples and no alive relations. */
+export async function deleteEntityIfOrphan(client: pg.PoolClient, entityId: string): Promise<void> {
+	await client.query(
+		`DELETE FROM entities
+		 WHERE id = $1 AND status = 'alive'
+		   AND NOT EXISTS (SELECT 1 FROM triples t WHERE t.entity_id = $1)
+		   AND NOT EXISTS (SELECT 1 FROM relations r WHERE r.from_id = $1 AND r.status = 'alive')
+		   AND NOT EXISTS (SELECT 1 FROM relations r WHERE r.to_id = $1 AND r.status = 'alive')`,
+		[entityId],
+	)
+}

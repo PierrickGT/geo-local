@@ -1,9 +1,10 @@
 import { useParams } from 'react-router'
-import type { EntityStatus } from '~/api/types'
+import type { EntityStatus, Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
 import { TriplesPanel } from '~/components/triples-panel'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
+import { TYPES_PROPERTY_ID } from '~/lib/constants'
 
 /**
  * Status badge component for displaying entity status.
@@ -20,6 +21,42 @@ function StatusBadge({ status }: { status: EntityStatus }) {
 			{status}
 		</span>
 	)
+}
+
+/**
+ * Entity type badge for displaying the entity's category (Type, Property, or Entity).
+ * An entity is a "Type" if it has incoming TYPE relations (other entities pointing to it).
+ */
+function EntityTypeBadge({ type }: { type: 'type' | 'property' | 'entity' }) {
+	const colorClasses: Record<typeof type, string> = {
+		type: 'bg-purple-100 text-purple-800',
+		property: 'bg-blue-100 text-blue-800',
+		entity: 'bg-gray-100 text-gray-800',
+	}
+
+	return (
+		<span
+			className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[type]}`}
+		>
+			{type.charAt(0).toUpperCase() + type.slice(1)}
+		</span>
+	)
+}
+
+/**
+ * Determines the entity type based on incoming relations.
+ * - "Type": if there are incoming TYPE relations (other entities use this as their type)
+ * - "Property": reserved for future detection (currently unused)
+ * - "Entity": default for regular entities
+ */
+function getEntityType(incoming: Relation[]): 'type' | 'property' | 'entity' {
+	const hasIncomingTypeRelations = incoming.some(
+		(relation) => relation.relationType === TYPES_PROPERTY_ID,
+	)
+	if (hasIncomingTypeRelations) {
+		return 'type'
+	}
+	return 'entity'
 }
 
 /**
@@ -127,6 +164,7 @@ export function EntityPage() {
 	}
 
 	const { entity: entityDetail } = entity
+	const entityType = getEntityType(entityDetail.incoming)
 
 	return (
 		<div className="p-6">
@@ -135,6 +173,7 @@ export function EntityPage() {
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<TruncateId id={entityDetail.id} maxLength={16} />
+						<EntityTypeBadge type={entityType} />
 						<StatusBadge status={entityDetail.status} />
 					</div>
 				</div>

@@ -19,9 +19,26 @@ export const RELATION_TYPE = 'TYPE'
 export const PROPERTY_NAME = 'NAME'
 
 /**
+ * NAME property entity ID (from @geoprotocol/geo-sdk SystemIds)
+ * Used to look up the NAME triple in entity data
+ */
+export const NAME_PROPERTY_ID = 'a126ca530c8e48d5b88882c734c38935'
+
+/**
  * DESCRIPTION property: longer description text
  */
 export const PROPERTY_DESCRIPTION = 'DESCRIPTION'
+
+/**
+ * DESCRIPTION property entity ID (from @geoprotocol/geo-sdk SystemIds)
+ */
+export const DESCRIPTION_PROPERTY_ID = '9b1f76ff9711404c861e59dc3fa7d037'
+
+/**
+ * TYPES property entity ID (from @geoprotocol/geo-sdk SystemIds)
+ * This is the relation type for TYPE relations
+ */
+export const TYPES_PROPERTY_ID = '8f151ba4de204e3c9cb499ddf96f48f1'
 
 // ---------------------------------------------------------------------------
 // Common Property IDs (may be entity IDs or string identifiers)
@@ -33,6 +50,16 @@ export const PROPERTY_DESCRIPTION = 'DESCRIPTION'
 export const WELL_KNOWN_PROPERTIES = [RELATION_TYPE, PROPERTY_NAME, PROPERTY_DESCRIPTION] as const
 
 /**
+ * Mapping from system property IDs to their display names
+ * These IDs come from @geoprotocol/geo-sdk SystemIds
+ */
+export const PROPERTY_ID_TO_NAME: Record<string, string> = {
+	[NAME_PROPERTY_ID]: PROPERTY_NAME,
+	[DESCRIPTION_PROPERTY_ID]: PROPERTY_DESCRIPTION,
+	[TYPES_PROPERTY_ID]: RELATION_TYPE,
+}
+
+/**
  * Check if a property ID is a well-known property
  */
 export function isWellKnown(propertyId: string): boolean {
@@ -42,11 +69,17 @@ export function isWellKnown(propertyId: string): boolean {
 /**
  * Format a property ID for display
  * For well-known properties, show the name directly
+ * For system property IDs, map to their display names
  * For others, truncate if needed
  */
 export function formatPropertyId(propertyId: string, maxLength = 12): string {
+	// Check if it's a string name (well-known)
 	if (isWellKnown(propertyId)) {
 		return propertyId
+	}
+	// Check if it's a system property ID that maps to a known name
+	if (propertyId in PROPERTY_ID_TO_NAME) {
+		return PROPERTY_ID_TO_NAME[propertyId]
 	}
 	return propertyId.length > maxLength ? `${propertyId.slice(0, maxLength)}...` : propertyId
 }
