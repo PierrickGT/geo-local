@@ -1,18 +1,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
 import { EntityPage } from './entity-page'
 
 // Mock the hooks
 vi.mock('~/hooks/use-entities', () => ({
 	useEntity: vi.fn(),
+	usePropertyNames: vi.fn(),
 }))
 
-import { useEntity } from '~/hooks/use-entities'
+import { useEntity, usePropertyNames } from '~/hooks/use-entities'
 
 const mockUseEntity = vi.mocked(useEntity)
+const mockUsePropertyNames = vi.mocked(usePropertyNames)
 
 // Helper to create wrapper with all providers
 function createWrapper(initialRoute = '/entities/test-entity-id') {
@@ -43,7 +45,7 @@ const mockEntityDetail = {
 		triples: [
 			{
 				entityId: 'test-entity-id',
-				propertyId: 'NAME',
+				propertyId: NAME_PROPERTY_ID,
 				valueType: 'text' as const,
 				value: { value: 'Test Entity' },
 				language: null,
@@ -92,13 +94,19 @@ describe('EntityPage', () => {
 		vi.clearAllMocks()
 		mockRefetch.mockClear()
 
-		// Default mock
+		// Default mock for useEntity
 		mockUseEntity.mockReturnValue({
 			entity: mockEntityDetail,
 			isLoading: false,
 			isError: false,
 			error: null,
 			refetch: mockRefetch,
+		})
+
+		// Default mock for usePropertyNames - returns empty map
+		mockUsePropertyNames.mockReturnValue({
+			names: new Map(),
+			isLoading: false,
 		})
 	})
 
@@ -109,12 +117,45 @@ describe('EntityPage', () => {
 			// Check entity ID is displayed (truncated)
 			expect(screen.getByText(/test-ent/)).toBeInTheDocument()
 
+			// Check entity type badge (default "Entity" for regular entities)
+			expect(screen.getByText('Entity')).toBeInTheDocument()
+
 			// Check status badge
 			expect(screen.getByText('alive')).toBeInTheDocument()
 
 			// Check timestamps are displayed
 			expect(screen.getByText(/Created:/)).toBeInTheDocument()
 			expect(screen.getByText(/Updated:/)).toBeInTheDocument()
+		})
+
+		it('renders "Type" badge when entity has incoming TYPE relations', async () => {
+			// Mock entity with incoming TYPE relations
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						incoming: [
+							{
+								fromId: 'some-entity',
+								toId: 'test-entity-id',
+								relationType: TYPES_PROPERTY_ID,
+								status: 'alive' as const,
+								createdAt: '2024-01-01T00:00:00Z',
+							},
+						],
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			// Should show "Type" badge instead of "Entity"
+			expect(screen.getByText('Type')).toBeInTheDocument()
+			expect(screen.queryByText('Entity')).not.toBeInTheDocument()
 		})
 
 		it('renders triples panel with properties', async () => {
@@ -129,12 +170,15 @@ describe('EntityPage', () => {
 			expect(screen.getByText('DESCRIPTION')).toBeInTheDocument()
 		})
 
-		it('renders relations panel with tabs', async () => {
+		it('renders relations panel with unified list', async () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Check tabs exist
-			expect(screen.getByRole('button', { name: /Outgoing/ })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: /Incoming/ })).toBeInTheDocument()
+			// Check relations header with count
+			expect(screen.getByRole('heading', { name: /Relations.*2/ })).toBeInTheDocument()
+
+			// Check both outgoing and incoming relation types are shown
+			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 	})
 
@@ -235,24 +279,19 @@ describe('EntityPage', () => {
 	})
 
 	describe('relations panel', () => {
-		it('switches between outgoing and incoming tabs', async () => {
-			const user = userEvent.setup()
-
+		it('shows all relations in unified list', async () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Check outgoing tab is active by default
-			expect(screen.getByRole('button', { name: /Outgoing \(1\)/ })).toBeInTheDocument()
+			// Check relations header with total count (1 outgoing + 1 incoming = 2)
+			expect(screen.getByRole('heading', { name: 'Relations (2)' })).toBeInTheDocument()
 
-			// Click incoming tab
-			await user.click(screen.getByRole('button', { name: /Incoming \(1\)/ }))
-
+			// Check outgoing relation type is shown
+			expect(screen.getByText('TYPE')).toBeInTheDocument()
 			// Check incoming relation type is shown
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 
 		it('shows empty state when no relations', async () => {
-			const user = userEvent.setup()
-
 			mockUseEntity.mockReturnValue({
 				entity: {
 					entity: {
@@ -269,12 +308,7 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('No outgoing relations found.')).toBeInTheDocument()
-
-			// Switch to incoming tab
-			await user.click(screen.getByRole('button', { name: /Incoming \(0\)/ }))
-
-			expect(screen.getByText('No incoming relations found.')).toBeInTheDocument()
+			expect(screen.getByText('No relations found for this entity.')).toBeInTheDocument()
 		})
 	})
 })

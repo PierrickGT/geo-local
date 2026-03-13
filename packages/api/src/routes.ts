@@ -68,7 +68,10 @@ export function createRouter(): Router {
 						ON r.from_id = e.id AND r.to_id = $${idx} AND r.status = 'alive'
 					WHERE e.status = 'alive'`
 				selectQuery = `
-					SELECT e.id, e.status, e.created_at, e.updated_at
+					SELECT e.id, e.status, e.created_at, e.updated_at,
+						(SELECT t.value->>'value' FROM triples t
+						 WHERE t.entity_id = e.id AND t.value_type = 'text'
+						 ORDER BY t.property_id LIMIT 1) AS properties_text
 					FROM entities e
 					INNER JOIN relations r
 						ON r.from_id = e.id AND r.to_id = $${idx} AND r.status = 'alive'
@@ -82,7 +85,10 @@ export function createRouter(): Router {
 					FROM entities e
 					WHERE e.status = 'alive'`
 				selectQuery = `
-					SELECT e.id, e.status, e.created_at, e.updated_at
+					SELECT e.id, e.status, e.created_at, e.updated_at,
+						(SELECT t.value->>'value' FROM triples t
+						 WHERE t.entity_id = e.id AND t.value_type = 'text'
+						 ORDER BY t.property_id LIMIT 1) AS properties_text
 					FROM entities e
 					WHERE e.status = 'alive'
 					ORDER BY e.created_at DESC
