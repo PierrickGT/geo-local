@@ -2,6 +2,8 @@ import { useParams } from 'react-router'
 import type { EntityStatus, Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
 import { TriplesPanel } from '~/components/triples-panel'
+import { Card, CardContent, CardHeader } from '~/components/ui/card'
+import { Skeleton } from '~/components/ui/skeleton'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
 import { TYPES_PROPERTY_ID } from '~/lib/constants'
@@ -85,12 +87,16 @@ export function EntityPage() {
 	if (isLoading) {
 		return (
 			<div className="p-6">
-				<div className="bg-white rounded-lg border border-gray-200 p-8">
-					<div className="flex items-center justify-center">
-						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-						<span className="ml-3 text-gray-500">Loading entity...</span>
-					</div>
-				</div>
+				<Card>
+					<CardContent className="py-8">
+						<div className="space-y-4">
+							<Skeleton className="h-8 w-48" />
+							<Skeleton className="h-4 w-64" />
+							<Skeleton className="h-32 w-full" />
+							<Skeleton className="h-32 w-full" />
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		)
 	}
@@ -101,64 +107,66 @@ export function EntityPage() {
 
 		return (
 			<div className="p-6">
-				<div className="bg-white rounded-lg border border-gray-200 p-8">
-					<div className="text-center">
-						{isNotFound ? (
-							<>
-								<svg
-									className="mx-auto h-12 w-12 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									role="img"
-									aria-label="Entity not found"
-								>
-									<title>Entity not found</title>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
-								<h3 className="mt-2 text-sm font-medium text-gray-900">Entity not found</h3>
-								<p className="mt-1 text-sm text-gray-500">
-									The entity with ID "{id}" does not exist.
-								</p>
-							</>
-						) : (
-							<>
-								<svg
-									className="mx-auto h-12 w-12 text-red-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									role="img"
-									aria-label="Error"
-								>
-									<title>Error</title>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-									/>
-								</svg>
-								<h3 className="mt-2 text-sm font-medium text-gray-900">Failed to load entity</h3>
-								<p className="mt-1 text-sm text-gray-500">
-									{error?.message || 'An unexpected error occurred'}
-								</p>
-								<button
-									type="button"
-									onClick={() => window.location.reload()}
-									className="mt-4 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-								>
-									Retry
-								</button>
-							</>
-						)}
-					</div>
-				</div>
+				<Card>
+					<CardContent className="py-8">
+						<div className="text-center">
+							{isNotFound ? (
+								<>
+									<svg
+										className="mx-auto h-12 w-12 text-gray-400"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										role="img"
+										aria-label="Entity not found"
+									>
+										<title>Entity not found</title>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+										/>
+									</svg>
+									<h3 className="mt-2 text-sm font-medium text-gray-900">Entity not found</h3>
+									<p className="mt-1 text-sm text-gray-500">
+										The entity with ID "{id}" does not exist.
+									</p>
+								</>
+							) : (
+								<>
+									<svg
+										className="mx-auto h-12 w-12 text-red-400"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										role="img"
+										aria-label="Error"
+									>
+										<title>Error</title>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+										/>
+									</svg>
+									<h3 className="mt-2 text-sm font-medium text-gray-900">Failed to load entity</h3>
+									<p className="mt-1 text-sm text-gray-500">
+										{error?.message || 'An unexpected error occurred'}
+									</p>
+									<button
+										type="button"
+										onClick={() => window.location.reload()}
+										className="mt-4 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+									>
+										Retry
+									</button>
+								</>
+							)}
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		)
 	}
@@ -167,30 +175,30 @@ export function EntityPage() {
 	const entityType = getEntityType(entityDetail.incoming)
 
 	return (
-		<div className="p-6">
+		<div className="p-6 space-y-6">
 			{/* Entity header */}
-			<div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-				<div className="flex items-center justify-between">
+			<Card>
+				<CardHeader>
 					<div className="flex items-center gap-3">
 						<TruncateId id={entityDetail.id} maxLength={16} />
 						<EntityTypeBadge type={entityType} />
 						<StatusBadge status={entityDetail.status} />
 					</div>
-				</div>
-				<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
-					<div>
-						<span className="font-medium text-gray-700">Created:</span>{' '}
-						{formatDate(entityDetail.createdAt)}
+					<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
+						<div>
+							<span className="font-medium text-gray-700">Created:</span>{' '}
+							{formatDate(entityDetail.createdAt)}
+						</div>
+						<div>
+							<span className="font-medium text-gray-700">Updated:</span>{' '}
+							{formatDate(entityDetail.updatedAt)}
+						</div>
 					</div>
-					<div>
-						<span className="font-medium text-gray-700">Updated:</span>{' '}
-						{formatDate(entityDetail.updatedAt)}
-					</div>
-				</div>
-			</div>
+				</CardHeader>
+			</Card>
 
 			{/* Triples panel */}
-			<TriplesPanel triples={entityDetail.triples} className="mb-6" />
+			<TriplesPanel triples={entityDetail.triples} />
 
 			{/* Relations panel */}
 			<RelationsPanel outgoing={entityDetail.outgoing} incoming={entityDetail.incoming} />
