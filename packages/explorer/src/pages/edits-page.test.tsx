@@ -149,11 +149,10 @@ describe('EditsPage', () => {
 		it('shows pending badge with correct styling', () => {
 			render(<EditsPage />, { wrapper: createWrapper() })
 
-			// Find badge in the table (not in dropdown) - badge has rounded-full class
 			const badges = screen.getAllByText('Pending')
 			const pendingBadge = badges.find((el) => el.classList.contains('rounded-full'))
 			expect(pendingBadge).toBeDefined()
-			expect(pendingBadge).toHaveClass('bg-amber-100', 'text-amber-800')
+			expect(pendingBadge).toHaveAttribute('data-variant', 'warning')
 		})
 
 		it('shows processing badge with correct styling', () => {
@@ -162,7 +161,7 @@ describe('EditsPage', () => {
 			const badges = screen.getAllByText('Processing')
 			const processingBadge = badges.find((el) => el.classList.contains('rounded-full'))
 			expect(processingBadge).toBeDefined()
-			expect(processingBadge).toHaveClass('bg-blue-100', 'text-blue-800')
+			expect(processingBadge).toHaveAttribute('data-variant', 'info')
 		})
 
 		it('shows applied badge with correct styling', () => {
@@ -171,7 +170,7 @@ describe('EditsPage', () => {
 			const badges = screen.getAllByText('Applied')
 			const appliedBadge = badges.find((el) => el.classList.contains('rounded-full'))
 			expect(appliedBadge).toBeDefined()
-			expect(appliedBadge).toHaveClass('bg-green-100', 'text-green-800')
+			expect(appliedBadge).toHaveAttribute('data-variant', 'success')
 		})
 
 		it('shows failed badge with correct styling', () => {
@@ -180,7 +179,7 @@ describe('EditsPage', () => {
 			const badges = screen.getAllByText('Failed')
 			const failedBadge = badges.find((el) => el.classList.contains('rounded-full'))
 			expect(failedBadge).toBeDefined()
-			expect(failedBadge).toHaveClass('bg-red-100', 'text-red-800')
+			expect(failedBadge).toHaveAttribute('data-variant', 'destructive')
 		})
 	})
 
