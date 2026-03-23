@@ -1,3 +1,14 @@
+import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import {
+	Pagination as ShadcnPagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from '~/components/ui/pagination'
+import { cn } from '~/lib/utils'
+
 interface PaginationProps {
 	total: number
 	limit: number
@@ -16,7 +27,7 @@ export function Pagination({
 	limit,
 	offset,
 	onPageChange,
-	className = '',
+	className,
 }: PaginationProps) {
 	const currentPage = Math.floor(offset / limit) + 1
 	const totalPages = Math.ceil(total / limit)
@@ -36,59 +47,69 @@ export function Pagination({
 	}
 
 	return (
-		<div className={`flex items-center justify-between ${className}`}>
-			<span className="text-sm text-gray-700">
-				Showing <span className="font-medium">{startItem}</span> to{' '}
-				<span className="font-medium">{endItem}</span> of{' '}
-				<span className="font-medium">{total}</span> results
+		<div className={cn('flex items-center justify-between', className)}>
+			<span className="text-sm text-muted-foreground">
+				Showing <span className="font-medium text-foreground">{startItem}</span> to{' '}
+				<span className="font-medium text-foreground">{endItem}</span> of{' '}
+				<span className="font-medium text-foreground">{total}</span> results
 			</span>
 
-			<div className="flex items-center gap-2">
-				<button
-					type="button"
-					onClick={goToFirst}
-					disabled={isFirstPage}
-					className="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-					title="First page"
-				>
-					First
-				</button>
+			<ShadcnPagination className="mx-0 w-auto justify-end">
+				<PaginationContent>
+					<PaginationItem>
+						<PaginationLink
+							onClick={goToFirst}
+							aria-label="Go to first page"
+							className={cn(
+								'cursor-pointer',
+								isFirstPage && 'pointer-events-none opacity-50',
+							)}
+						>
+							<ChevronsLeft className="size-4" />
+						</PaginationLink>
+					</PaginationItem>
 
-				<button
-					type="button"
-					onClick={goToPrev}
-					disabled={isFirstPage}
-					className="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-					title="Previous page"
-				>
-					Prev
-				</button>
+					<PaginationItem>
+						<PaginationPrevious
+							onClick={goToPrev}
+							className={cn(
+								'cursor-pointer',
+								isFirstPage && 'pointer-events-none opacity-50',
+							)}
+						/>
+					</PaginationItem>
 
-				<span className="px-3 py-1.5 text-sm text-gray-700">
-					Page <span className="font-medium">{currentPage}</span> of{' '}
-					<span className="font-medium">{totalPages}</span>
-				</span>
+					<PaginationItem>
+						<span className="px-3 py-2 text-sm text-muted-foreground">
+							Page <span className="font-medium text-foreground">{currentPage}</span> of{' '}
+							<span className="font-medium text-foreground">{totalPages}</span>
+						</span>
+					</PaginationItem>
 
-				<button
-					type="button"
-					onClick={goToNext}
-					disabled={isLastPage}
-					className="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-					title="Next page"
-				>
-					Next
-				</button>
+					<PaginationItem>
+						<PaginationNext
+							onClick={goToNext}
+							className={cn(
+								'cursor-pointer',
+								isLastPage && 'pointer-events-none opacity-50',
+							)}
+						/>
+					</PaginationItem>
 
-				<button
-					type="button"
-					onClick={goToLast}
-					disabled={isLastPage}
-					className="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-					title="Last page"
-				>
-					Last
-				</button>
-			</div>
+					<PaginationItem>
+						<PaginationLink
+							onClick={goToLast}
+							aria-label="Go to last page"
+							className={cn(
+								'cursor-pointer',
+								isLastPage && 'pointer-events-none opacity-50',
+							)}
+						>
+							<ChevronsRight className="size-4" />
+						</PaginationLink>
+					</PaginationItem>
+				</PaginationContent>
+			</ShadcnPagination>
 		</div>
 	)
 }
