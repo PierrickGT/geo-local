@@ -9,9 +9,9 @@ describe('Pagination', () => {
 			<Pagination total={100} limit={20} offset={0} onPageChange={() => {}} />,
 		)
 
-		// Check that pagination renders with buttons
-		expect(screen.getByRole('button', { name: /first/i })).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument()
+		// Check that pagination renders with navigation links
+		expect(screen.getByLabelText('Go to first page')).toBeInTheDocument()
+		expect(screen.getByLabelText('Go to next page')).toBeInTheDocument()
 		expect(container.firstChild).toBeInTheDocument()
 	})
 
@@ -31,24 +31,24 @@ describe('Pagination', () => {
 	it('disables first and prev buttons on first page', () => {
 		render(<Pagination total={100} limit={20} offset={0} onPageChange={() => {}} />)
 
-		expect(screen.getByRole('button', { name: /first/i })).toBeDisabled()
-		expect(screen.getByRole('button', { name: /prev/i })).toBeDisabled()
+		expect(screen.getByLabelText('Go to first page')).toBeDisabled()
+		expect(screen.getByLabelText('Go to previous page')).toBeDisabled()
 	})
 
 	it('disables next and last buttons on last page', () => {
 		render(<Pagination total={100} limit={20} offset={80} onPageChange={() => {}} />)
 
-		expect(screen.getByRole('button', { name: /next/i })).toBeDisabled()
-		expect(screen.getByRole('button', { name: /last/i })).toBeDisabled()
+		expect(screen.getByLabelText('Go to next page')).toBeDisabled()
+		expect(screen.getByLabelText('Go to last page')).toBeDisabled()
 	})
 
 	it('enables all buttons on middle page', () => {
 		render(<Pagination total={100} limit={20} offset={40} onPageChange={() => {}} />)
 
-		expect(screen.getByRole('button', { name: /first/i })).toBeEnabled()
-		expect(screen.getByRole('button', { name: /prev/i })).toBeEnabled()
-		expect(screen.getByRole('button', { name: /next/i })).toBeEnabled()
-		expect(screen.getByRole('button', { name: /last/i })).toBeEnabled()
+		expect(screen.getByLabelText('Go to first page')).toBeEnabled()
+		expect(screen.getByLabelText('Go to previous page')).toBeEnabled()
+		expect(screen.getByLabelText('Go to next page')).toBeEnabled()
+		expect(screen.getByLabelText('Go to last page')).toBeEnabled()
 	})
 
 	it('calls onPageChange with 0 when first button clicked', async () => {
@@ -57,7 +57,7 @@ describe('Pagination', () => {
 
 		render(<Pagination total={100} limit={20} offset={40} onPageChange={onPageChange} />)
 
-		await user.click(screen.getByRole('button', { name: /first/i }))
+		await user.click(screen.getByLabelText('Go to first page'))
 
 		expect(onPageChange).toHaveBeenCalledWith(0)
 	})
@@ -68,7 +68,7 @@ describe('Pagination', () => {
 
 		render(<Pagination total={100} limit={20} offset={40} onPageChange={onPageChange} />)
 
-		await user.click(screen.getByRole('button', { name: /prev/i }))
+		await user.click(screen.getByLabelText('Go to previous page'))
 
 		expect(onPageChange).toHaveBeenCalledWith(20)
 	})
@@ -79,7 +79,7 @@ describe('Pagination', () => {
 
 		render(<Pagination total={100} limit={20} offset={0} onPageChange={onPageChange} />)
 
-		await user.click(screen.getByRole('button', { name: /next/i }))
+		await user.click(screen.getByLabelText('Go to next page'))
 
 		expect(onPageChange).toHaveBeenCalledWith(20)
 	})
@@ -90,7 +90,7 @@ describe('Pagination', () => {
 
 		render(<Pagination total={100} limit={20} offset={0} onPageChange={onPageChange} />)
 
-		await user.click(screen.getByRole('button', { name: /last/i }))
+		await user.click(screen.getByLabelText('Go to last page'))
 
 		expect(onPageChange).toHaveBeenCalledWith(80)
 	})
