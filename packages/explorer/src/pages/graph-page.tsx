@@ -44,6 +44,8 @@ import {
 	type RelationEdge as RelationEdgeType,
 	toReactFlowEdge,
 } from '~/components/graph/relation-edge'
+import { Card, CardContent } from '~/components/ui/card'
+import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useEntity, useEntityRelations } from '~/hooks/use-entities'
 
 // Custom node and edge types
@@ -455,9 +457,14 @@ export function GraphPage() {
 	if (isLoading) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<div className="text-gray-500">
-					<div className="animate-pulse">Loading graph data...</div>
-				</div>
+				<Card className="w-full max-w-md">
+					<CardContent className="py-8">
+						<div className="space-y-4">
+							<Skeleton className="h-8 w-48 mx-auto" />
+							<Skeleton className="h-64 w-full" />
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		)
 	}
@@ -466,16 +473,20 @@ export function GraphPage() {
 	if (isError || focusError) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<div className="text-center">
-					<div className="text-red-600 mb-4">{focusError ?? 'Failed to load graph data'}</div>
-					<button
-						type="button"
-						onClick={handleRetry}
-						className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-					>
-						Retry
-					</button>
-				</div>
+				<Card className="w-full max-w-md bg-red-50 ring-red-200">
+					<CardContent className="py-8">
+						<div className="text-center">
+							<div className="text-red-600 mb-4">{focusError ?? 'Failed to load graph data'}</div>
+							<button
+								type="button"
+								onClick={handleRetry}
+								className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+							>
+								Retry
+							</button>
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		)
 	}
@@ -484,9 +495,13 @@ export function GraphPage() {
 	if (graphNodes.length === 0) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<div className="text-gray-500">
-					No entities to display. Add some entities to see the graph.
-				</div>
+				<Card className="w-full max-w-md">
+					<CardContent className="py-8">
+						<p className="text-center text-gray-500">
+							No entities to display. Add some entities to see the graph.
+						</p>
+					</CardContent>
+				</Card>
 			</div>
 		)
 	}

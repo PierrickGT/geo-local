@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { EntityTable } from '~/components/entity-table'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useTypes } from '~/hooks/use-entities'
 
 const DEFAULT_LIMIT = 20
@@ -87,61 +89,67 @@ export function EntitiesPage() {
 	}, [searchParams, setSearchParams])
 
 	return (
-		<div className="p-6">
-			<div className="flex items-center justify-between mb-6">
-				<h1 className="text-2xl font-semibold text-gray-900">Entities</h1>
-
-				{/* Type filter dropdown */}
-				<div className="flex items-center gap-2">
-					<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
-						Filter by type:
-					</label>
-					<select
-						id="type-filter"
-						value={typeFilter ?? ''}
-						onChange={handleTypeChange}
-						disabled={isLoadingTypes}
-						className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-					>
-						<option value="">All types</option>
-						{types?.map((typeId) => (
-							<option key={typeId} value={typeId}>
-								{typeId.slice(0, 12)}...
-							</option>
-						))}
-					</select>
-				</div>
-			</div>
+		<div className="p-6 space-y-6">
+			<Card>
+				<CardHeader>
+					<CardTitle>Entities</CardTitle>
+					<div className="flex items-center gap-2">
+						<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
+							Filter by type:
+						</label>
+						<select
+							id="type-filter"
+							value={typeFilter ?? ''}
+							onChange={handleTypeChange}
+							disabled={isLoadingTypes}
+							className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+						>
+							<option value="">All types</option>
+							{types?.map((typeId) => (
+								<option key={typeId} value={typeId}>
+									{typeId.slice(0, 12)}...
+								</option>
+							))}
+						</select>
+					</div>
+				</CardHeader>
+			</Card>
 
 			{/* Error state */}
 			{isError && (
-				<div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<h3 className="text-sm font-medium text-red-800">Failed to load entities</h3>
-							<p className="text-sm text-red-600 mt-1">
-								{error?.message || 'An unexpected error occurred'}
-							</p>
+				<Card className="bg-red-50 ring-red-200">
+					<CardContent className="py-4">
+						<div className="flex items-center justify-between">
+							<div>
+								<h3 className="text-sm font-medium text-red-800">Failed to load entities</h3>
+								<p className="text-sm text-red-600 mt-1">
+									{error?.message || 'An unexpected error occurred'}
+								</p>
+							</div>
+							<button
+								type="button"
+								onClick={handleRetry}
+								className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
+							>
+								Retry
+							</button>
 						</div>
-						<button
-							type="button"
-							onClick={handleRetry}
-							className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
-						>
-							Retry
-						</button>
-					</div>
-				</div>
+					</CardContent>
+				</Card>
 			)}
 
 			{/* Loading state */}
 			{isLoading && !isError && (
-				<div className="bg-white rounded-lg border border-gray-200 p-8">
-					<div className="flex items-center justify-center">
-						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-						<span className="ml-3 text-gray-500">Loading entities...</span>
-					</div>
-				</div>
+				<Card>
+					<CardContent className="py-8">
+						<div className="space-y-3">
+							<Skeleton className="h-10 w-full" />
+							<Skeleton className="h-16 w-full" />
+							<Skeleton className="h-16 w-full" />
+							<Skeleton className="h-16 w-full" />
+						</div>
+					</CardContent>
+				</Card>
 			)}
 
 			{/* Entity table */}
