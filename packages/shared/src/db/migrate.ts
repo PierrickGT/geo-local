@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { closePool, getPool } from './pool.js'
 import { createLogger } from '../logger.js'
+import { closePool, getPool } from './pool.js'
 
 const log = createLogger('migrate')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -31,7 +31,10 @@ export async function runMigrations(): Promise<void> {
 		return
 	}
 
-	const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort()
+	const files = fs
+		.readdirSync(migrationsDir)
+		.filter((f) => f.endsWith('.sql'))
+		.sort()
 
 	for (const file of files) {
 		const { rows } = await pool.query('SELECT 1 FROM _migrations WHERE name = $1', [file])
@@ -59,9 +62,9 @@ export async function runMigrations(): Promise<void> {
 }
 
 // CLI entry point
-const isMain = process.argv[1] && (
-	process.argv[1].endsWith('migrate.ts') || process.argv[1].endsWith('migrate.js')
-)
+const isMain =
+	process.argv[1] &&
+	(process.argv[1].endsWith('migrate.ts') || process.argv[1].endsWith('migrate.js'))
 if (isMain) {
 	runMigrations()
 		.then(() => {

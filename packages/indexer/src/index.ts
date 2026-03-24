@@ -1,4 +1,4 @@
-import { config, createLogger, getPool, closePool } from '@geo-runtime/shared'
+import { closePool, config, createLogger, getPool } from '@geo-runtime/shared'
 import { pollOnce } from './poller.js'
 
 const log = createLogger('indexer')
@@ -8,7 +8,10 @@ let running = true
 async function main(): Promise<void> {
 	const pool = getPool()
 
-	log.info({ pollIntervalMs: config.pollIntervalMs, batchSize: config.batchSize }, 'indexer started')
+	log.info(
+		{ pollIntervalMs: config.pollIntervalMs, batchSize: config.batchSize },
+		'indexer started',
+	)
 
 	while (running) {
 		try {

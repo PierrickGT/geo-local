@@ -1,6 +1,6 @@
-import type pg from 'pg'
-import type { CreateRelation } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import type { CreateRelation } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 import { ensureEntity } from './shared.js'
 
 export async function createRelation(client: pg.PoolClient, op: CreateRelation): Promise<void> {

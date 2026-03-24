@@ -1,11 +1,11 @@
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import {
-	Pagination as ShadcnPagination,
 	PaginationContent,
 	PaginationItem,
 	PaginationLink,
 	PaginationNext,
 	PaginationPrevious,
+	Pagination as ShadcnPagination,
 } from '~/components/ui/pagination'
 import { cn } from '~/lib/utils'
 
@@ -22,13 +22,7 @@ interface PaginationProps {
  * Shows current page range and total count.
  * Disables buttons appropriately at boundaries.
  */
-export function Pagination({
-	total,
-	limit,
-	offset,
-	onPageChange,
-	className,
-}: PaginationProps) {
+export function Pagination({ total, limit, offset, onPageChange, className }: PaginationProps) {
 	const currentPage = Math.floor(offset / limit) + 1
 	const totalPages = Math.ceil(total / limit)
 	const startItem = total === 0 ? 0 : offset + 1
@@ -60,10 +54,7 @@ export function Pagination({
 						<PaginationLink
 							onClick={goToFirst}
 							aria-label="Go to first page"
-							className={cn(
-								'cursor-pointer',
-								isFirstPage && 'pointer-events-none opacity-50',
-							)}
+							className={cn('cursor-pointer', isFirstPage && 'pointer-events-none opacity-50')}
 						>
 							<ChevronsLeft className="size-4" />
 						</PaginationLink>
@@ -72,10 +63,7 @@ export function Pagination({
 					<PaginationItem>
 						<PaginationPrevious
 							onClick={goToPrev}
-							className={cn(
-								'cursor-pointer',
-								isFirstPage && 'pointer-events-none opacity-50',
-							)}
+							className={cn('cursor-pointer', isFirstPage && 'pointer-events-none opacity-50')}
 						/>
 					</PaginationItem>
 
@@ -89,10 +77,7 @@ export function Pagination({
 					<PaginationItem>
 						<PaginationNext
 							onClick={goToNext}
-							className={cn(
-								'cursor-pointer',
-								isLastPage && 'pointer-events-none opacity-50',
-							)}
+							className={cn('cursor-pointer', isLastPage && 'pointer-events-none opacity-50')}
 						/>
 					</PaginationItem>
 
@@ -100,10 +85,7 @@ export function Pagination({
 						<PaginationLink
 							onClick={goToLast}
 							aria-label="Go to last page"
-							className={cn(
-								'cursor-pointer',
-								isLastPage && 'pointer-events-none opacity-50',
-							)}
+							className={cn('cursor-pointer', isLastPage && 'pointer-events-none opacity-50')}
 						>
 							<ChevronsRight className="size-4" />
 						</PaginationLink>

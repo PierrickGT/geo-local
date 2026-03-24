@@ -1,18 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+
 import { SearchInput } from './search-input'
 
 describe('SearchInput', () => {
 	it('renders with placeholder text', () => {
 		render(<SearchInput value="" onChange={vi.fn()} />)
-
 		expect(screen.getByPlaceholderText('Search entities...')).toBeInTheDocument()
 	})
 
 	it('displays the current value', () => {
 		render(<SearchInput value="test query" onChange={vi.fn()} />)
-
 		expect(screen.getByDisplayValue('test query')).toBeInTheDocument()
 	})
 
@@ -29,15 +28,15 @@ describe('SearchInput', () => {
 		expect(handleChange).toHaveBeenCalledTimes(5)
 	})
 
-	it('shows search icon', () => {
+	it('shows search icon (aria-hidden)', () => {
 		render(<SearchInput value="" onChange={vi.fn()} />)
-
-		expect(screen.getByRole('img', { name: 'Search' })).toBeInTheDocument()
+		// Lucide icons have aria-hidden, use hidden: true to query them
+		const icon = screen.getByRole('img', { hidden: true })
+		expect(icon).toBeInTheDocument()
 	})
 
 	it('has accessible label', () => {
 		render(<SearchInput value="" onChange={vi.fn()} />)
-
 		expect(screen.getByLabelText('Search entities')).toBeInTheDocument()
 	})
 

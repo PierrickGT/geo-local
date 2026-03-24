@@ -1,6 +1,6 @@
-import type pg from 'pg'
-import type { UpdateRelation } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import type { UpdateRelation } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 
 const FIELD_MAP: Record<string, string> = {
 	fromSpace: 'from_space',
@@ -53,8 +53,5 @@ export async function updateRelation(client: pg.PoolClient, op: UpdateRelation):
 
 	sets.push('updated_at = now()')
 
-	await client.query(
-		`UPDATE relations SET ${sets.join(', ')} WHERE id = $1`,
-		values,
-	)
+	await client.query(`UPDATE relations SET ${sets.join(', ')} WHERE id = $1`, values)
 }

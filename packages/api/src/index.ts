@@ -1,5 +1,5 @@
+import { closePool, config, createLogger } from '@geo-runtime/shared'
 import express from 'express'
-import { config, createLogger, closePool } from '@geo-runtime/shared'
 import { createRouter } from './routes.js'
 
 const log = createLogger('api')
