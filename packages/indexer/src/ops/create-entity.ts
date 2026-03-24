@@ -1,6 +1,6 @@
-import type pg from 'pg'
-import type { CreateEntity } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import type { CreateEntity } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 import { upsertTriple } from './shared.js'
 
 export async function createEntity(client: pg.PoolClient, op: CreateEntity): Promise<void> {

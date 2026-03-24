@@ -1,6 +1,6 @@
+import { getPool } from '@geo-runtime/shared'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
-import { getPool } from '@geo-runtime/shared'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -128,9 +128,12 @@ export function createRouter(): Router {
 			}
 
 			const [triplesRes, outgoingRes, incomingRes] = await Promise.all([
-				pool.query('SELECT entity_id, property_id, value_type, value, language FROM triples WHERE entity_id = $1', [id]),
-				pool.query('SELECT * FROM relations WHERE from_id = $1 AND status = \'alive\'', [id]),
-				pool.query('SELECT * FROM relations WHERE to_id = $1 AND status = \'alive\'', [id]),
+				pool.query(
+					'SELECT entity_id, property_id, value_type, value, language FROM triples WHERE entity_id = $1',
+					[id],
+				),
+				pool.query("SELECT * FROM relations WHERE from_id = $1 AND status = 'alive'", [id]),
+				pool.query("SELECT * FROM relations WHERE to_id = $1 AND status = 'alive'", [id]),
 			])
 
 			res.json({

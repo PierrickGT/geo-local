@@ -1,16 +1,16 @@
-import express, { Router } from 'express'
-import { Graph, IdUtils } from '@geoprotocol/geo-sdk'
-import { createEdit, encodeEdit, decodeEdit, formatId } from '@geoprotocol/grc-20'
 import { config, createLogger, getPool, idToHex } from '@geo-runtime/shared'
+import { Graph, IdUtils } from '@geoprotocol/geo-sdk'
+import { createEdit, decodeEdit, encodeEdit, formatId } from '@geoprotocol/grc-20'
+import express, { Router } from 'express'
 
-import type { Request, Response } from 'express'
-import type { Op } from '@geoprotocol/grc-20'
 import type {
+	DeleteRelationParams,
 	EntityParams,
 	RelationParams,
 	UpdateEntityParams,
-	DeleteRelationParams,
 } from '@geoprotocol/geo-sdk'
+import type { Op } from '@geoprotocol/grc-20'
+import type { Request, Response } from 'express'
 
 const log = createLogger('ingest:routes')
 
@@ -89,61 +89,55 @@ export function createRouter(): Router {
 	)
 
 	// POST /edits/build — accept JSON mutations, build edit server-side
-	router.post(
-		'/build',
-		express.json({ limit: '10mb' }),
-		async (req: Request, res: Response) => {
-			try {
-				const body = req.body as BuildBody
-				if (!body.mutations || !Array.isArray(body.mutations) || body.mutations.length === 0) {
-					res.status(400).json({ error: 'mutations array is required and must not be empty' })
+	router.post('/build', express.json({ limit: '10mb' }), async (req: Request, res: Response) => {
+		try {
+			const body = req.body as BuildBody
+			if (!body.mutations || !Array.isArray(body.mutations) || body.mutations.length === 0) {
+				res.status(400).json({ error: 'mutations array is required and must not be empty' })
+				return
+			}
+
+			const allOps: Op[] = []
+			const entityIds: string[] = []
+
+			for (const mutation of body.mutations) {
+				const handler = MUTATION_HANDLERS[mutation.type as MutationType]
+				if (!handler) {
+					res.status(400).json({ error: `Unknown mutation type: ${mutation.type}` })
 					return
 				}
 
-				const allOps: Op[] = []
-				const entityIds: string[] = []
-
-				for (const mutation of body.mutations) {
-					const handler = MUTATION_HANDLERS[mutation.type as MutationType]
-					if (!handler) {
-						res.status(400).json({ error: `Unknown mutation type: ${mutation.type}` })
-						return
-					}
-
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					const result = (handler as any)(mutation.params)
-					allOps.push(...result.ops)
-					entityIds.push(result.id)
-				}
-
-				const authors = body.author
-					? [IdUtils.toGrcId(body.author)]
-					: []
-
-				const edit = createEdit({
-					name: body.name,
-					authors,
-					ops: allOps,
-				})
-
-				const blob = encodeEdit(edit)
-				const id = idToHex(edit.id)
-				const name = edit.name ?? ''
-				const author = authors.length > 0 ? formatId(authors[0]) : ''
-				const opCount = edit.ops.length
-				const spaceId = resolveSpaceId(req)
-
-				await insertEdit(id, spaceId, author, name, blob, opCount)
-
-				log.info({ id, name, opCount, entityCount: entityIds.length }, 'Edit ingested (build)')
-				res.status(201).json({ id, name, opCount, entityIds })
-			} catch (err) {
-				const message = err instanceof Error ? err.message : 'Unknown error'
-				log.error({ err }, 'Failed to build edit')
-				res.status(400).json({ error: message })
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const result = (handler as any)(mutation.params)
+				allOps.push(...result.ops)
+				entityIds.push(result.id)
 			}
-		},
-	)
+
+			const authors = body.author ? [IdUtils.toGrcId(body.author)] : []
+
+			const edit = createEdit({
+				name: body.name,
+				authors,
+				ops: allOps,
+			})
+
+			const blob = encodeEdit(edit)
+			const id = idToHex(edit.id)
+			const name = edit.name ?? ''
+			const author = authors.length > 0 ? formatId(authors[0]) : ''
+			const opCount = edit.ops.length
+			const spaceId = resolveSpaceId(req)
+
+			await insertEdit(id, spaceId, author, name, blob, opCount)
+
+			log.info({ id, name, opCount, entityCount: entityIds.length }, 'Edit ingested (build)')
+			res.status(201).json({ id, name, opCount, entityIds })
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Unknown error'
+			log.error({ err }, 'Failed to build edit')
+			res.status(400).json({ error: message })
+		}
+	})
 
 	return router
 }
