@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router'
 import type { Edit, EditStatus } from '~/api/types'
 import { StatusBadge } from '~/components/status-badge'
+import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { TruncateId } from '~/components/ui/truncate-id'
@@ -87,13 +88,9 @@ export function EditsPage() {
 									{error?.message || 'An unexpected error occurred'}
 								</p>
 							</div>
-							<button
-								type="button"
-								onClick={handleRetry}
-								className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
-							>
+							<Button variant="destructive" size="sm" onClick={handleRetry}>
 								Retry
-							</button>
+							</Button>
 						</div>
 					</CardContent>
 				</Card>

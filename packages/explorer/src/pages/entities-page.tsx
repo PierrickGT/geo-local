@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { EntityTable } from '~/components/entity-table'
+import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useTypes } from '~/hooks/use-entities'
@@ -126,13 +127,9 @@ export function EntitiesPage() {
 									{error?.message || 'An unexpected error occurred'}
 								</p>
 							</div>
-							<button
-								type="button"
-								onClick={handleRetry}
-								className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
-							>
+							<Button variant="destructive" size="sm" onClick={handleRetry}>
 								Retry
-							</button>
+							</Button>
 						</div>
 					</CardContent>
 				</Card>

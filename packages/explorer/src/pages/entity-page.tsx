@@ -2,6 +2,8 @@ import { useParams } from 'react-router'
 import type { EntityStatus, Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
 import { TriplesPanel } from '~/components/triples-panel'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { TruncateId } from '~/components/ui/truncate-id'
@@ -12,17 +14,9 @@ import { TYPES_PROPERTY_ID } from '~/lib/constants'
  * Status badge component for displaying entity status.
  */
 function StatusBadge({ status }: { status: EntityStatus }) {
-	const isAlive = status === 'alive'
+	const variant = status === 'alive' ? 'success' : 'destructive'
 
-	return (
-		<span
-			className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-				isAlive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-			}`}
-		>
-			{status}
-		</span>
-	)
+	return <Badge variant={variant}>{status}</Badge>
 }
 
 /**
@@ -30,19 +24,9 @@ function StatusBadge({ status }: { status: EntityStatus }) {
  * An entity is a "Type" if it has incoming TYPE relations (other entities pointing to it).
  */
 function EntityTypeBadge({ type }: { type: 'type' | 'property' | 'entity' }) {
-	const colorClasses: Record<typeof type, string> = {
-		type: 'bg-purple-100 text-purple-800',
-		property: 'bg-blue-100 text-blue-800',
-		entity: 'bg-gray-100 text-gray-800',
-	}
+	const variant = type === 'type' ? 'info' : type === 'property' ? 'secondary' : 'outline'
 
-	return (
-		<span
-			className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[type]}`}
-		>
-			{type.charAt(0).toUpperCase() + type.slice(1)}
-		</span>
-	)
+	return <Badge variant={variant}>{type.charAt(0).toUpperCase() + type.slice(1)}</Badge>
 }
 
 /**
@@ -155,13 +139,13 @@ export function EntityPage() {
 									<p className="mt-1 text-sm text-gray-500">
 										{error?.message || 'An unexpected error occurred'}
 									</p>
-									<button
-										type="button"
+									<Button
+										variant="default"
 										onClick={() => window.location.reload()}
-										className="mt-4 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+										className="mt-4"
 									>
 										Retry
-									</button>
+									</Button>
 								</>
 							)}
 						</div>

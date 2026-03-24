@@ -44,6 +44,7 @@ import {
 	type RelationEdge as RelationEdgeType,
 	toReactFlowEdge,
 } from '~/components/graph/relation-edge'
+import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useEntity, useEntityRelations } from '~/hooks/use-entities'
@@ -477,13 +478,9 @@ export function GraphPage() {
 					<CardContent className="py-8">
 						<div className="text-center">
 							<div className="text-red-600 mb-4">{focusError ?? 'Failed to load graph data'}</div>
-							<button
-								type="button"
-								onClick={handleRetry}
-								className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-							>
+							<Button variant="default" onClick={handleRetry}>
 								Retry
-							</button>
+							</Button>
 						</div>
 					</CardContent>
 				</Card>

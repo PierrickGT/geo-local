@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router'
 import type { SearchResult } from '~/api/types'
 import { SearchInput } from '~/components/search-input'
+import { Button } from '~/components/ui/button'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useSearch } from '~/hooks/use-search'
 
@@ -74,13 +75,9 @@ export function SearchPage() {
 								{error?.message || 'An unexpected error occurred'}
 							</p>
 						</div>
-						<button
-							type="button"
-							onClick={() => refetch()}
-							className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
-						>
+						<Button variant="destructive" size="sm" onClick={() => refetch()}>
 							Retry
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}
