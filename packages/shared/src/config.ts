@@ -1,5 +1,5 @@
-import dotenv from 'dotenv'
 import path from 'path'
+import dotenv from 'dotenv'
 
 // Load .env from project root (monorepo root, not package directory)
 dotenv.config({ path: path.resolve(import.meta.dirname, '../../../.env') })

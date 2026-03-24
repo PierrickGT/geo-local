@@ -1,6 +1,6 @@
-import type pg from 'pg'
-import type { CreateValueRef } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import type { CreateValueRef } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 import { ensureEntity } from './shared.js'
 
 export async function createValueRef(client: pg.PoolClient, op: CreateValueRef): Promise<void> {

@@ -1,6 +1,6 @@
-import type pg from 'pg'
-import { decodeEdit } from '@geoprotocol/grc-20'
 import { createLogger } from '@geo-runtime/shared'
+import { decodeEdit } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 import { applyEdit } from './applier.js'
 
 const log = createLogger('indexer:poller')
@@ -35,18 +35,14 @@ export async function pollOnce(pool: pg.Pool, batchSize: number): Promise<number
 			const row = rows[0]
 			editId = row.id
 
-			await client.query(
-				`UPDATE edits SET status = 'processing' WHERE id = $1`,
-				[editId],
-			)
+			await client.query(`UPDATE edits SET status = 'processing' WHERE id = $1`, [editId])
 
 			const edit = decodeEdit(new Uint8Array(row.blob))
 			await applyEdit(client, edit)
 
-			await client.query(
-				`UPDATE edits SET status = 'applied', applied_at = now() WHERE id = $1`,
-				[editId],
-			)
+			await client.query(`UPDATE edits SET status = 'applied', applied_at = now() WHERE id = $1`, [
+				editId,
+			])
 
 			await client.query('COMMIT')
 			log.info({ editId }, 'Edit applied')
@@ -58,10 +54,9 @@ export async function pollOnce(pool: pg.Pool, batchSize: number): Promise<number
 			log.error({ editId, err: msg }, 'Edit failed')
 
 			if (editId) {
-				await pool.query(
-					`UPDATE edits SET status = 'failed', error_msg = $2 WHERE id = $1`,
-					[editId, msg],
-				).catch(() => {})
+				await pool
+					.query(`UPDATE edits SET status = 'failed', error_msg = $2 WHERE id = $1`, [editId, msg])
+					.catch(() => {})
 			}
 		} finally {
 			client.release()

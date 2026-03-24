@@ -1,7 +1,7 @@
-import type pg from 'pg'
-import type { UpdateEntity } from '@geoprotocol/grc-20'
 import { idToHex } from '@geo-runtime/shared'
+import type { UpdateEntity } from '@geoprotocol/grc-20'
 import { formatId } from '@geoprotocol/grc-20'
+import type pg from 'pg'
 import { upsertTriple } from './shared.js'
 
 export async function updateEntity(client: pg.PoolClient, op: UpdateEntity): Promise<void> {
@@ -13,10 +13,10 @@ export async function updateEntity(client: pg.PoolClient, op: UpdateEntity): Pro
 
 		switch (u.language.type) {
 			case 'all':
-				await client.query(
-					`DELETE FROM triples WHERE entity_id = $1 AND property_id = $2`,
-					[id, propId],
-				)
+				await client.query(`DELETE FROM triples WHERE entity_id = $1 AND property_id = $2`, [
+					id,
+					propId,
+				])
 				break
 			case 'english':
 				await client.query(
@@ -39,8 +39,5 @@ export async function updateEntity(client: pg.PoolClient, op: UpdateEntity): Pro
 	}
 
 	// 3. Touch entity
-	await client.query(
-		`UPDATE entities SET updated_at = now() WHERE id = $1`,
-		[id],
-	)
+	await client.query(`UPDATE entities SET updated_at = now() WHERE id = $1`, [id])
 }
