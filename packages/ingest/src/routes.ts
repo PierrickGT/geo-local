@@ -21,6 +21,7 @@ interface BuildBody {
 		| { type: 'createEntity'; params: EntityParams }
 		| { type: 'createRelation'; params: RelationParams }
 		| { type: 'updateEntity'; params: UpdateEntityParams }
+		| { type: 'deleteEntity'; params: { id: string } }
 		| { type: 'deleteRelation'; params: DeleteRelationParams }
 	>
 }
@@ -100,7 +101,20 @@ export function createRouter(): Router {
 			const allOps: Op[] = []
 			const entityIds: string[] = []
 
+			const spaceId = resolveSpaceId(req)
+
 			for (const mutation of body.mutations) {
+				// deleteEntity is async (queries external API) and needs server-resolved spaceId
+				if (mutation.type === 'deleteEntity') {
+					const result = await Graph.deleteEntity({
+						id: mutation.params.id,
+						spaceId,
+					})
+					allOps.push(...result.ops)
+					entityIds.push(result.id)
+					continue
+				}
+
 				const handler = MUTATION_HANDLERS[mutation.type as MutationType]
 				if (!handler) {
 					res.status(400).json({ error: `Unknown mutation type: ${mutation.type}` })
@@ -108,7 +122,7 @@ export function createRouter(): Router {
 				}
 
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = (handler as any)(mutation.params)
+				const result = await (handler as any)(mutation.params)
 				allOps.push(...result.ops)
 				entityIds.push(result.id)
 			}
@@ -126,7 +140,6 @@ export function createRouter(): Router {
 			const name = edit.name ?? ''
 			const author = authors.length > 0 ? formatId(authors[0]) : ''
 			const opCount = edit.ops.length
-			const spaceId = resolveSpaceId(req)
 
 			await insertEdit(id, spaceId, author, name, blob, opCount)
 
