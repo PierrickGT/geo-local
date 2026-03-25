@@ -15,6 +15,6 @@ createRoot(root).render(
 		<QueryClientProvider client={queryClient}>
 			<RouterProvider router={router} />
 		</QueryClientProvider>
-		{import.meta.env.DEV && <Agentation />}
+		{import.meta.env.DEV && <Agentation endpoint="http://localhost:4747" />}
 	</StrictMode>,
 )
