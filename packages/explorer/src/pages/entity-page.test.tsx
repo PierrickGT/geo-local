@@ -67,6 +67,7 @@ const mockEntityDetail = {
 		],
 		outgoing: [
 			{
+				id: 'rel-out-1',
 				fromId: 'test-entity-id',
 				toId: 'related-entity-1',
 				relationType: 'TYPE',
@@ -76,6 +77,7 @@ const mockEntityDetail = {
 		],
 		incoming: [
 			{
+				id: 'rel-in-1',
 				fromId: 'related-entity-2',
 				toId: 'test-entity-id',
 				relationType: 'REFERENCES',
@@ -140,6 +142,7 @@ describe('EntityPage', () => {
 						...mockEntityDetail.entity,
 						incoming: [
 							{
+								id: 'rel-type-in',
 								fromId: 'some-entity',
 								toId: 'test-entity-id',
 								relationType: TYPES_PROPERTY_ID,

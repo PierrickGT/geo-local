@@ -94,6 +94,7 @@ const mockEntityDetail = {
 const mockRelations = {
 	relations: [
 		{
+			id: 'rel-graph-1',
 			fromId: 'focus-entity',
 			toId: 'neighbor-1',
 			relationType: 'RELATES_TO',
@@ -101,6 +102,7 @@ const mockRelations = {
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 		{
+			id: 'rel-graph-2',
 			fromId: 'neighbor-2',
 			toId: 'focus-entity',
 			relationType: 'RELATED_FROM',

@@ -56,6 +56,7 @@ export interface Triple {
 // ---------------------------------------------------------------------------
 
 export interface Relation {
+	id: string
 	fromId: string
 	toId: string
 	relationType: string

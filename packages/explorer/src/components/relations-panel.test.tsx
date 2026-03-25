@@ -60,6 +60,7 @@ function createWrapper(initialRoute = '/entities/test-entity') {
 describe('RelationsPanel', () => {
 	const mockOutgoing: Relation[] = [
 		{
+			id: 'rel-outgoing-1',
 			fromId: 'test-entity',
 			toId: 'type-entity',
 			relationType: 'TYPE',
@@ -67,6 +68,7 @@ describe('RelationsPanel', () => {
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 		{
+			id: 'rel-outgoing-2',
 			fromId: 'test-entity',
 			toId: 'related-entity-1',
 			relationType: 'REFERENCES',
@@ -77,6 +79,7 @@ describe('RelationsPanel', () => {
 
 	const mockIncoming: Relation[] = [
 		{
+			id: 'rel-incoming-1',
 			fromId: 'source-entity',
 			toId: 'test-entity',
 			relationType: 'LINKS_TO',
@@ -214,6 +217,7 @@ describe('RelationsPanel', () => {
 	describe('truncation', () => {
 		it('truncates long relation types', () => {
 			const longTypeRelation: Relation = {
+				id: 'rel-long-type',
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'THIS_IS_A_VERY_LONG_RELATION_TYPE_THAT_SHOULD_BE_TRUNCATED',
@@ -240,6 +244,7 @@ describe('RelationsPanel', () => {
 			mockPropertyNames(relationNames, new Map())
 
 			const relationWithId: Relation = {
+				id: 'rel-resolved-name',
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'property-id-123',
@@ -261,6 +266,7 @@ describe('RelationsPanel', () => {
 			mockPropertyNames(new Map(), new Map())
 
 			const relationWithId: Relation = {
+				id: 'rel-fallback-id',
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'property-id-456',
