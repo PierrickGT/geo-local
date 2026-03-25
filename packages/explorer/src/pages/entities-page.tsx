@@ -90,31 +90,29 @@ export function EntitiesPage() {
 	}, [searchParams, setSearchParams])
 
 	return (
-		<div className="p-6 space-y-6">
-			<Card>
-				<CardHeader>
-					<CardTitle>Entities</CardTitle>
-					<div className="flex items-center gap-2">
-						<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
-							Filter by type:
-						</label>
-						<select
-							id="type-filter"
-							value={typeFilter ?? ''}
-							onChange={handleTypeChange}
-							disabled={isLoadingTypes}
-							className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-						>
-							<option value="">All types</option>
-							{types?.map((typeId) => (
-								<option key={typeId} value={typeId}>
-									{typeId.slice(0, 12)}...
-								</option>
-							))}
-						</select>
-					</div>
-				</CardHeader>
-			</Card>
+		<Card>
+			<CardHeader className="px-4">
+				<CardTitle>Entities</CardTitle>
+				<div className="flex items-center gap-2">
+					<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
+						Filter by type:
+					</label>
+					<select
+						id="type-filter"
+						value={typeFilter ?? ''}
+						onChange={handleTypeChange}
+						disabled={isLoadingTypes}
+						className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+					>
+						<option value="">All types</option>
+						{types?.map((typeId) => (
+							<option key={typeId} value={typeId}>
+								{typeId.slice(0, 12)}...
+							</option>
+						))}
+					</select>
+				</div>
+			</CardHeader>
 
 			{/* Error state */}
 			{isError && (
@@ -137,28 +135,28 @@ export function EntitiesPage() {
 
 			{/* Loading state */}
 			{isLoading && !isError && (
-				<Card>
-					<CardContent className="py-8">
-						<div className="space-y-3">
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-16 w-full" />
-							<Skeleton className="h-16 w-full" />
-							<Skeleton className="h-16 w-full" />
-						</div>
-					</CardContent>
-				</Card>
+				<CardContent className="py-8">
+					<div className="space-y-3">
+						<Skeleton className="h-10 w-full" />
+						<Skeleton className="h-16 w-full" />
+						<Skeleton className="h-16 w-full" />
+						<Skeleton className="h-16 w-full" />
+					</div>
+				</CardContent>
 			)}
 
 			{/* Entity table */}
 			{!isLoading && !isError && entities && (
-				<EntityTable
-					entities={entities.entities}
-					total={entities.total}
-					limit={limit}
-					offset={offset}
-					onPageChange={handlePageChange}
-				/>
+				<CardContent>
+					<EntityTable
+						entities={entities.entities}
+						total={entities.total}
+						limit={limit}
+						offset={offset}
+						onPageChange={handlePageChange}
+					/>
+				</CardContent>
 			)}
-		</div>
+		</Card>
 	)
 }
