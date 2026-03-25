@@ -72,18 +72,20 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 		[allRelations],
 	)
 
+	// Extract unique linked entity IDs for name resolution
+	const linkedEntityIds = useMemo(() => {
+		const ids = allRelations.map((r) => (r.direction === 'outgoing' ? r.toId : r.fromId))
+		return [...new Set(ids)]
+	}, [allRelations])
+
 	// Resolve property names for relation types
 	const { names: propertyNames } = usePropertyNames(relationTypeIds)
 
+	// Resolve names for linked entities
+	const { names: linkedEntityNames } = usePropertyNames(linkedEntityIds)
+
 	const handleEntityClick = (entityId: string) => {
 		navigate(`/entities/${encodeURIComponent(entityId)}`)
-	}
-
-	const handleKeyDown = (entityId: string, event: React.KeyboardEvent) => {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault()
-			handleEntityClick(entityId)
-		}
 	}
 
 	const totalCount = allRelations.length
@@ -108,6 +110,8 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 						// Use resolved name if available, fallback to formatted ID
 						const resolvedName = propertyNames.get(relation.relationType)
 						const displayName = resolvedName ?? formatPropertyId(relation.relationType)
+						// Resolve linked entity name
+						const linkedEntityName = linkedEntityNames.get(linkedEntityId)
 
 						return (
 							<div
@@ -120,15 +124,17 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 											{displayName}
 										</span>
 										<DirectionArrow direction={relation.direction} />
-										<button
-											type="button"
-											onClick={() => handleEntityClick(linkedEntityId)}
-											onKeyDown={(e) => handleKeyDown(linkedEntityId, e)}
-											className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded font-mono text-sm"
+										<a
+											href={`/entities/${encodeURIComponent(linkedEntityId)}`}
+											onClick={(e) => {
+												e.preventDefault()
+												handleEntityClick(linkedEntityId)
+											}}
+											className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded text-sm"
 											title={linkedEntityId}
 										>
-											{truncateEntityId(linkedEntityId)}
-										</button>
+											{linkedEntityName ?? truncateEntityId(linkedEntityId)}
+										</a>
 									</div>
 								</div>
 							</div>

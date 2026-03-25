@@ -2,18 +2,16 @@ import { useState } from 'react'
 
 interface TruncateIdProps {
 	id: string
-	maxLength?: number
 	className?: string
 }
 
 /**
- * Truncates a hex ID to show first N characters with ellipsis.
+ * Truncates a hex ID via CSS ellipsis.
+ * Parent must constrain width for truncation to trigger.
  * Includes a copy button to copy the full ID to clipboard.
  */
-export function TruncateId({ id, maxLength = 8, className = '' }: TruncateIdProps) {
+export function TruncateId({ id, className = '' }: TruncateIdProps) {
 	const [copied, setCopied] = useState(false)
-
-	const truncated = id.length > maxLength ? `${id.slice(0, maxLength)}...` : id
 
 	const handleCopy = async () => {
 		try {
@@ -26,14 +24,17 @@ export function TruncateId({ id, maxLength = 8, className = '' }: TruncateIdProp
 	}
 
 	return (
-		<span className={`inline-flex items-center gap-1 font-mono text-sm ${className}`}>
-			<span className="text-gray-700" title={id}>
-				{truncated}
+		<span className={`inline-flex items-center gap-1 font-mono text-sm min-w-0 ${className}`}>
+			<span
+				className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-700"
+				title={id}
+			>
+				{id}
 			</span>
 			<button
 				type="button"
 				onClick={handleCopy}
-				className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+				className="shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
 				title={copied ? 'Copied!' : 'Copy to clipboard'}
 			>
 				{copied ? (

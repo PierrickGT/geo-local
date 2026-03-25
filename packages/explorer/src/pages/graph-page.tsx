@@ -27,7 +27,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { getEntityRelations } from '~/api/entities'
+import { getEntity, getEntityRelations } from '~/api/entities'
 import {
 	EntityNode,
 	type EntityNode as EntityNodeType,
@@ -48,6 +48,7 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useEntity, useEntityRelations } from '~/hooks/use-entities'
+import { NAME_PROPERTY_ID } from '~/lib/constants'
 
 // Custom node and edge types
 const nodeTypes = { entity: EntityNode }
@@ -217,6 +218,41 @@ export function GraphPage() {
 			setEdges(rfEdges)
 		}
 	}, [seedGraphData, graphNodes.length, setNodes, setEdges])
+
+	// Fetch entity names once and inject labels into ReactFlow nodes
+	useEffect(() => {
+		if (graphNodes.length === 0) return
+
+		const ids = graphNodes.map((n) => n.id)
+		let cancelled = false
+
+		Promise.all(
+			ids.map((id) =>
+				getEntity(id)
+					.then((res) => {
+						const entity = res.entity
+						const nameTriple = entity?.triples.find(
+							(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
+						)
+						return { id, label: (nameTriple?.value.value as string | undefined) ?? undefined }
+					})
+					.catch(() => ({ id, label: undefined })),
+			),
+		).then((results) => {
+			if (cancelled) return
+			const labelMap = new Map(results.map((r) => [r.id, r.label]))
+			setNodes((prev) =>
+				prev.map((node) => {
+					const label = labelMap.get(node.data.entityId)
+					if (label === undefined || node.data.label === label) return node
+					return { ...node, data: { ...node.data, label } }
+				}),
+			)
+		})
+
+		return () => { cancelled = true }
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [graphNodes.length])
 
 	// Handle focus error (invalid entity ID)
 	useEffect(() => {
@@ -504,7 +540,7 @@ export function GraphPage() {
 	}
 
 	return (
-		<div className="h-full w-full">
+		<div className="h-full w-full relative">
 			<ReactFlow
 				nodes={nodes}
 				edges={edges}
@@ -516,6 +552,7 @@ export function GraphPage() {
 				onNodeDragStop={handleNodeDragStop}
 				nodeTypes={nodeTypes}
 				edgeTypes={edgeTypes}
+				preventScrolling={false}
 				fitView
 				fitViewOptions={{ padding: 0.2 }}
 				minZoom={0.1}

@@ -15,6 +15,7 @@ import {
  */
 export interface GraphNode extends SimulationNodeDatum {
 	id: string
+	label?: string
 	/** If true, the node will not be affected by the force simulation */
 	fixed?: boolean
 }

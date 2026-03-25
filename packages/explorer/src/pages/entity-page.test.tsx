@@ -111,10 +111,14 @@ describe('EntityPage', () => {
 	})
 
 	describe('rendering', () => {
-		it('renders entity header with id, status, and timestamps', async () => {
+		it('renders entity header with name, id, status, and timestamps', async () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Check entity ID is displayed (truncated)
+			// Check entity name is displayed (from NAME triple) - appears in header
+			const nameElements = screen.getAllByText('Test Entity')
+			expect(nameElements.length).toBeGreaterThanOrEqual(1)
+
+			// Check entity ID is still displayed (truncated)
 			expect(screen.getByText(/test-ent/)).toBeInTheDocument()
 
 			// Check entity type badge (default "Entity" for regular entities)
@@ -164,9 +168,9 @@ describe('EntityPage', () => {
 			// Check properties header
 			expect(screen.getByRole('heading', { name: 'Properties' })).toBeInTheDocument()
 
-			// Check property values
+			// Check property values (NAME triple shows "Test Entity" in both header and triples)
 			expect(screen.getByText('NAME')).toBeInTheDocument()
-			expect(screen.getByText('Test Entity')).toBeInTheDocument()
+			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(1)
 			expect(screen.getByText('DESCRIPTION')).toBeInTheDocument()
 		})
 
@@ -250,6 +254,28 @@ describe('EntityPage', () => {
 	})
 
 	describe('triples panel', () => {
+		it('falls back to ID when entity has no NAME triple', () => {
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						triples: [],
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			// Should show truncated ID as the primary identifier
+			expect(screen.getByText(/test-ent/)).toBeInTheDocument()
+			// Name span should not be rendered
+			expect(screen.queryByText('Test Entity')).not.toBeInTheDocument()
+		})
+
 		it('shows empty state when no triples', () => {
 			mockUseEntity.mockReturnValue({
 				entity: {

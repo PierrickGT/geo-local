@@ -12,6 +12,11 @@ vi.mock('~/hooks/use-entities', () => ({
 	useEntityRelations: vi.fn(),
 }))
 
+vi.mock('~/api/entities', () => ({
+	getEntity: vi.fn(() => Promise.resolve({ entity: null })),
+	getEntityRelations: vi.fn(() => Promise.resolve({ relations: [] })),
+}))
+
 // Mock react-router's useNavigate (but NOT useSearchParams - let MemoryRouter provide it)
 const mockNavigate = vi.fn()
 vi.mock('react-router', async () => {

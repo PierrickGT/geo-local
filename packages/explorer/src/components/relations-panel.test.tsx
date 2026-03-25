@@ -25,6 +25,19 @@ beforeEach(() => {
 	})
 })
 
+/**
+ * Helper to configure the usePropertyNames mock for both calls:
+ * first call resolves relation type names, second resolves linked entity names.
+ */
+function mockPropertyNames(
+	relationNames: Map<string, string | undefined>,
+	entityNames: Map<string, string | undefined>,
+) {
+	mockUsePropertyNames
+		.mockReturnValueOnce({ names: relationNames, isLoading: false })
+		.mockReturnValueOnce({ names: entityNames, isLoading: false })
+}
+
 // Helper to create wrapper with all providers
 function createWrapper(initialRoute = '/entities/test-entity') {
 	const queryClient = new QueryClient({
@@ -221,13 +234,10 @@ describe('RelationsPanel', () => {
 
 	describe('property name resolution', () => {
 		it('displays resolved name when available', () => {
-			const namesMap = new Map<string, string | undefined>()
-			namesMap.set('property-id-123', 'Has Part')
+			const relationNames = new Map<string, string | undefined>()
+			relationNames.set('property-id-123', 'Has Part')
 
-			mockUsePropertyNames.mockReturnValue({
-				names: namesMap,
-				isLoading: false,
-			})
+			mockPropertyNames(relationNames, new Map())
 
 			const relationWithId: Relation = {
 				fromId: 'test-entity',
@@ -248,11 +258,7 @@ describe('RelationsPanel', () => {
 		})
 
 		it('falls back to formatted ID when no name resolved', () => {
-			// Empty names map = no resolved names
-			mockUsePropertyNames.mockReturnValue({
-				names: new Map(),
-				isLoading: false,
-			})
+			mockPropertyNames(new Map(), new Map())
 
 			const relationWithId: Relation = {
 				fromId: 'test-entity',
@@ -271,11 +277,7 @@ describe('RelationsPanel', () => {
 		})
 
 		it('shows well-known properties directly when no name resolved', () => {
-			// Empty names map
-			mockUsePropertyNames.mockReturnValue({
-				names: new Map(),
-				isLoading: false,
-			})
+			mockPropertyNames(new Map(), new Map())
 
 			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
 				wrapper: createWrapper(),
@@ -286,13 +288,10 @@ describe('RelationsPanel', () => {
 		})
 
 		it('prefers resolved name over well-known property format', () => {
-			const namesMap = new Map<string, string | undefined>()
-			namesMap.set('TYPE', 'Is Type Of')
+			const relationNames = new Map<string, string | undefined>()
+			relationNames.set('TYPE', 'Is Type Of')
 
-			mockUsePropertyNames.mockReturnValue({
-				names: namesMap,
-				isLoading: false,
-			})
+			mockPropertyNames(relationNames, new Map())
 
 			render(<RelationsPanel outgoing={mockOutgoing} incoming={[]} />, {
 				wrapper: createWrapper(),
@@ -300,6 +299,35 @@ describe('RelationsPanel', () => {
 
 			// Should display the resolved name even for well-known property
 			expect(screen.getByText('Is Type Of')).toBeInTheDocument()
+		})
+	})
+
+	describe('linked entity name resolution', () => {
+		it('displays linked entity name when available', () => {
+			const entityNames = new Map<string, string | undefined>()
+			entityNames.set('type-entity', 'Location Type')
+
+			mockPropertyNames(new Map(), entityNames)
+
+			render(<RelationsPanel outgoing={[mockOutgoing[0]]} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should display the linked entity's resolved name
+			expect(screen.getByText('Location Type')).toBeInTheDocument()
+			// Title should still show the full entity ID
+			expect(screen.getByTitle('type-entity')).toBeInTheDocument()
+		})
+
+		it('falls back to truncated ID when linked entity has no name', () => {
+			mockPropertyNames(new Map(), new Map())
+
+			render(<RelationsPanel outgoing={[mockOutgoing[0]]} incoming={[]} />, {
+				wrapper: createWrapper(),
+			})
+
+			// Should display truncated entity ID
+			expect(screen.getByText(/type-ent/)).toBeInTheDocument()
 		})
 	})
 })

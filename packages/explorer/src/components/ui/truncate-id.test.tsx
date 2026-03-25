@@ -4,19 +4,17 @@ import { describe, expect, it, vi } from 'vitest'
 import { TruncateId } from './truncate-id'
 
 describe('TruncateId', () => {
-	it('renders truncated ID with default length of 8', () => {
+	it('renders full ID in the DOM (CSS handles truncation)', () => {
 		render(<TruncateId id="0123456789abcdef" />)
-		expect(screen.getByText('01234567...')).toBeInTheDocument()
+		expect(screen.getByText('0123456789abcdef')).toBeInTheDocument()
 	})
 
-	it('renders full ID when shorter than max length', () => {
+	it('applies truncation classes', () => {
 		render(<TruncateId id="abc" />)
-		expect(screen.getByText('abc')).toBeInTheDocument()
-	})
-
-	it('renders with custom max length', () => {
-		render(<TruncateId id="0123456789abcdef" maxLength={4} />)
-		expect(screen.getByText('0123...')).toBeInTheDocument()
+		const span = screen.getByText('abc')
+		expect(span.className).toContain('overflow-hidden')
+		expect(span.className).toContain('text-ellipsis')
+		expect(span.className).toContain('whitespace-nowrap')
 	})
 
 	it('shows full ID in title attribute', () => {

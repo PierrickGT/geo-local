@@ -7,6 +7,7 @@ import type { GraphNode } from './force-layout'
  */
 export type EntityNodeData = {
 	entityId: string
+	label?: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
@@ -24,7 +25,7 @@ export type EntityNode = Node<EntityNodeData, 'entity'>
  */
 function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
 	const entityId = data.entityId
-	const truncated = entityId.length > 8 ? `${entityId.slice(0, 8)}...` : entityId
+	const displayText = data.label ?? entityId
 
 	return (
 		<div
@@ -33,7 +34,7 @@ function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
 			}`}
 			tabIndex={0}
 			role="button"
-			aria-label={`Entity ${entityId}`}
+			aria-label={`Entity ${data.label ? `${data.label} (${entityId})` : entityId}`}
 		>
 			<Handle
 				type="target"
@@ -41,8 +42,8 @@ function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
 				className="!w-2 !h-2 !bg-blue-400"
 				aria-label="Connection target"
 			/>
-			<div className="font-mono text-sm text-gray-700" title={entityId}>
-				{truncated}
+			<div className="text-sm text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-48" title={entityId}>
+				{displayText}
 			</div>
 			<Handle
 				type="source"
@@ -64,7 +65,7 @@ export function toReactFlowNode(node: GraphNode, _index: number): EntityNode {
 		id: node.id,
 		type: 'entity',
 		position: { x: node.x ?? 0, y: node.y ?? 0 },
-		data: { entityId: node.id },
+		data: { entityId: node.id, label: node.label },
 		// Preserve the fixed/pinned state
 		draggable: !node.fixed,
 	}

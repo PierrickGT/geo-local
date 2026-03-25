@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
-import { TYPES_PROPERTY_ID } from '~/lib/constants'
+import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
 
 /**
  * Status badge component for displaying entity status.
@@ -158,15 +158,30 @@ export function EntityPage() {
 	const { entity: entityDetail } = entity
 	const entityType = getEntityType(entityDetail.incoming)
 
+	const nameTriple = entityDetail.triples.find(
+		(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
+	)
+	const entityName = (nameTriple?.value.value as string | undefined) ?? undefined
+
 	return (
 		<div className="p-6 space-y-6">
 			{/* Entity header */}
 			<Card>
 				<CardHeader>
 					<div className="flex items-center gap-3">
-						<TruncateId id={entityDetail.id} maxLength={16} />
-						<EntityTypeBadge type={entityType} />
-						<StatusBadge status={entityDetail.status} />
+						<div className="flex flex-col">
+							<div className="flex items-center gap-3">
+								{entityName ? (
+									<span className="text-lg font-semibold text-gray-900">{entityName}</span>
+								) : null}
+								<EntityTypeBadge type={entityType} />
+								<StatusBadge status={entityDetail.status} />
+							</div>
+							<TruncateId
+								id={entityDetail.id}
+								className={entityName ? 'text-gray-400 text-xs' : ''}
+							/>
+						</div>
 					</div>
 					<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
 						<div>

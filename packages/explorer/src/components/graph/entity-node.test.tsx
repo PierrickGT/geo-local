@@ -45,34 +45,34 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('EntityNode', () => {
-	it('displays truncated entity ID', () => {
+	it('displays entity ID when no label is provided', () => {
 		render(
 			<TestWrapper>
 				<EntityNode {...defaultProps} data={{ entityId: 'abc123def456ghi789' }} />
 			</TestWrapper>,
 		)
 
-		expect(screen.getByText('abc123de...')).toBeInTheDocument()
+		expect(screen.getByText('abc123def456ghi789')).toBeInTheDocument()
+	})
+
+	it('displays label when provided', () => {
+		render(
+			<TestWrapper>
+				<EntityNode {...defaultProps} data={{ entityId: 'abc123', label: 'My Entity' }} />
+			</TestWrapper>,
+		)
+
+		expect(screen.getByText('My Entity')).toBeInTheDocument()
 	})
 
 	it('displays full ID in title attribute', () => {
 		render(
 			<TestWrapper>
-				<EntityNode {...defaultProps} data={{ entityId: 'abc123def456ghi789' }} />
+				<EntityNode {...defaultProps} data={{ entityId: 'abc123def456ghi789', label: 'My Entity' }} />
 			</TestWrapper>,
 		)
 
 		expect(screen.getByTitle('abc123def456ghi789')).toBeInTheDocument()
-	})
-
-	it('displays short IDs without truncation', () => {
-		render(
-			<TestWrapper>
-				<EntityNode {...defaultProps} data={{ entityId: 'short' }} />
-			</TestWrapper>,
-		)
-
-		expect(screen.getByText('short')).toBeInTheDocument()
 	})
 
 	it('shows selected state styling', () => {
@@ -86,7 +86,17 @@ describe('EntityNode', () => {
 		expect(node).toHaveClass('border-blue-600')
 	})
 
-	it('has correct aria-label', () => {
+	it('has correct aria-label with label', () => {
+		render(
+			<TestWrapper>
+				<EntityNode {...defaultProps} data={{ entityId: 'test-id', label: 'Test Entity' }} />
+			</TestWrapper>,
+		)
+
+		expect(screen.getByRole('button', { name: 'Entity Test Entity (test-id)' })).toBeInTheDocument()
+	})
+
+	it('has correct aria-label without label', () => {
 		render(
 			<TestWrapper>
 				<EntityNode {...defaultProps} data={{ entityId: 'test-id' }} />
