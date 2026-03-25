@@ -230,5 +230,28 @@ export function createRouter(): Router {
 		}
 	})
 
+	// GET /edits/:id — must be registered AFTER GET /edits to prevent shadowing
+	router.get('/edits/:id', async (req: Request, res: Response) => {
+		try {
+			const pool = getPool()
+			const { id } = req.params
+
+			const result = await pool.query(
+				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg FROM edits WHERE id = $1',
+				[id],
+			)
+
+			if (result.rows.length === 0) {
+				res.status(404).json({ error: 'Edit not found' })
+				return
+			}
+
+			const edit = formatRow(result.rows[0])
+			res.json(edit)
+		} catch (err) {
+			res.status(500).json({ error: 'Internal server error' })
+		}
+	})
+
 	return router
 }
