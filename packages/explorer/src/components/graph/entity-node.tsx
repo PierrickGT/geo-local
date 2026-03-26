@@ -42,7 +42,10 @@ function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
 				className="!w-2 !h-2 !bg-blue-400"
 				aria-label="Connection target"
 			/>
-			<div className="text-sm text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-48" title={entityId}>
+			<div
+				className="text-sm text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-48"
+				title={entityId}
+			>
 				{displayText}
 			</div>
 			<Handle

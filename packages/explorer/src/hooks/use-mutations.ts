@@ -90,7 +90,9 @@ async function submitAndPoll(
 	signal?: AbortSignal,
 ): Promise<BuildResponse> {
 	const response = await submitMutations({ mutations: [mutationPayload] })
-	return pollUntilSettled(response.id, { signal })
+	const settled = await pollUntilSettled(response.id, { signal })
+	// Merge entityIds from the initial build response (poll result doesn't have them)
+	return { ...settled, entityIds: response.entityIds }
 }
 
 // ---------------------------------------------------------------------------

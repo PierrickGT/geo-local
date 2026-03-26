@@ -93,6 +93,13 @@ describe('EntitiesPage', () => {
 			expect(screen.getByText('entity-2')).toBeInTheDocument()
 		})
 
+		it('renders Create Entity button in header', () => {
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('create-entity-button')).toBeInTheDocument()
+			expect(screen.getByTestId('create-entity-button')).toHaveTextContent('Create Entity')
+		})
+
 		it('shows loading state while fetching entities', () => {
 			mockUseEntities.mockReturnValue({
 				entities: undefined,

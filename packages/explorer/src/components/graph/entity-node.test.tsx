@@ -68,7 +68,10 @@ describe('EntityNode', () => {
 	it('displays full ID in title attribute', () => {
 		render(
 			<TestWrapper>
-				<EntityNode {...defaultProps} data={{ entityId: 'abc123def456ghi789', label: 'My Entity' }} />
+				<EntityNode
+					{...defaultProps}
+					data={{ entityId: 'abc123def456ghi789', label: 'My Entity' }}
+				/>
 			</TestWrapper>,
 		)
 

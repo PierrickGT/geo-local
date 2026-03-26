@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { EntityTable } from '~/components/entity-table'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
@@ -14,6 +14,7 @@ const DEFAULT_OFFSET = 0
  * URL syncs ?type=, ?limit=, ?offset=
  */
 export function EntitiesPage() {
+	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
 
 	// Parse URL params with defaults
@@ -92,7 +93,16 @@ export function EntitiesPage() {
 	return (
 		<Card>
 			<CardHeader className="px-4">
-				<CardTitle>Entities</CardTitle>
+				<div className="flex items-center justify-between">
+					<CardTitle>Entities</CardTitle>
+					<Button
+						size="sm"
+						onClick={() => navigate('/entities/new')}
+						data-testid="create-entity-button"
+					>
+						Create Entity
+					</Button>
+				</div>
 				<div className="flex items-center gap-2">
 					<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
 						Filter by type:

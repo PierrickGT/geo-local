@@ -250,7 +250,9 @@ export function GraphPage() {
 			)
 		})
 
-		return () => { cancelled = true }
+		return () => {
+			cancelled = true
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [graphNodes.length])
 

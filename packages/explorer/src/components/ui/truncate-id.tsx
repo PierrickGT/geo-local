@@ -25,10 +25,7 @@ export function TruncateId({ id, className = '' }: TruncateIdProps) {
 
 	return (
 		<span className={`inline-flex items-center gap-1 font-mono text-sm min-w-0 ${className}`}>
-			<span
-				className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-700"
-				title={id}
-			>
+			<span className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-700" title={id}>
 				{id}
 			</span>
 			<button
