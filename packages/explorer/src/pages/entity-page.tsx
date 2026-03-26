@@ -1,4 +1,5 @@
-import { useParams } from 'react-router'
+import { PencilIcon } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router'
 import type { EntityStatus, Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
 import { TriplesPanel } from '~/components/triples-panel'
@@ -65,6 +66,7 @@ function formatDate(isoString: string): string {
  */
 export function EntityPage() {
 	const { id } = useParams<{ id: string }>()
+	const navigate = useNavigate()
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
 
 	// Loading state
@@ -168,20 +170,33 @@ export function EntityPage() {
 			{/* Entity header */}
 			<Card>
 				<CardHeader>
-					<div className="flex items-center gap-3">
-						<div className="flex flex-col">
-							<div className="flex items-center gap-3">
-								{entityName ? (
-									<span className="text-lg font-semibold text-gray-900">{entityName}</span>
-								) : null}
-								<EntityTypeBadge type={entityType} />
-								<StatusBadge status={entityDetail.status} />
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-3">
+							<div className="flex flex-col">
+								<div className="flex items-center gap-3">
+									{entityName ? (
+										<span className="text-lg font-semibold text-gray-900">{entityName}</span>
+									) : null}
+									<EntityTypeBadge type={entityType} />
+									<StatusBadge status={entityDetail.status} />
+								</div>
+								<TruncateId
+									id={entityDetail.id}
+									className={entityName ? 'text-gray-400 text-xs' : ''}
+								/>
 							</div>
-							<TruncateId
-								id={entityDetail.id}
-								className={entityName ? 'text-gray-400 text-xs' : ''}
-							/>
 						</div>
+						{entityDetail.status === 'alive' && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => navigate(`/entities/${entityDetail.id}/edit`)}
+								data-testid="edit-entity-button"
+							>
+								<PencilIcon className="size-4" />
+								Edit
+							</Button>
+						)}
 					</div>
 					<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
 						<div>

@@ -65,17 +65,16 @@ export function CreateEntityPage() {
 			<h1 className="text-2xl font-semibold text-gray-900 mb-6">Create Entity</h1>
 
 			{error && (
-				<div className="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-200" data-testid="create-error">
+				<div
+					className="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-200"
+					data-testid="create-error"
+				>
 					<p className="text-sm font-medium text-red-800">Failed to create entity</p>
 					<p className="text-sm text-red-600 mt-1">{error.message}</p>
 				</div>
 			)}
 
-			<EntityForm
-				mode="create"
-				onSubmit={handleSubmit}
-				isSubmitting={isLoading}
-			/>
+			<EntityForm mode="create" onSubmit={handleSubmit} isSubmitting={isLoading} />
 		</div>
 	)
 }

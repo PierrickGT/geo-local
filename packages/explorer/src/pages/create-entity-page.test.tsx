@@ -256,12 +256,15 @@ describe('CreateEntityPage', () => {
 
 			// Create a controlled promise
 			let resolveSubmit: () => void
-			const pendingPromise = new Promise<{ id: string; name: string; opCount: number; entityIds: string[] }>(
-				(resolve) => {
-					resolveSubmit = () =>
-						resolve({ id: 'edit-1', name: 'Create', opCount: 1, entityIds: ['e1'] })
-				},
-			)
+			const pendingPromise = new Promise<{
+				id: string
+				name: string
+				opCount: number
+				entityIds: string[]
+			}>((resolve) => {
+				resolveSubmit = () =>
+					resolve({ id: 'edit-1', name: 'Create', opCount: 1, entityIds: ['e1'] })
+			})
 			mockSubmitMutations.mockReturnValueOnce(pendingPromise)
 
 			render(<CreateEntityPage />, { wrapper: createWrapper() })

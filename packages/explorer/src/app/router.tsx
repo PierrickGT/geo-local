@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import { CreateEntityPage } from '~/pages/create-entity-page'
+import { EditEntityPage } from '~/pages/edit-entity-page'
 import { EditsPage } from '~/pages/edits-page'
 import { EntitiesPage } from '~/pages/entities-page'
 import { EntityPage } from '~/pages/entity-page'
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
 			{
 				path: 'entities/new',
 				element: <CreateEntityPage />,
+			},
+			{
+				path: 'entities/:id/edit',
+				element: <EditEntityPage />,
 			},
 			{
 				path: 'entities/:id',
