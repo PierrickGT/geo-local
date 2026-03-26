@@ -30,9 +30,10 @@ describe('SearchInput', () => {
 
 	it('shows search icon (aria-hidden)', () => {
 		render(<SearchInput value="" onChange={vi.fn()} />)
-		// Lucide icons have aria-hidden, use hidden: true to query them
-		const icon = screen.getByRole('img', { hidden: true })
+		// Lucide icons render as SVG with aria-hidden="true" and no role="img"
+		const icon = screen.getByRole('searchbox').parentElement?.querySelector('svg')
 		expect(icon).toBeInTheDocument()
+		expect(icon).toHaveAttribute('aria-hidden', 'true')
 	})
 
 	it('has accessible label', () => {

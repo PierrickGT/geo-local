@@ -88,7 +88,8 @@ describe('EntitiesPage', () => {
 		it('renders entity list with default pagination', async () => {
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('heading', { name: 'Entities' })).toBeInTheDocument()
+			// CardTitle renders as a div, not a heading element
+			expect(screen.getByText('Entities')).toBeInTheDocument()
 			expect(screen.getByText('entity-1')).toBeInTheDocument()
 			expect(screen.getByText('entity-2')).toBeInTheDocument()
 		})
@@ -112,7 +113,9 @@ describe('EntitiesPage', () => {
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Loading entities...')).toBeInTheDocument()
+			// UI now uses skeleton spinners instead of text loading states
+			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+			expect(skeletons.length).toBeGreaterThan(0)
 		})
 	})
 
@@ -174,10 +177,11 @@ describe('EntitiesPage', () => {
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('button', { name: 'First' })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: 'Prev' })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
-			expect(screen.getByRole('button', { name: 'Last' })).toBeInTheDocument()
+			// Pagination links are rendered as <a> tags with aria-labels
+			expect(screen.getByLabelText('Go to first page')).toBeInTheDocument()
+			expect(screen.getByLabelText('Go to previous page')).toBeInTheDocument()
+			expect(screen.getByLabelText('Go to next page')).toBeInTheDocument()
+			expect(screen.getByLabelText('Go to last page')).toBeInTheDocument()
 		})
 
 		it('clicking next updates offset', async () => {
@@ -197,7 +201,8 @@ describe('EntitiesPage', () => {
 
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
-			await user.click(screen.getByRole('button', { name: 'Next' }))
+			// Pagination links are <a> tags with aria-labels, not buttons
+			await user.click(screen.getByLabelText('Go to next page'))
 
 			// Verify useEntities was called with updated offset
 			expect(mockUseEntities).toHaveBeenCalledWith(

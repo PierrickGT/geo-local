@@ -55,8 +55,9 @@ describe('EntityTable', () => {
 			/>,
 		)
 
-		expect(screen.getByText('abc123de...')).toBeInTheDocument()
-		expect(screen.getByText('xyz789uv...')).toBeInTheDocument()
+		// TruncateId now renders the full ID (CSS truncation via overflow-hidden)
+		expect(screen.getByText('abc123def456')).toBeInTheDocument()
+		expect(screen.getByText('xyz789uvw012')).toBeInTheDocument()
 	})
 
 	it('renders status badges', () => {
@@ -86,6 +87,7 @@ describe('EntityTable', () => {
 			/>,
 		)
 
+		// EntityTable loading state uses text "Loading entities..."
 		expect(screen.getByText('Loading entities...')).toBeInTheDocument()
 	})
 
@@ -123,7 +125,8 @@ describe('EntityTable', () => {
 			/>,
 		)
 
-		await user.click(screen.getByRole('button', { name: /next/i }))
+		// Pagination links are <a> tags with aria-labels, not buttons
+		await user.click(screen.getByLabelText('Go to next page'))
 
 		expect(onPageChange).toHaveBeenCalledWith(20)
 	})
@@ -142,7 +145,8 @@ describe('EntityTable', () => {
 			/>,
 		)
 
-		const row = screen.getByText('abc123de...').closest('tr')
+		// TruncateId renders the full ID text (CSS truncation via overflow-hidden)
+		const row = screen.getByText('abc123def456').closest('tr')
 		expect(row).not.toBeNull()
 		await user.click(row as HTMLElement)
 

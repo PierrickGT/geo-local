@@ -105,7 +105,8 @@ describe('EditsPage', () => {
 		it('renders edits page with heading', () => {
 			render(<EditsPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('heading', { name: 'Edits' })).toBeInTheDocument()
+			// CardTitle renders as a div, not a heading element
+			expect(screen.getByText('Edits')).toBeInTheDocument()
 		})
 
 		it('renders status filter dropdown', () => {
@@ -215,7 +216,9 @@ describe('EditsPage', () => {
 
 			render(<EditsPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Loading edits...')).toBeInTheDocument()
+			// UI now uses skeleton spinners instead of text loading states
+			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+			expect(skeletons.length).toBeGreaterThan(0)
 		})
 	})
 

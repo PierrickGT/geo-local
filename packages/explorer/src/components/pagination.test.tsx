@@ -31,24 +31,27 @@ describe('Pagination', () => {
 	it('disables first and prev buttons on first page', () => {
 		render(<Pagination total={100} limit={20} offset={0} onPageChange={() => {}} />)
 
-		expect(screen.getByLabelText('Go to first page')).toBeDisabled()
-		expect(screen.getByLabelText('Go to previous page')).toBeDisabled()
+		// Pagination uses CSS classes (pointer-events-none, opacity-50) instead of disabled attribute
+		expect(screen.getByLabelText('Go to first page')).toHaveClass('pointer-events-none')
+		expect(screen.getByLabelText('Go to previous page')).toHaveClass('pointer-events-none')
 	})
 
 	it('disables next and last buttons on last page', () => {
 		render(<Pagination total={100} limit={20} offset={80} onPageChange={() => {}} />)
 
-		expect(screen.getByLabelText('Go to next page')).toBeDisabled()
-		expect(screen.getByLabelText('Go to last page')).toBeDisabled()
+		// Pagination uses CSS classes (pointer-events-none, opacity-50) instead of disabled attribute
+		expect(screen.getByLabelText('Go to next page')).toHaveClass('pointer-events-none')
+		expect(screen.getByLabelText('Go to last page')).toHaveClass('pointer-events-none')
 	})
 
 	it('enables all buttons on middle page', () => {
 		render(<Pagination total={100} limit={20} offset={40} onPageChange={() => {}} />)
 
-		expect(screen.getByLabelText('Go to first page')).toBeEnabled()
-		expect(screen.getByLabelText('Go to previous page')).toBeEnabled()
-		expect(screen.getByLabelText('Go to next page')).toBeEnabled()
-		expect(screen.getByLabelText('Go to last page')).toBeEnabled()
+		// Enabled buttons should NOT have the pointer-events-none class
+		expect(screen.getByLabelText('Go to first page')).not.toHaveClass('pointer-events-none')
+		expect(screen.getByLabelText('Go to previous page')).not.toHaveClass('pointer-events-none')
+		expect(screen.getByLabelText('Go to next page')).not.toHaveClass('pointer-events-none')
+		expect(screen.getByLabelText('Go to last page')).not.toHaveClass('pointer-events-none')
 	})
 
 	it('calls onPageChange with 0 when first button clicked', async () => {

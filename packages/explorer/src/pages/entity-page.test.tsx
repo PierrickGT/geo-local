@@ -241,7 +241,9 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Loading entity...')).toBeInTheDocument()
+			// UI now uses skeleton spinners instead of text loading states
+			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+			expect(skeletons.length).toBeGreaterThan(0)
 		})
 	})
 

@@ -161,7 +161,9 @@ describe('GraphPage', () => {
 
 			render(<GraphPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Loading graph data...')).toBeInTheDocument()
+			// UI now uses skeleton spinners instead of text loading states
+			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+			expect(skeletons.length).toBeGreaterThan(0)
 		})
 
 		it('shows loading state in focus mode', () => {
@@ -176,7 +178,9 @@ describe('GraphPage', () => {
 			// Pass URL with focus param to MemoryRouter
 			render(<GraphPage />, { wrapper: createWrapper('/graph?focus=test-id') })
 
-			expect(screen.getByText('Loading graph data...')).toBeInTheDocument()
+			// UI now uses skeleton spinners instead of text loading states
+			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+			expect(skeletons.length).toBeGreaterThan(0)
 		})
 	})
 
