@@ -8,6 +8,10 @@ const log = createLogger('migrate')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'db', 'migrations')
 
+interface MigrationEntry {
+	run: () => Promise<void>
+}
+
 export async function runMigrations(): Promise<void> {
 	const pool = getPool()
 
@@ -33,7 +37,7 @@ export async function runMigrations(): Promise<void> {
 
 	const files = fs
 		.readdirSync(migrationsDir)
-		.filter((f) => f.endsWith('.sql'))
+		.filter((f) => f.endsWith('.sql') || f.endsWith('.ts'))
 		.sort()
 
 	for (const file of files) {
@@ -43,20 +47,36 @@ export async function runMigrations(): Promise<void> {
 			continue
 		}
 
-		const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8')
-		const client = await pool.connect()
-		try {
-			await client.query('BEGIN')
-			await client.query(sql)
-			await client.query('INSERT INTO _migrations (name) VALUES ($1)', [file])
-			await client.query('COMMIT')
-			log.info({ file }, 'Migration applied')
-		} catch (err) {
-			await client.query('ROLLBACK')
-			log.error({ file, err }, 'Migration failed')
-			throw err
-		} finally {
-			client.release()
+		if (file.endsWith('.sql')) {
+			const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8')
+			const client = await pool.connect()
+			try {
+				await client.query('BEGIN')
+				await client.query(sql)
+				await client.query('INSERT INTO _migrations (name) VALUES ($1)', [file])
+				await client.query('COMMIT')
+				log.info({ file }, 'Migration applied')
+			} catch (err) {
+				await client.query('ROLLBACK')
+				log.error({ file, err }, 'Migration failed')
+				throw err
+			} finally {
+				client.release()
+			}
+		} else if (file.endsWith('.ts')) {
+			// .ts migrations are dynamically imported and must export a `run()` function
+			const mod = (await import(path.join(migrationsDir, file))) as MigrationEntry
+			if (typeof mod.run !== 'function') {
+				throw new Error(`TypeScript migration ${file} must export a run() function`)
+			}
+			try {
+				await mod.run()
+				await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [file])
+				log.info({ file }, 'Migration applied')
+			} catch (err) {
+				log.error({ file, err }, 'Migration failed')
+				throw err
+			}
 		}
 	}
 }

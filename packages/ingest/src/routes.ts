@@ -1,6 +1,6 @@
 import { config, createLogger, getPool, idToHex } from '@geo-runtime/shared'
 import { Graph, IdUtils } from '@geoprotocol/geo-sdk'
-import { createEdit, decodeEdit, encodeEdit, formatId } from '@geoprotocol/grc-20'
+import { createEdit, decodeEdit, deleteEntity as deleteEntityOp, encodeEdit, formatId } from '@geoprotocol/grc-20'
 import express, { Router } from 'express'
 
 import type {
@@ -37,6 +37,22 @@ type MutationType = keyof typeof MUTATION_HANDLERS
 
 function resolveSpaceId(req: Request): string {
 	return (req.headers['x-space-id'] as string | undefined) ?? config.spaceId
+}
+
+const ZERO_SPACE_ID = '00000000000000000000000000000000'
+
+async function resolveEntitySpaceId(entityId: string, fallbackSpaceId: string): Promise<string> {
+	const pool = getPool()
+
+	const { rows } = await pool.query(
+		`SELECT space_id FROM entities WHERE id = $1`,
+		[entityId],
+	)
+
+	const spaceId = rows[0]?.space_id
+	if (spaceId && spaceId !== '' && spaceId !== ZERO_SPACE_ID) return spaceId
+
+	return fallbackSpaceId
 }
 
 async function insertEdit(
@@ -104,14 +120,22 @@ export function createRouter(): Router {
 			const spaceId = resolveSpaceId(req)
 
 			for (const mutation of body.mutations) {
-				// deleteEntity is async (queries external API) and needs server-resolved spaceId
 				if (mutation.type === 'deleteEntity') {
-					const result = await Graph.deleteEntity({
-						id: mutation.params.id,
-						spaceId,
-					})
-					allOps.push(...result.ops)
-					entityIds.push(result.id)
+					const entitySpaceId = await resolveEntitySpaceId(mutation.params.id, spaceId)
+					const hasValidSpace = entitySpaceId && entitySpaceId !== '' && entitySpaceId !== ZERO_SPACE_ID
+					if (hasValidSpace) {
+						const result = await Graph.deleteEntity({
+							id: mutation.params.id,
+							spaceId: entitySpaceId,
+						})
+						allOps.push(...result.ops)
+						entityIds.push(result.id)
+					} else {
+						// Local-only entity with no space association — generate op directly
+						const op = deleteEntityOp(IdUtils.toGrcId(mutation.params.id))
+						allOps.push(op)
+						entityIds.push(mutation.params.id)
+					}
 					continue
 				}
 

@@ -4,8 +4,20 @@ import { formatId } from '@geoprotocol/grc-20'
 import type pg from 'pg'
 import { upsertTriple } from './shared.js'
 
-export async function updateEntity(client: pg.PoolClient, op: UpdateEntity): Promise<void> {
+export async function updateEntity(
+	client: pg.PoolClient,
+	op: UpdateEntity,
+	spaceId?: string,
+): Promise<void> {
 	const id = idToHex(op.id)
+
+	// Backfill space_id if missing
+	if (spaceId) {
+		await client.query(
+			`UPDATE entities SET space_id = COALESCE(space_id, $2) WHERE id = $1`,
+			[id, spaceId],
+		)
+	}
 
 	// 1. Process unsets first
 	for (const u of op.unset) {

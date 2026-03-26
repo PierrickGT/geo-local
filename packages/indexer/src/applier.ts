@@ -10,14 +10,14 @@ import { restoreRelation } from './ops/restore-relation.js'
 import { updateEntity } from './ops/update-entity.js'
 import { updateRelation } from './ops/update-relation.js'
 
-export async function applyEdit(client: pg.PoolClient, edit: Edit): Promise<void> {
+export async function applyEdit(client: pg.PoolClient, edit: Edit, spaceId: string): Promise<void> {
 	for (const op of edit.ops) {
 		switch (op.type) {
 			case 'createEntity':
-				await createEntity(client, op)
+				await createEntity(client, op, spaceId)
 				break
 			case 'updateEntity':
-				await updateEntity(client, op)
+				await updateEntity(client, op, spaceId)
 				break
 			case 'deleteEntity':
 				await deleteEntity(client, op)

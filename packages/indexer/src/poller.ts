@@ -7,6 +7,7 @@ const log = createLogger('indexer:poller')
 
 interface PendingEdit {
 	id: string
+	spaceId: string
 	blob: Buffer
 }
 
@@ -20,7 +21,7 @@ export async function pollOnce(pool: pg.Pool, batchSize: number): Promise<number
 			await client.query('BEGIN')
 
 			const { rows } = await client.query<PendingEdit>(
-				`SELECT id, blob FROM edits
+				`SELECT id, space_id, blob FROM edits
 				 WHERE status = 'pending'
 				 ORDER BY created_at
 				 FOR UPDATE SKIP LOCKED
@@ -38,7 +39,7 @@ export async function pollOnce(pool: pg.Pool, batchSize: number): Promise<number
 			await client.query(`UPDATE edits SET status = 'processing' WHERE id = $1`, [editId])
 
 			const edit = decodeEdit(new Uint8Array(row.blob))
-			await applyEdit(client, edit)
+			await applyEdit(client, edit, row.spaceId)
 
 			await client.query(`UPDATE edits SET status = 'applied', applied_at = now() WHERE id = $1`, [
 				editId,

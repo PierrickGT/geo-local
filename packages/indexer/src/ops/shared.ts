@@ -3,8 +3,20 @@ import type { PropertyValue } from '@geoprotocol/grc-20'
 import type pg from 'pg'
 
 /** Ensure an entity row exists (INSERT ... ON CONFLICT DO NOTHING). */
-export async function ensureEntity(client: pg.PoolClient, id: string): Promise<void> {
-	await client.query(`INSERT INTO entities (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`, [id])
+export async function ensureEntity(
+	client: pg.PoolClient,
+	id: string,
+	spaceId?: string,
+): Promise<void> {
+	if (spaceId) {
+		await client.query(
+			`INSERT INTO entities (id, space_id) VALUES ($1, $2)
+			 ON CONFLICT (id) DO UPDATE SET space_id = COALESCE(entities.space_id, EXCLUDED.space_id)`,
+			[id, spaceId],
+		)
+	} else {
+		await client.query(`INSERT INTO entities (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`, [id])
+	}
 }
 
 /** Upsert a triple from a PropertyValue. */
