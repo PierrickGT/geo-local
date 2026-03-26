@@ -117,10 +117,42 @@ export function EditEntityPage() {
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
 	const { mutateAsync, isLoading: isSubmitting, error: mutationError, reset } = useUpdateEntity()
 
+	// All hook calls must come before conditional returns (React rules of hooks)
 	const initialData = useMemo(() => {
 		if (!entity?.entity) return undefined
 		return triplesToFormData(entity.entity.triples)
 	}, [entity])
+
+	const handleSubmit = useCallback(
+		async (data: EntityFormData) => {
+			if (!initialData) return
+
+			reset()
+
+			const { values, unset } = computeDiff(initialData, data)
+
+			// Filter out empty values arrays
+			const hasValues = values.length > 0
+			const hasUnset = unset.length > 0
+
+			if (!hasValues && !hasUnset) return
+
+			try {
+				await mutateAsync({
+					id: id ?? '',
+					name: data.name !== initialData.name ? data.name : undefined,
+					description: data.description !== initialData.description ? data.description : undefined,
+					values: hasValues ? values : undefined,
+					unset: hasUnset ? unset : undefined,
+				})
+
+				navigate(`/entities/${id}`, { replace: true })
+			} catch {
+				// Error handled by hook state, displayed below
+			}
+		},
+		[id, initialData, mutateAsync, navigate, reset],
+	)
 
 	// Error state (check before loading to avoid showing skeleton on error)
 	if (isError) {
@@ -181,35 +213,6 @@ export function EditEntityPage() {
 			</div>
 		)
 	}
-
-	const handleSubmit = useCallback(
-		async (data: EntityFormData) => {
-			reset()
-
-			const { values, unset } = computeDiff(initialData, data)
-
-			// Filter out empty values arrays
-			const hasValues = values.length > 0
-			const hasUnset = unset.length > 0
-
-			if (!hasValues && !hasUnset) return
-
-			try {
-				await mutateAsync({
-					id: id ?? '',
-					name: data.name !== initialData.name ? data.name : undefined,
-					description: data.description !== initialData.description ? data.description : undefined,
-					values: hasValues ? values : undefined,
-					unset: hasUnset ? unset : undefined,
-				})
-
-				navigate(`/entities/${id}`, { replace: true })
-			} catch {
-				// Error handled by hook state, displayed below
-			}
-		},
-		[id, initialData, mutateAsync, navigate, reset],
-	)
 
 	return (
 		<div className="p-6 max-w-2xl">

@@ -126,7 +126,7 @@ function AddRelationDialog({
 						<Label htmlFor="relation-type">Relation Type (Property ID)</Label>
 						<Input
 							id="relation-type"
-							placeholder="e.g. REFERENCES"
+							placeholder="e.g. a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
 							value={relationType}
 							onChange={(e) => setRelationType(e.target.value)}
 							disabled={createRelation.isLoading}

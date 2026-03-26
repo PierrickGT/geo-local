@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -590,6 +590,83 @@ describe('EditEntityPage', () => {
 			// Submit is disabled, so clicking does nothing
 			expect(screen.getByTestId('entity-submit')).toBeDisabled()
 			expect(mockSubmitMutations).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('hooks ordering (no conditional hook calls)', () => {
+		it('renders without React hooks crash when entity transitions from loading to loaded', () => {
+			// Start with loading state
+			mockEntityLoading()
+
+			const { rerender } = render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			// Should show skeleton, not crash
+			expect(screen.queryByTestId('entity-name-input')).not.toBeInTheDocument()
+
+			// Transition to loaded state — previously this would crash with
+			// "Rendered more hooks than during the previous render" because
+			// useCallback was after the loading early return
+			act(() => {
+				mockEntityLoaded()
+				rerender(<EditEntityPage />)
+			})
+
+			expect(screen.getByTestId('entity-name-input')).toHaveValue('Original Name')
+			expect(screen.getByRole('heading', { name: 'Edit Entity' })).toBeInTheDocument()
+		})
+
+		it('renders without React hooks crash when entity transitions from loading to error', () => {
+			mockEntityLoading()
+
+			const { rerender } = render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.queryByTestId('entity-name-input')).not.toBeInTheDocument()
+
+			// Transition to error state
+			act(() => {
+				mockEntityError('Not found', 404)
+				rerender(<EditEntityPage />)
+			})
+
+			expect(screen.getByText('Entity not found')).toBeInTheDocument()
+		})
+
+		it('renders without React hooks crash when entity starts with error (direct URL, invalid ID)', () => {
+			// Simulate direct navigation to /entities/invalid/edit where entity 404s immediately
+			mockEntityError('Not found', 404)
+
+			render(<EditEntityPage />, {
+				wrapper: createWrapper('/entities/nonexistent00000000000000000/edit'),
+			})
+
+			expect(screen.getByText('Entity not found')).toBeInTheDocument()
+			expect(screen.getByText(/nonexistent00000000000000000/)).toBeInTheDocument()
+		})
+
+		it('renders without React hooks crash when entity starts with generic error', () => {
+			mockEntityError('Network error')
+
+			render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Failed to load entity')).toBeInTheDocument()
+			expect(screen.getByText('Network error')).toBeInTheDocument()
+		})
+
+		it('renders without React hooks crash when entity transitions from error to loaded', () => {
+			// Start with error
+			mockEntityError('Network error')
+
+			const { rerender } = render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Failed to load entity')).toBeInTheDocument()
+
+			// Transition to loaded (e.g., retry succeeded)
+			act(() => {
+				mockEntityLoaded()
+				rerender(<EditEntityPage />)
+			})
+
+			expect(screen.getByTestId('entity-name-input')).toHaveValue('Original Name')
 		})
 	})
 })
