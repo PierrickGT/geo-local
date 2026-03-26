@@ -56,6 +56,31 @@ When using mutation hooks in dialogs or event handlers that need to handle error
 
 React Router matches routes top-down. When adding nested routes under `/entities/:id` (e.g., `/entities/:id/edit`), place the more specific routes BEFORE the parameterized route to prevent the `:id` param from capturing literal path segments (e.g., `edit` being captured as an entity ID).
 
+## shadcn/ui Rendering Patterns
+
+shadcn/ui components may not render the semantic HTML elements you'd expect. Tests should query by text content, aria-label, or data-testid rather than by role:
+
+- **CardTitle** renders as `<div>` (not `<h1>`/`<h2>`). Use `getByText()` not `getByRole('heading')`.
+- **PaginationLink** renders as `<a>` (not `<button>`). Use `getByRole('link')` or query by `aria-label`.
+- **Skeleton** renders `<div data-slot="skeleton">`. Check for the `data-slot` attribute or `aria-hidden`.
+- **Lucide icons** render as `<svg aria-hidden="true">` with no `role` attribute. Query by container or test ID.
+- **Disabled state**: The project uses CSS classes (`pointer-events-none opacity-50`) rather than HTML `disabled` attribute in some components (e.g., Pagination). Test behavior, not implementation.
+
+## data-testid Convention
+
+Components use `data-testid` attributes for test selectors. Pattern: `<component>-<element>`. Examples:
+- `delete-entity-button`, `confirm-delete-button`, `delete-entity-error`
+- `edit-entity-button`
+- When text appears in multiple DOM locations, use `getAllByText().length >= N` to verify count.
+
+## React Hooks Ordering
+
+All React hook calls (useState, useMemo, useCallback, useQuery, etc.) must appear before any conditional returns or early exits. Violating this causes React to crash with "Rendered more hooks than during the previous render."
+
+## Integration Test Mock Dependencies
+
+Page components render child components that may depend on mutation hooks. When testing page components, you must mock all mutation hooks used by transitive children. Example: EntityPage renders RelationsPanel which uses `useCreateRelation`/`useDeleteRelation` — these must be mocked in entity-page tests.
+
 ## Query Key Convention
 
 - `['entities']` — all entities queries

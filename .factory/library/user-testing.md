@@ -81,6 +81,7 @@ Testing surface: tools, URLs, setup steps, known quirks.
 
 - Type filter options come from TYPE relations - may be empty if no typed entities exist
 - Some entity pages show 404 console errors for stale relation references (pre-existing)
+- Relation panel may show 404 console errors for relation type IDs being fetched as entity IDs (the panel tries to resolve the relation property ID as an entity name). This is cosmetic and doesn't affect functionality.
 - Mutation flows require both ingest server AND indexer running — edits stay in `pending` without indexer
 - Polling has a 60s timeout — if indexer is slow, tests may timeout
 - Entity list ordered by `created_at DESC` — new entities appear on first page

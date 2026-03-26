@@ -1,0 +1,82 @@
+{
+	"milestone": "delete-entity",
+	"round": 1,
+	"status": "pass",
+	"validatorsRun": {
+		"test": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run test",
+			"exitCode": 0,
+			"note": "333/333 tests pass (25 test files)"
+		},
+		"typecheck": {
+			"passed": true,
+			"command": "pnpm --filter @geo-runtime/explorer run typecheck",
+			"exitCode": 0
+		},
+		"lint": {
+			"passed": false,
+			"command": "pnpm lint",
+			"exitCode": 1,
+			"note": "Pre-existing failures only: .factory/validation/ JSON formatting (prior milestones), packages/api/dist/ compiled output, and unused err vars in packages/api/src/routes.ts (from infrastructure-create milestone). No new lint issues from delete-entity features."
+		}
+	},
+	"reviewsSummary": {
+		"total": 4,
+		"passed": 4,
+		"failed": 0,
+		"failedFeatures": []
+	},
+	"blockingIssues": [],
+	"appliedUpdates": [
+		{
+			"target": "library",
+			"description": "Added shadcn/ui rendering patterns (CardTitle as div, PaginationLink as anchor, Skeleton data-slot, Lucide SVG attributes, CSS-based disabled state), data-testid convention, React hooks ordering rule, and integration test mock dependencies to architecture.md",
+			"sourceFeature": "fix-preexisting-tests, delete-entity-ui, fix-edit-page-hooks-crash"
+		},
+		{
+			"target": "library",
+			"description": "Added relation type ID 404 console error to user-testing.md Known Quirks section",
+			"sourceFeature": "cross-area-validation"
+		}
+	],
+	"suggestedGuidanceUpdates": [
+		{
+			"target": "AGENTS.md",
+			"suggestion": "Remove or update the 'Pre-Existing Test Failures' section since all 15 failures have been fixed. Future workers should not expect these failures.",
+			"evidence": "fix-preexisting-tests (commit f666bc9) fixed all 15 failures. 333/333 tests now pass. AGENTS.md still states '15 tests fail due to prior UI refactoring.'",
+			"isSystemic": false
+		},
+		{
+			"target": "AGENTS.md",
+			"suggestion": "Add note about pre-existing lint failures: .factory/validation/ JSON files and packages/api/dist/ compiled output cause lint to fail (exit code 1). These are not application code issues. Workers should check lint output against packages/*/src/ only.",
+			"evidence": "Every milestone's lint run shows the same pre-existing failures. cross-area-validation handoff explicitly noted this. Workers may waste time investigating these.",
+			"isSystemic": true
+		},
+		{
+			"target": "frontend-worker skill",
+			"suggestion": "Add guidance that page component integration tests need to mock all mutation hooks used by child components. Example: EntityPage tests must mock useCreateRelation/useDeleteRelation because RelationsPanel is a child.",
+			"evidence": "delete-entity-ui worker encountered test failures due to missing mutation hook mocks for transitive child components. skillFeedback documented this deviation.",
+			"isSystemic": true
+		}
+	],
+	"rejectedObservations": [
+		{
+			"observation": "Cross-component mock dependency observation (duplicate of skill suggestion)",
+			"reason": "Already captured as suggestedGuidanceUpdate for frontend-worker skill"
+		},
+		{
+			"observation": "mutateAsync vs mutate convention and isLoading mapping",
+			"reason": "Already documented in architecture.md from prior milestone"
+		},
+		{
+			"observation": "Verification feature skipping Phase 2",
+			"reason": "Informational only — worker correctly applied the skill to a verification-only feature"
+		},
+		{
+			"observation": "AGENTS.md pre-existing test failures already known",
+			"reason": "Already covered by the suggestedGuidanceUpdate to remove/update that section"
+		}
+	],
+	"previousRound": null
+}

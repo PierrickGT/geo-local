@@ -1,0 +1,31 @@
+{
+	"featureId": "fix-preexisting-tests",
+	"reviewedAt": "2026-03-26T01:15:00.000Z",
+	"commitId": "f666bc9",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "pass",
+	"codeReview": {
+		"summary": "All 15 pre-existing test failures across 7 files have been correctly updated to match the current UI implementation. Each fix category was verified against the actual source components: Skeleton loading states use data-slot='skeleton', pagination uses CSS classes instead of HTML disabled attribute, pagination links are <a> tags with aria-labels not <button> elements, CardTitle renders as <div> not <heading>, TruncateId renders full text with CSS truncation, and Lucide Search icon has aria-hidden but no role='img'. All 333 tests pass with zero regressions.",
+		"issues": []
+	},
+	"sharedStateObservations": [
+		{
+			"area": "conventions",
+			"observation": "Pre-Existing Test Failures section in AGENTS.md describes the failures at a high level. Now that they are fixed, this section should be removed or updated to prevent future workers from expecting these failures.",
+			"evidence": "AGENTS.md line: '15 tests fail due to prior UI refactoring... These should be fixed as part of this mission but are not new issues.'"
+		},
+		{
+			"area": "knowledge",
+			"observation": "Several UI component patterns that caused test failures are undocumented but worth recording: (1) shadcn/ui components like CardTitle, PaginationLink render as div/a not heading/button, (2) the project uses CSS-based disabled states (pointer-events-none opacity-50) rather than HTML disabled attribute, (3) Lucide icons render as SVG with aria-hidden but no role attribute, (4) loading states use Skeleton components with data-slot='skeleton' instead of text.",
+			"evidence": "Verified across card.tsx, pagination.tsx, search-input.tsx, skeleton.tsx — all match test expectations."
+		},
+		{
+			"area": "skills",
+			"observation": "The frontend-worker skill should note that shadcn/ui components may not render semantic HTML elements — CardTitle is a div, PaginationLink is an anchor. Tests should query by text content or aria-label rather than by role when using these components.",
+			"evidence": "CardTitle in card.tsx uses React.ComponentProps<'div'> and renders <div data-slot='card-title'>. Pagination components in pagination.tsx are <a> elements."
+		}
+	],
+	"addressesFailureFrom": null,
+	"summary": "Clean fix of all 15 pre-existing test failures. Each test change accurately reflects the current UI component implementations. No bugs, no regressions, no edge cases missed. Verification passed: 333/333 tests green, build clean, lint clean."
+}

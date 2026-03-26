@@ -1,0 +1,33 @@
+{
+	"featureId": "fix-edit-page-hooks-crash",
+	"reviewedAt": "2026-03-26T01:15:00.000Z",
+	"commitId": "4bf92d2",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "pass",
+	"codeReview": {
+		"summary": "Clean, correct fix for a classic React hooks violation. The worker moved useMemo and useCallback before conditional early returns in EditEntityPage, added an initialData guard in handleSubmit, updated the AddRelationDialog placeholder, and added 5 well-targeted tests. All verification passed (typecheck, lint, 26/26 tests).",
+		"issues": [
+			{
+				"file": "packages/explorer/src/pages/edit-entity-page.tsx",
+				"line": 132,
+				"severity": "suggestion",
+				"description": "The `if (!initialData) return` guard in handleSubmit is a correct safety measure for when hooks fire but entity data isn't yet available. However, handleSubmit is only passed to EntityForm which is only rendered when initialData is truthy (after the loading early return on line ~186). The guard is defensive and harmless but technically dead code in the current render path. This is fine as-is — defensive programming is appropriate here."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "conventions",
+			"observation": "The AGENTS.md for this mission already documents pre-existing test failures (15 tests across entity, graph, search, pagination), which matches what the worker found. This was properly handled.",
+			"evidence": "AGENTS.md 'Pre-Existing Test Failures' section matches worker's discoveredIssues about 15 test failures"
+		},
+		{
+			"area": "conventions",
+			"observation": "React hooks ordering rule (all hooks before conditional returns) is a well-known React pattern but not explicitly mentioned in AGENTS.md or CLAUDE.md. The worker had to identify this independently from the feature description. Adding a React-specific note about hooks ordering to the project conventions could prevent this class of bug in future features.",
+			"evidence": "Feature description explicitly stated the hooks violation. AGENTS.md has no mention of React hooks rules."
+		}
+	],
+	"addressesFailureFrom": null,
+	"summary": "Pass. The fix correctly resolves the React hooks crash by moving all useMemo/useCallback calls before conditional early returns in EditEntityPage. The handleSubmit now includes a defensive guard for when initialData is undefined. The AddRelationDialog placeholder was updated from 'e.g. REFERENCES' to a hex example. Five new tests cover all state transitions (loading→loaded, loading→error, error→loaded, direct URL with invalid ID, direct URL with generic error). Typecheck, lint, and all 26 tests pass. Commit message follows conventional commits format and is descriptive."
+}
