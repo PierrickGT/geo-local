@@ -1,4 +1,5 @@
-import { PencilIcon } from 'lucide-react'
+import { PencilIcon, Trash2Icon } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import type { EntityStatus, Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
@@ -6,9 +7,19 @@ import { TriplesPanel } from '~/components/triples-panel'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '~/components/ui/dialog'
 import { Skeleton } from '~/components/ui/skeleton'
+import { Spinner } from '~/components/ui/spinner'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
+import { useDeleteEntity } from '~/hooks/use-mutations'
 import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
 
 /**
@@ -60,6 +71,83 @@ function formatDate(isoString: string): string {
 	})
 }
 
+// ---------------------------------------------------------------------------
+// Delete Entity Dialog
+// ---------------------------------------------------------------------------
+
+function DeleteEntityDialog({
+	entityId,
+	entityName,
+	open,
+	onOpenChange,
+}: {
+	entityId: string
+	entityName?: string
+	open: boolean
+	onOpenChange: (open: boolean) => void
+}) {
+	const navigate = useNavigate()
+	const deleteEntity = useDeleteEntity()
+
+	async function handleConfirm() {
+		if (deleteEntity.isLoading) return
+
+		try {
+			await deleteEntity.mutateAsync({ id: entityId })
+			deleteEntity.reset()
+			navigate('/entities')
+		} catch {
+			// Error is captured in deleteEntity.error, dialog stays open
+		}
+	}
+
+	function handleOpenChange(nextOpen: boolean) {
+		if (!nextOpen) {
+			deleteEntity.reset()
+		}
+		onOpenChange(nextOpen)
+	}
+
+	const displayName = entityName ?? entityId
+
+	return (
+		<Dialog open={open} onOpenChange={handleOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Delete Entity</DialogTitle>
+					<DialogDescription>
+						Are you sure you want to delete <span className="font-medium">{displayName}</span>? This
+						action cannot be undone.
+					</DialogDescription>
+				</DialogHeader>
+				{deleteEntity.error && (
+					<div className="text-sm text-destructive" data-testid="delete-entity-error">
+						{deleteEntity.error.message}
+					</div>
+				)}
+				<DialogFooter>
+					<Button
+						variant="outline"
+						onClick={() => handleOpenChange(false)}
+						disabled={deleteEntity.isLoading}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={handleConfirm}
+						disabled={deleteEntity.isLoading}
+						data-testid="confirm-delete-button"
+					>
+						{deleteEntity.isLoading && <Spinner className="mr-1" />}
+						Delete
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
 /**
  * Entity detail page showing entity header, triples panel, and relations panel.
  * Handles loading, not found, and error states.
@@ -68,6 +156,7 @@ export function EntityPage() {
 	const { id } = useParams<{ id: string }>()
 	const navigate = useNavigate()
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
 	// Loading state
 	if (isLoading) {
@@ -187,15 +276,26 @@ export function EntityPage() {
 							</div>
 						</div>
 						{entityDetail.status === 'alive' && (
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => navigate(`/entities/${entityDetail.id}/edit`)}
-								data-testid="edit-entity-button"
-							>
-								<PencilIcon className="size-4" />
-								Edit
-							</Button>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => navigate(`/entities/${entityDetail.id}/edit`)}
+									data-testid="edit-entity-button"
+								>
+									<PencilIcon className="size-4" />
+									Edit
+								</Button>
+								<Button
+									variant="destructive"
+									size="sm"
+									onClick={() => setDeleteDialogOpen(true)}
+									data-testid="delete-entity-button"
+								>
+									<Trash2Icon className="size-4" />
+									Delete
+								</Button>
+							</div>
 						)}
 					</div>
 					<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
@@ -219,6 +319,14 @@ export function EntityPage() {
 				entityId={entityDetail.id}
 				outgoing={entityDetail.outgoing}
 				incoming={entityDetail.incoming}
+			/>
+
+			{/* Delete Entity Dialog */}
+			<DeleteEntityDialog
+				entityId={entityDetail.id}
+				entityName={entityName}
+				open={deleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
 			/>
 		</div>
 	)

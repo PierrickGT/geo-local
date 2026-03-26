@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
@@ -11,10 +12,20 @@ vi.mock('~/hooks/use-entities', () => ({
 	usePropertyNames: vi.fn(),
 }))
 
+vi.mock('~/hooks/use-mutations', () => ({
+	useDeleteEntity: vi.fn(),
+	useCreateRelation: vi.fn(),
+	useDeleteRelation: vi.fn(),
+}))
+
 import { useEntity, usePropertyNames } from '~/hooks/use-entities'
+import { useCreateRelation, useDeleteEntity, useDeleteRelation } from '~/hooks/use-mutations'
 
 const mockUseEntity = vi.mocked(useEntity)
 const mockUsePropertyNames = vi.mocked(usePropertyNames)
+const mockUseDeleteEntity = vi.mocked(useDeleteEntity)
+const mockUseCreateRelation = vi.mocked(useCreateRelation)
+const mockUseDeleteRelation = vi.mocked(useDeleteRelation)
 
 // Helper to create wrapper with all providers
 function createWrapper(initialRoute = '/entities/test-entity-id') {
@@ -109,6 +120,35 @@ describe('EntityPage', () => {
 		mockUsePropertyNames.mockReturnValue({
 			names: new Map(),
 			isLoading: false,
+		})
+
+		// Default mock for useDeleteEntity
+		mockUseDeleteEntity.mockReturnValue({
+			mutate: vi.fn(),
+			mutateAsync: vi.fn(),
+			isLoading: false,
+			error: null,
+			reset: vi.fn(),
+			data: undefined,
+		})
+
+		// Default mocks for relation mutation hooks (used by RelationsPanel)
+		mockUseCreateRelation.mockReturnValue({
+			mutate: vi.fn(),
+			mutateAsync: vi.fn(),
+			isLoading: false,
+			error: null,
+			reset: vi.fn(),
+			data: undefined,
+		})
+
+		mockUseDeleteRelation.mockReturnValue({
+			mutate: vi.fn(),
+			mutateAsync: vi.fn(),
+			isLoading: false,
+			error: null,
+			reset: vi.fn(),
+			data: undefined,
 		})
 	})
 
@@ -304,6 +344,201 @@ describe('EntityPage', () => {
 			// Multiple 'text' badges exist due to two text triples in mock data
 			expect(screen.getAllByText('text').length).toBeGreaterThan(0)
 			expect(screen.getByText('number')).toBeInTheDocument()
+		})
+	})
+
+	describe('delete entity', () => {
+		it('renders Delete button for alive entities', () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('delete-entity-button')).toBeInTheDocument()
+			expect(screen.getByText('Delete')).toBeInTheDocument()
+		})
+
+		it('hides Delete button for deleted entities', () => {
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						status: 'deleted',
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.queryByTestId('delete-entity-button')).not.toBeInTheDocument()
+			// Edit button should also be hidden for deleted entities
+			expect(screen.queryByTestId('edit-entity-button')).not.toBeInTheDocument()
+		})
+
+		it('opens confirmation dialog when Delete button is clicked', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+
+			expect(screen.getByRole('dialog')).toBeInTheDocument()
+			expect(
+				screen.getByRole('dialog').querySelector('[data-slot="dialog-title"]'),
+			).toHaveTextContent('Delete Entity')
+			expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument()
+			// "Test Entity" appears in both header and dialog — use getAllByText
+			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(2)
+			expect(screen.getByText('Cancel')).toBeInTheDocument()
+			expect(screen.getByTestId('confirm-delete-button')).toBeInTheDocument()
+		})
+
+		it('dialog shows entity ID when entity has no name', async () => {
+			const user = userEvent.setup()
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						triples: [],
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+
+			expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument()
+			// Entity ID appears in both TruncateId (header) and dialog — use getAllByText
+			expect(screen.getAllByText('test-entity-id').length).toBeGreaterThanOrEqual(2)
+		})
+
+		it('canceling dialog dismisses it without firing mutation', async () => {
+			const user = userEvent.setup()
+			const mutateAsyncFn = vi.fn()
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: mutateAsyncFn,
+				isLoading: false,
+				error: null,
+				reset: vi.fn(),
+				data: undefined,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+			await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+			expect(mutateAsyncFn).not.toHaveBeenCalled()
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+		})
+
+		it('confirm fires deleteEntity mutation with correct params', async () => {
+			const user = userEvent.setup()
+			const mutateAsyncFn = vi.fn().mockResolvedValue({ id: 'edit-id' })
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: mutateAsyncFn,
+				isLoading: false,
+				error: null,
+				reset: vi.fn(),
+				data: undefined,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+			await user.click(screen.getByTestId('confirm-delete-button'))
+
+			expect(mutateAsyncFn).toHaveBeenCalledWith({ id: 'test-entity-id' })
+		})
+
+		it('shows spinner and disables buttons during pending', async () => {
+			const user = userEvent.setup()
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: vi.fn(), // returns a promise that never resolves — stays pending
+				isLoading: true,
+				error: null,
+				reset: vi.fn(),
+				data: undefined,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+
+			// Both buttons should be disabled during loading
+			const dialog = screen.getByRole('dialog')
+			const buttons = dialog.querySelectorAll('button')
+			const confirmBtn = Array.from(buttons).find((b) => b.textContent?.includes('Delete'))
+			const cancelBtn = Array.from(buttons).find((b) => b.textContent?.includes('Cancel'))
+			expect(confirmBtn).toBeDisabled()
+			expect(cancelBtn).toBeDisabled()
+
+			// Spinner should be visible inside the confirm button
+			expect(confirmBtn?.querySelector('[role="status"]')).toBeInTheDocument()
+		})
+
+		it('shows error message when mutation fails', async () => {
+			const user = userEvent.setup()
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: vi.fn(),
+				isLoading: false,
+				error: new Error('Failed to delete entity: not found'),
+				reset: vi.fn(),
+				data: undefined,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+
+			expect(screen.getByTestId('delete-entity-error')).toHaveTextContent(
+				'Failed to delete entity: not found',
+			)
+		})
+
+		it('closing dialog resets error state', async () => {
+			const user = userEvent.setup()
+			const resetFn = vi.fn()
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: vi.fn(),
+				isLoading: false,
+				error: new Error('Some error'),
+				reset: resetFn,
+				data: undefined,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+			expect(screen.getByTestId('delete-entity-error')).toBeInTheDocument()
+
+			// Close via Cancel
+			await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+			expect(resetFn).toHaveBeenCalled()
+
+			// Re-open — hook mock has no error now
+			mockUseDeleteEntity.mockReturnValue({
+				mutate: vi.fn(),
+				mutateAsync: vi.fn(),
+				isLoading: false,
+				error: null,
+				reset: vi.fn(),
+				data: undefined,
+			})
+
+			await user.click(screen.getByTestId('delete-entity-button'))
+			expect(screen.queryByTestId('delete-entity-error')).not.toBeInTheDocument()
 		})
 	})
 
