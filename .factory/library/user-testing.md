@@ -85,6 +85,9 @@ Testing surface: tools, URLs, setup steps, known quirks.
 - Mutation flows require both ingest server AND indexer running — edits stay in `pending` without indexer
 - Polling has a 60s timeout — if indexer is slow, tests may timeout
 - Entity list ordered by `created_at DESC` — new entities appear on first page
+- **SPACE_ID env var not configured** — the ingest server's `resolveSpaceId()` falls back to empty string, causing `deleteEntity` mutations to return 400 through the Vite proxy. Other mutations (create, update, relations) work without it because they resolve spaceId from the entity itself.
+- **@geoprotocol/geo-sdk Graph.deleteEntity() produces zero operations** — even with a valid spaceId, the SDK's deleteEntity returns opCount:0, meaning entities are never actually deleted in the DB. This blocks visual verification of the deleted status badge (VAL-DEL-006). The UI code is correct but the SDK has a bug.
+- **Workaround for delete UI testing** — inject a browser-side fetch mock via `agent-browser eval` to intercept POST /ingest/edits/build and GET /api/edits/:id, returning successful responses with delayed resolution to capture spinner/loading states.
 
 ## Flow Validator Guidance: Browser UI
 
