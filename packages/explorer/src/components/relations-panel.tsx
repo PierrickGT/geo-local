@@ -1,10 +1,25 @@
-import { useMemo } from 'react'
+import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { Relation } from '~/api/types'
+import { Button } from '~/components/ui/button'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '~/components/ui/dialog'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
+import { Spinner } from '~/components/ui/spinner'
 import { usePropertyNames } from '~/hooks/use-entities'
+import { useCreateRelation, useDeleteRelation } from '~/hooks/use-mutations'
 import { formatPropertyId } from '~/lib/constants'
 
 interface RelationsPanelProps {
+	entityId: string
 	outgoing: Relation[]
 	incoming: Relation[]
 	className?: string
@@ -49,13 +64,204 @@ function DirectionArrow({ direction }: { direction: Direction }) {
 	)
 }
 
+// ---------------------------------------------------------------------------
+// Add Relation Dialog
+// ---------------------------------------------------------------------------
+
+function AddRelationDialog({
+	entityId,
+	open,
+	onOpenChange,
+}: {
+	entityId: string
+	open: boolean
+	onOpenChange: (open: boolean) => void
+}) {
+	const [relationType, setRelationType] = useState('')
+	const [targetEntityId, setTargetEntityId] = useState('')
+	const createRelation = useCreateRelation()
+
+	const canSubmit = relationType.trim() !== '' && targetEntityId.trim() !== ''
+
+	async function handleSubmit(e: React.FormEvent) {
+		e.preventDefault()
+		if (!canSubmit || createRelation.isLoading) return
+
+		try {
+			await createRelation.mutateAsync({
+				fromEntity: entityId,
+				toEntity: targetEntityId.trim(),
+				type: relationType.trim(),
+			})
+			setRelationType('')
+			setTargetEntityId('')
+			createRelation.reset()
+			onOpenChange(false)
+		} catch {
+			// Error is captured in createRelation.error, dialog stays open
+		}
+	}
+
+	function handleOpenChange(nextOpen: boolean) {
+		if (!nextOpen) {
+			// Reset form on close
+			setRelationType('')
+			setTargetEntityId('')
+			createRelation.reset()
+		}
+		onOpenChange(nextOpen)
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={handleOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Add Relation</DialogTitle>
+					<DialogDescription>
+						Create a new outgoing relation from this entity to a target entity.
+					</DialogDescription>
+				</DialogHeader>
+				<form onSubmit={handleSubmit} className="space-y-4">
+					<div className="space-y-2">
+						<Label htmlFor="relation-type">Relation Type (Property ID)</Label>
+						<Input
+							id="relation-type"
+							placeholder="e.g. REFERENCES"
+							value={relationType}
+							onChange={(e) => setRelationType(e.target.value)}
+							disabled={createRelation.isLoading}
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="target-entity-id">Target Entity ID</Label>
+						<Input
+							id="target-entity-id"
+							placeholder="32-character hex entity ID"
+							value={targetEntityId}
+							onChange={(e) => setTargetEntityId(e.target.value)}
+							disabled={createRelation.isLoading}
+						/>
+					</div>
+					{createRelation.error && (
+						<div className="text-sm text-destructive" data-testid="add-relation-error">
+							{createRelation.error.message}
+						</div>
+					)}
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => handleOpenChange(false)}
+							disabled={createRelation.isLoading}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={!canSubmit || createRelation.isLoading}>
+							{createRelation.isLoading && <Spinner className="mr-1" />}
+							Add Relation
+						</Button>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Remove Relation Dialog
+// ---------------------------------------------------------------------------
+
+function RemoveRelationDialog({
+	relation,
+	entityId,
+	open,
+	onOpenChange,
+}: {
+	relation: UnifiedRelation
+	entityId: string
+	open: boolean
+	onOpenChange: (open: boolean) => void
+}) {
+	const deleteRelation = useDeleteRelation()
+
+	async function handleConfirm() {
+		if (deleteRelation.isLoading) return
+
+		try {
+			await deleteRelation.mutateAsync({
+				id: relation.id,
+				entityId,
+			})
+			deleteRelation.reset()
+			onOpenChange(false)
+		} catch {
+			// Error is captured in deleteRelation.error, dialog stays open
+		}
+	}
+
+	function handleOpenChange(nextOpen: boolean) {
+		if (!nextOpen) {
+			deleteRelation.reset()
+		}
+		onOpenChange(nextOpen)
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={handleOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Remove Relation</DialogTitle>
+					<DialogDescription>
+						Are you sure you want to remove the{' '}
+						<span className="font-medium">{formatPropertyId(relation.relationType)}</span> relation
+						{relation.direction === 'outgoing'
+							? ` to ${truncateEntityId(relation.toId, 16)}`
+							: ` from ${truncateEntityId(relation.fromId, 16)}`}
+						?
+					</DialogDescription>
+				</DialogHeader>
+				{deleteRelation.error && (
+					<div className="text-sm text-destructive" data-testid="remove-relation-error">
+						{deleteRelation.error.message}
+					</div>
+				)}
+				<DialogFooter>
+					<Button
+						variant="outline"
+						onClick={() => handleOpenChange(false)}
+						disabled={deleteRelation.isLoading}
+					>
+						Cancel
+					</Button>
+					<Button variant="destructive" onClick={handleConfirm} disabled={deleteRelation.isLoading}>
+						{deleteRelation.isLoading && <Spinner className="mr-1" />}
+						Remove
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+// ---------------------------------------------------------------------------
+// RelationsPanel
+// ---------------------------------------------------------------------------
+
 /**
  * Relations panel showing all relations in a unified list.
  * Each relation shows the relation type, direction indicator, and linked entity.
  * Clicking a linked entity navigates to its detail page.
+ * Supports adding and removing relations via dialogs.
  */
-export function RelationsPanel({ outgoing, incoming, className = '' }: RelationsPanelProps) {
+export function RelationsPanel({
+	entityId,
+	outgoing,
+	incoming,
+	className = '',
+}: RelationsPanelProps) {
 	const navigate = useNavigate()
+	const [addDialogOpen, setAddDialogOpen] = useState(false)
+	const [removeTarget, setRemoveTarget] = useState<UnifiedRelation | null>(null)
 
 	// Combine outgoing and incoming relations with direction marker
 	const allRelations: UnifiedRelation[] = useMemo(
@@ -93,8 +299,17 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 	return (
 		<div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
 			{/* Header */}
-			<div className="px-4 py-3 border-b border-gray-200">
+			<div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
 				<h2 className="text-lg font-medium text-gray-900">Relations ({totalCount})</h2>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => setAddDialogOpen(true)}
+					data-testid="add-relation-button"
+				>
+					<PlusIcon className="size-4" />
+					Add Relation
+				</Button>
 			</div>
 
 			{/* Relations list */}
@@ -119,7 +334,7 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 								className="px-4 py-3 hover:bg-gray-50"
 							>
 								<div className="flex items-center justify-between gap-4">
-									<div className="flex items-center gap-3">
+									<div className="flex items-center gap-3 min-w-0">
 										<span className="font-mono text-sm text-gray-700" title={relation.relationType}>
 											{displayName}
 										</span>
@@ -130,18 +345,42 @@ export function RelationsPanel({ outgoing, incoming, className = '' }: Relations
 												e.preventDefault()
 												handleEntityClick(linkedEntityId)
 											}}
-											className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded text-sm"
+											className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded text-sm truncate"
 											title={linkedEntityId}
 										>
 											{linkedEntityName ?? truncateEntityId(linkedEntityId)}
 										</a>
 									</div>
+									<Button
+										variant="ghost"
+										size="icon-xs"
+										onClick={() => setRemoveTarget(relation)}
+										data-testid={`remove-relation-button-${index}`}
+										aria-label={`Remove ${displayName} relation`}
+									>
+										<Trash2Icon className="size-3.5 text-gray-400 hover:text-destructive" />
+									</Button>
 								</div>
 							</div>
 						)
 					})
 				)}
 			</div>
+
+			{/* Add Relation Dialog */}
+			<AddRelationDialog entityId={entityId} open={addDialogOpen} onOpenChange={setAddDialogOpen} />
+
+			{/* Remove Relation Dialog */}
+			{removeTarget && (
+				<RemoveRelationDialog
+					relation={removeTarget}
+					entityId={entityId}
+					open={removeTarget !== null}
+					onOpenChange={(nextOpen) => {
+						if (!nextOpen) setRemoveTarget(null)
+					}}
+				/>
+			)}
 		</div>
 	)
 }

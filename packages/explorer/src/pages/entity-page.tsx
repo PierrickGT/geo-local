@@ -215,7 +215,11 @@ export function EntityPage() {
 			<TriplesPanel triples={entityDetail.triples} />
 
 			{/* Relations panel */}
-			<RelationsPanel outgoing={entityDetail.outgoing} incoming={entityDetail.incoming} />
+			<RelationsPanel
+				entityId={entityDetail.id}
+				outgoing={entityDetail.outgoing}
+				incoming={entityDetail.incoming}
+			/>
 		</div>
 	)
 }
