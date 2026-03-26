@@ -41,6 +41,21 @@ Defined in `packages/explorer/src/lib/constants.ts`:
 - `DESCRIPTION_PROPERTY_ID` — entity description triple
 - `TYPES_PROPERTY_ID` — entity type references
 
+## Mutation Hook Usage Pattern
+
+When using mutation hooks in dialogs or event handlers that need to handle errors inline, use `mutateAsync` + `try/catch` instead of `mutate` + `onSuccess`/`onError`. The mutation hooks expose both patterns via `mapMutationResult`:
+
+- `mutate` — fire-and-forget, use `onSuccess`/`onError` callbacks for side effects
+- `mutateAsync` — returns a Promise, use `try/catch` for inline error handling in dialogs
+
+**Convention**: Use `mutateAsync` in Dialog/form submit handlers where you need to keep the dialog open on error and show the error message. Use `mutate` + callbacks for simple fire-and-forget actions (e.g., delete button).
+
+**Note**: The `isLoading` property on `MutationHookReturn` is mapped from TanStack Query's `isPending`. This is documented in the hook file comments.
+
+## Route Ordering Convention
+
+React Router matches routes top-down. When adding nested routes under `/entities/:id` (e.g., `/entities/:id/edit`), place the more specific routes BEFORE the parameterized route to prevent the `:id` param from capturing literal path segments (e.g., `edit` being captured as an entity ID).
+
 ## Query Key Convention
 
 - `['entities']` — all entities queries

@@ -1,0 +1,36 @@
+{
+  "featureId": "relations-add-remove",
+  "milestone": "edit-relations",
+  "reviewStatus": "pass",
+  "issues": [
+    {
+      "severity": "non_blocking",
+      "description": "AddRelationDialog does not validate that targetEntityId is a valid 32-char hex entity ID. The input accepts any string as long as it's non-empty. Since entity IDs are char(32) hex (per AGENTS.md), a client-side format validation could prevent obviously invalid inputs (e.g., spaces, special chars) from hitting the server.",
+      "file": "packages/explorer/src/components/relations-panel.tsx",
+      "line": 84
+    },
+    {
+      "severity": "suggestion",
+      "description": "The AddRelationDialog only supports creating outgoing relations (fromEntity is hardcoded as the current entity). The feature description and expectedBehavior mention 'Add Relation' generically. If future requirements include incoming relations, the dialog would need a direction selector. This is acceptable for current scope but worth noting.",
+      "file": "packages/explorer/src/components/relations-panel.tsx",
+      "line": 90
+    },
+    {
+      "severity": "suggestion",
+      "description": "RemoveRelationDialog error test ('shows error in dialog when mutation fails') tests the pre-existing hook error state rather than the mutateAsync rejection path. The component also relies on TanStack Query's automatic error capture from mutateAsync rejection — this works but is untested for the remove case. The add case similarly only tests pre-existing hook error state.",
+      "file": "packages/explorer/src/components/relations-panel.test.tsx",
+      "line": null
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "observation": "Worker used mutateAsync + try/catch pattern in dialogs instead of mutate + onSuccess. The mutation hooks' mapMutationResult exposes both mutate and mutateAsync. The worker's skillFeedback suggests adding onSuccess callback support to mutate signature. This pattern decision (async/await in component vs declarative onSuccess) should be documented as a convention for future frontend workers.",
+      "suggestedTarget": "library"
+    },
+    {
+      "observation": "The isLoading property on MutationHookReturn is mapped from TanStack Query's isPending. This is already documented in the hook file comment but may not be obvious to workers unfamiliar with the codebase. Consider adding to library or AGENTS.md.",
+      "suggestedTarget": "library"
+    }
+  ],
+  "summary": "The implementation fully covers all 8 validation assertions (VAL-REL-001 through VAL-REL-008). AddRelationDialog and RemoveRelationDialog are well-structured sub-components with proper validation, error handling, loading states, and form reset. 22 new tests pass (40 total including 18 pre-existing). Build and typecheck succeed. Two minor observations: no client-side hex format validation on entity IDs, and error tests cover pre-existing hook error state rather than mutateAsync rejection path. Neither is blocking."
+}

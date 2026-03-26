@@ -1,0 +1,53 @@
+{
+  "milestone": "edit-relations",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": false,
+      "command": "pnpm --filter @geo-runtime/explorer run test",
+      "exitCode": 1,
+      "note": "15 pre-existing failures from prior UI refactoring (skeleton spinners replaced loading text, CSS-based disabled state replaced disabled attribute). These are documented in fix-preexisting-tests feature for the delete-entity milestone. No new failures introduced by edit-relations features."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "pnpm --filter @geo-runtime/explorer run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": false,
+      "command": "pnpm lint",
+      "exitCode": 1,
+      "note": "Failures are pre-existing: dist/ output files (noVar, noUnusedTemplateLiteral, noUnusedVariables), shared/config.ts (useNodejsImportProtocol), and one non-null assertion in create-entity-page.test.tsx. No new lint issues from edit-relations features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added mutation hook usage pattern (mutateAsync vs mutate convention) and route ordering convention to architecture.md",
+      "sourceFeature": "relations-add-remove, edit-entity-page"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Document route ordering convention: when adding nested routes under parameterized paths (e.g., /entities/:id/edit), always place specific literal routes before the :id parameter route to prevent path segment capture. React Router matches top-down.",
+      "evidence": "edit-entity-page worker correctly placed /entities/:id/edit before /entities/:id in router.tsx. This pattern is not documented and could trip up future workers adding routes like /entities/:id/relations/new.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Skill procedure alignment feedback (positive, no changes needed)",
+      "reason": "Informational only — no action required"
+    }
+  ],
+  "previousRound": null
+}

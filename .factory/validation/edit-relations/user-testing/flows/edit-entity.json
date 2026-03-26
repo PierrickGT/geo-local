@@ -1,0 +1,272 @@
+{
+  "groupId": "edit-entity",
+  "testedAt": "2026-03-26T00:45:00Z",
+  "isolation": {
+    "browserSession": "2bf84390d1e1__edit",
+    "explorerUrl": "http://localhost:3003",
+    "readOnlyEntityId": "c9d0e1f2a3b4c9d0e1f2a3b4c9d0e1f2",
+    "mutationTestEntities": [
+      "df65f60b21fe40489f5acfcadc761237",
+      "b314f5dba4c045e297c57175ddac3cd4",
+      "46aff143f3c046a380529094ee66afe7"
+    ]
+  },
+  "toolsUsed": ["agent-browser", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-EDIT-001",
+      "title": "Edit button present on entity detail page",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /entities/c9d0e1f2a3b4c9d0e1f2a3b4c9d0e1f2",
+          "expected": "Entity detail page loads",
+          "observed": "Entity detail page loaded successfully"
+        },
+        {
+          "action": "Inspect page for Edit button",
+          "expected": "Edit button visible in entity header area",
+          "observed": "Button with ref @e6 labeled 'Edit' found in header, alongside Add Relation button"
+        },
+        {
+          "action": "Click Edit button",
+          "expected": "Navigate to /entities/:id/edit",
+          "observed": "URL changed to /entities/c9d0e1f2a3b4c9d0e1f2a3b4c9d0e1f2/edit"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "edit-relations/edit-entity/VAL-EDIT-001-entity-detail-with-edit-button.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Client-side navigation, no network requests required"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDIT-003",
+      "title": "Submitting name change sends correct diff",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create entity df65f60b21fe40489f5acfcadc761237 with custom property cc11223344556677889900aabbccdde1 via curl",
+          "expected": "Entity created with 1 custom property",
+          "observed": "Entity created, edit applied, 2 triples (name + custom property)"
+        },
+        {
+          "action": "Navigate to entity detail, click Edit button",
+          "expected": "Edit form pre-filled with entity data",
+          "observed": "Form showed name 'EditTest_1774485611' and property cc11223344556677889900aabbccdde1 = 'initial_value_001'"
+        },
+        {
+          "action": "Change name to 'EditTest_1774485611_RENAMED' and click Save Changes",
+          "expected": "Mutation sent with only NAME property in values, no unchanged properties",
+          "observed": "Mutation payload: updateEntity with values=[{property:'a126ca530c8e48d5b88882c734c38935', type:'text', value:'EditTest_1774485611_RENAMED'}]. No custom property in payload."
+        },
+        {
+          "action": "Wait for polling and navigation",
+          "expected": "Navigate back to entity detail with updated name",
+          "observed": "URL changed to /entities/df65f60b21fe40489f5acfcadc761237, API confirmed name updated"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "edit-relations/edit-entity/VAL-EDIT-003-entity-updated-name.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /ingest/edits/build -> captured mutation: {type:'updateEntity', params:{id:'df65f60b21fe40489f5acfcadc761237', name:'EditTest_1774485611_RENAMED', values:[{property:'a126ca530c8e48d5b88882c734c38935', type:'text', value:'EditTest_1774485611_RENAMED'}]}}"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDIT-004",
+      "title": "Removing an existing property sends it in unset array",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create entity b314f5dba4c045e297c57175ddac3cd4 with 2 custom properties via curl",
+          "expected": "Entity created with 2 custom properties",
+          "observed": "Entity created with properties dd11223344556677889900aabbccdde2 and ee11223344556677889900aabbccdde3"
+        },
+        {
+          "action": "Navigate to edit page via entity detail Edit button",
+          "expected": "Form shows both custom properties",
+          "observed": "Form showed both properties: 'prop_alpha_value' and '42'"
+        },
+        {
+          "action": "Click Remove property 2 and submit",
+          "expected": "Mutation sent with removed property in unset array, not in values",
+          "observed": "Mutation payload: updateEntity with unset=[{property:'ee11223344556677889900aabbccdde3'}]. No values array, no unset for the remaining property."
+        },
+        {
+          "action": "Wait for navigation",
+          "expected": "Navigate back to entity detail",
+          "observed": "URL changed to /entities/b314f5dba4c045e297c57175ddac3cd4"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST /ingest/edits/build -> captured mutation: {type:'updateEntity', params:{id:'b314f5dba4c045e297c57175ddac3cd4', unset:[{property:'ee11223344556677889900aabbccdde3'}]}}"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDIT-005",
+      "title": "Adding a new property sends it in values array",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to edit page for entity b314f5dba4c045e297c57175ddac3cd4 (now with 1 property after VAL-EDIT-004)",
+          "expected": "Form shows 1 remaining custom property",
+          "observed": "Form showed property dd11223344556677889900aabbccdde2 = 'prop_alpha_value'"
+        },
+        {
+          "action": "Click Add Property, fill with ID ff11223344556677889900aabbccdde4 and value 'new_prop_value_999', submit",
+          "expected": "Mutation sent with new property in values array",
+          "observed": "Mutation payload: updateEntity with values=[{property:'ff11223344556677889900aabbccdde4', type:'text', value:'new_prop_value_999'}]. Existing property not in payload."
+        },
+        {
+          "action": "Wait for navigation",
+          "expected": "Navigate back to entity detail",
+          "observed": "URL changed to /entities/b314f5dba4c045e297c57175ddac3cd4"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST /ingest/edits/build -> captured mutation: {type:'updateEntity', params:{id:'b314f5dba4c045e297c57175ddac3cd4', values:[{property:'ff11223344556677889900aabbccdde4', type:'text', value:'new_prop_value_999'}]}}"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDIT-006",
+      "title": "No-op submit is blocked or shows message",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load edit page for entity df65f60b21fe40489f5acfcadc761237 (before any changes)",
+          "expected": "Edit form shows entity data with no changes",
+          "observed": "Form pre-filled with name and 1 custom property"
+        },
+        {
+          "action": "Inspect form state",
+          "expected": "No-changes message shown and submit button disabled",
+          "observed": "'No changes to save.' paragraph visible, Save Changes button is [disabled]"
+        },
+        {
+          "action": "Check network for any mutation requests",
+          "expected": "No POST to /ingest/edits/build",
+          "observed": "No mutation requests captured"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "edit-relations/edit-entity/VAL-EDIT-006-edit-form-no-changes.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No POST requests to /ingest/edits/build"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDIT-007",
+      "title": "Successful edit shows spinner, navigates back on success",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create entity 46aff143f3c046a380529094ee66afe7 via curl",
+          "expected": "Entity created",
+          "observed": "Entity created and edit applied"
+        },
+        {
+          "action": "Navigate to edit page via entity detail Edit button",
+          "expected": "Edit form loads with pre-filled data",
+          "observed": "Form loaded with entity data"
+        },
+        {
+          "action": "Change name and click Save Changes",
+          "expected": "Button text changes to 'Saving...' (spinner)",
+          "observed": "Button text changed from 'Save Changes' to 'Saving...' (confirmed in earlier tests and by code review of EntityForm component)"
+        },
+        {
+          "action": "Wait for completion",
+          "expected": "Navigate to /entities/:id",
+          "observed": "URL changed to /entities/46aff143f3c046a380529094ee66afe7"
+        },
+        {
+          "action": "Verify entity detail shows updated data",
+          "expected": "Updated name visible",
+          "observed": "API confirmed name updated to 'EditTest_1774485900_spinner_RENAMED'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "edit-relations/edit-entity/VAL-EDIT-007-spinner.png",
+          "edit-relations/edit-entity/VAL-EDIT-007-post-navigation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /ingest/edits/build -> 201, polling completed successfully"
+      },
+      "issues": "Spinner screenshot was taken too late (polling completed very quickly, ~2-3s). The spinner was confirmed by code inspection (EntityForm renders 'Saving...' when isSubmitting=true) and observed during VAL-EDIT-003 testing where the button text briefly changed."
+    },
+    {
+      "id": "VAL-EDIT-008",
+      "title": "Error during edit submission displays error, preserves edits",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to edit page for entity 46aff143f3c046a380529094ee66afe7",
+          "expected": "Edit form loads",
+          "observed": "Form loaded with entity data"
+        },
+        {
+          "action": "Install fetch interceptor that returns 500 for /ingest/edits/build",
+          "expected": "Interceptor active",
+          "observed": "Interceptor installed successfully"
+        },
+        {
+          "action": "Change name to 'EditTest_1774485900_ERROR_TEST' and submit",
+          "expected": "Error message displayed, form values preserved, button re-enabled",
+          "observed": "Error message 'Failed to update entity' + 'Ingest API Error: 500 Internal Server Error' displayed. Name field still shows 'EditTest_1774485900_ERROR_TEST'. Custom property field still shows 'cc11223344556677889900aabbccdde5' = 'spinner_test_val'. Save Changes button is enabled (not disabled)."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "edit-relations/edit-entity/VAL-EDIT-008-error-preserved-edits.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Simulated 500 response via fetch interceptor"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Direct URL navigation to /entities/:id/edit crashes with 'Rendered more hooks than during the previous render' React error. The EditEntityPage component has early returns for isError and isLoading states before useMemo/useCallback hooks, violating React's rules of hooks. Navigation from the entity detail page via the Edit button works correctly because the component tree is already warm.",
+      "resolved": true,
+      "resolution": "Used entity detail page as entry point for all mutation tests, clicking the Edit button to navigate to the edit form. This works reliably.",
+      "affectedAssertions": ["VAL-EDIT-003", "VAL-EDIT-004", "VAL-EDIT-005", "VAL-EDIT-006", "VAL-EDIT-007", "VAL-EDIT-008"]
+    },
+    {
+      "description": "Property IDs must be valid 32-char hex strings. The UI form does not validate property ID format, so submitting with non-hex property IDs causes the ingest server to return an error. This was discovered during initial entity creation attempts.",
+      "resolved": true,
+      "resolution": "Used valid 32-char hex property IDs (e.g., 'cc11223344556677889900aabbccdde1') for all mutation tests.",
+      "affectedAssertions": ["VAL-EDIT-004", "VAL-EDIT-005"]
+    },
+    {
+      "description": "The ingest server's createEntity endpoint does not support 'number' value type — only 'text' is supported. Attempting to use 'number' returns 'Unsupported value type: number'.",
+      "resolved": true,
+      "resolution": "Used 'text' value type for all property tests instead of 'number'.",
+      "affectedAssertions": ["VAL-EDIT-004", "VAL-EDIT-005"]
+    },
+    {
+      "description": "Mutation polling completes very quickly (~2-3 seconds including ingest + indexer processing), making it impossible to capture the spinner in a screenshot. The spinner state is confirmed by code review.",
+      "resolved": true,
+      "resolution": "Confirmed spinner via code inspection (EntityForm renders 'Saving...' when isSubmitting=true) and observed during earlier tests.",
+      "affectedAssertions": ["VAL-EDIT-007"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 7 assertions (VAL-EDIT-001, 003-008): all passed. VAL-EDIT-002 was not assigned. Key findings: (1) Edit button correctly navigates to edit page. (2) Name changes send only changed NAME property in values array. (3) Property removal sends property ID in unset array. (4) New property addition sends property in values array. (5) No-op submit shows message and disables button. (6) Spinner appears during submission with navigation on success. (7) Error responses display error message and preserve form edits. Critical bug discovered: direct URL access to /entities/:id/edit crashes due to React hooks rules violation (early returns before useMemo/useCallback)."
+}

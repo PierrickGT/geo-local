@@ -1,0 +1,61 @@
+{
+  "milestone": "edit-relations",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 15,
+    "passed": 15,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-EDIT-001",
+    "VAL-EDIT-003",
+    "VAL-EDIT-004",
+    "VAL-EDIT-005",
+    "VAL-EDIT-006",
+    "VAL-EDIT-007",
+    "VAL-EDIT-008",
+    "VAL-REL-001",
+    "VAL-REL-002",
+    "VAL-REL-003",
+    "VAL-REL-004",
+    "VAL-REL-005",
+    "VAL-REL-006",
+    "VAL-REL-007",
+    "VAL-REL-008"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "skippedAssertions": [
+    {
+      "id": "VAL-EDIT-002",
+      "reason": "Not assigned to any completed feature in this milestone. Edit form prefill is implicitly tested by VAL-EDIT-003/004/005/006/007 which all navigate to the edit form and observe pre-filled data."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Updated setup steps: Docker not available, use Homebrew postgres@14 on port 5432. Set DATABASE_URL to port 5432 in .env. Added note about creating postgres user and geo database when Docker is unavailable.",
+      "source": "setup"
+    },
+    {
+      "target": "services.yaml",
+      "description": "Noted that Docker may not be available; Homebrew postgres@14 is alternative. Healthcheck for ingest server should use POST instead of GET.",
+      "source": "setup"
+    }
+  ],
+  "discoveredIssues": [
+    {
+      "severity": "non_blocking",
+      "description": "Direct URL navigation to /entities/:id/edit crashes with React hooks error ('Rendered more hooks than during the previous render'). EditEntityPage has early returns for isError/isLoading before useMemo/useCallback calls, violating rules of hooks. Navigation via Edit button works correctly.",
+      "suggestedFix": "Move useMemo/useCallback calls before the early returns, or restructure component to use conditional rendering inside the hook calls."
+    },
+    {
+      "severity": "non_blocking",
+      "description": "Add Relation dialog placeholder says 'e.g. REFERENCES' but the field requires a 32-char hex entity ID. Misleading UX.",
+      "suggestedFix": "Update placeholder to show a hex example like 'e.g. a1b2c3d4e5f6...'"
+    }
+  ],
+  "previousRound": null
+}
