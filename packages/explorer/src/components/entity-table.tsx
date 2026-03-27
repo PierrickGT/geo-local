@@ -185,7 +185,6 @@ export function EntityTable({
 											<input
 												type="checkbox"
 												checked={selectedIds?.has(entity.id) ?? false}
-												onChange={() => onToggleSelection?.(entity.id)}
 												onClick={(e) => handleCheckboxClick(e, entity.id)}
 												aria-label={`Select ${entity.id}`}
 												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"

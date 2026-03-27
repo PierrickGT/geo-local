@@ -143,21 +143,13 @@ export function EntitiesPage() {
 	}
 
 	// Selection handlers
-	// EntityTable fires both onChange and onClick for each checkbox click,
-	// so we derive target state from the checkbox's current DOM checked state
-	// rather than toggling (which would cancel out on the second call).
 	const handleToggleSelection = useCallback((id: string) => {
-		const checkbox = document.querySelector(
-			`input[aria-label="Select ${CSS.escape(id)}"]`,
-		) as HTMLInputElement | null
-		if (!checkbox) return
-
 		setSelectedIds((prev) => {
 			const next = new Set(prev)
-			if (checkbox.checked) {
-				next.add(id)
-			} else {
+			if (next.has(id)) {
 				next.delete(id)
+			} else {
+				next.add(id)
 			}
 			return next
 		})
