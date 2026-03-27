@@ -318,6 +318,33 @@ describe('EntityTable', () => {
 			expect(mockNavigate).toHaveBeenCalledWith('/entities/abc123def456')
 		})
 
+		it('shift+click calls onToggleSelection with shiftKey=true', async () => {
+			const user = userEvent.setup()
+			const onToggleSelection = vi.fn()
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					selectedIds={new Set()}
+					onToggleSelection={onToggleSelection}
+					onToggleSelectAll={vi.fn()}
+				/>,
+			)
+
+			const rowCheckboxes = screen.getAllByRole('checkbox').slice(1)
+			await user.click(rowCheckboxes[0])
+
+			await user.keyboard('{Shift>}')
+			await user.click(rowCheckboxes[1])
+			await user.keyboard('{/Shift}')
+
+			expect(onToggleSelection).toHaveBeenCalledWith('def789ghi012', true, 1)
+		})
+
 		it('checkboxes are keyboard accessible', async () => {
 			const user = userEvent.setup()
 			const onToggleSelection = vi.fn()
@@ -341,7 +368,7 @@ describe('EntityTable', () => {
 			expect(rowCheckboxes[0]).toHaveFocus()
 
 			await user.keyboard(' ')
-			expect(onToggleSelection).toHaveBeenCalledWith('abc123def456')
+			expect(onToggleSelection).toHaveBeenCalledWith('abc123def456', false, 0)
 		})
 	})
 })

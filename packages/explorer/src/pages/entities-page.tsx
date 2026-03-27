@@ -141,18 +141,23 @@ export function EntitiesPage() {
 	if (prevOffsetRef.current !== offset) {
 		prevOffsetRef.current = offset
 		setSelectedIds(new Set())
+		lastClickedIndexRef.current = null
 	}
 
 	// Selection handlers
 	const handleToggleSelection = useCallback(
 		(id: string, shiftKey: boolean, index: number) => {
+			// Capture ref before setState — React 18 batching runs the updater
+			// asynchronously, so the ref would be stale if read inside the updater.
+			const lastClickedIndex = lastClickedIndexRef.current
+
 			setSelectedIds((prev) => {
 				const next = new Set(prev)
 
-				if (shiftKey && lastClickedIndexRef.current !== null) {
+				if (shiftKey && lastClickedIndex !== null) {
 					// Range selection: select all alive entities between last clicked and current
-					const start = Math.min(lastClickedIndexRef.current, index)
-					const end = Math.max(lastClickedIndexRef.current, index)
+					const start = Math.min(lastClickedIndex, index)
+					const end = Math.max(lastClickedIndex, index)
 					const allEntities = entities?.entities ?? []
 
 					for (let i = start; i <= end; i++) {

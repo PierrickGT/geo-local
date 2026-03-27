@@ -97,14 +97,6 @@ export function EntityTable({
 		}
 	}
 
-	const handleCheckboxClick = (
-		event: React.MouseEvent<HTMLInputElement>,
-		entityId: string,
-		index: number,
-	) => {
-		event.stopPropagation()
-		onToggleSelection?.(entityId, event.shiftKey, index)
-	}
 
 	if (isLoading) {
 		return (
@@ -174,7 +166,12 @@ export function EntityTable({
 							</th>
 						</tr>
 					</thead>
-					<tbody className="bg-white divide-y divide-gray-200">
+					<tbody
+						className="bg-white divide-y divide-gray-200"
+						onMouseDown={(e) => {
+							if (e.shiftKey) e.preventDefault()
+						}}
+					>
 						{entities.map((entity, index) => (
 							<tr
 								key={entity.id}
@@ -189,8 +186,11 @@ export function EntityTable({
 											<input
 												type="checkbox"
 												checked={selectedIds?.has(entity.id) ?? false}
-												onClick={(e) => handleCheckboxClick(e, entity.id, index)}
-												readOnly
+												onChange={() => {}}
+												onClick={(e) => {
+													e.stopPropagation()
+													onToggleSelection?.(entity.id, e.shiftKey, index)
+												}}
 												aria-label={`Select ${entity.id}`}
 												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 											/>
