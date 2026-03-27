@@ -13,9 +13,6 @@ export async function createRelation(client: pg.PoolClient, op: CreateRelation):
 	await ensureEntity(client, toId)
 
 	const entityId = op.entity ? idToHex(op.entity) : null
-	if (entityId) {
-		await ensureEntity(client, entityId)
-	}
 
 	await client.query(
 		`INSERT INTO relations (id, relation_type, from_id, to_id, position, from_space, from_version, to_space, to_version, entity_id)
