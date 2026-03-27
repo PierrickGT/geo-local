@@ -41,6 +41,7 @@ import {
 	pollUntilSettled,
 	useCreateEntity,
 	useCreateRelation,
+	useDeleteEntities,
 	useDeleteEntity,
 	useDeleteRelation,
 	useUpdateEntity,
@@ -388,6 +389,214 @@ describe('use-mutations', () => {
 
 			await waitFor(() => expect(result.current.error).toBeTruthy())
 			expect(result.current.error?.message).toBe('Entity not found on chain')
+		})
+	})
+
+	// ========================================================================
+	// useDeleteEntities (batch)
+	// ========================================================================
+
+	describe('useDeleteEntities', () => {
+		it('maps each id to a deleteEntity mutation in a single call', async () => {
+			mockSubmitMutations.mockResolvedValueOnce(BUILD_RESPONSE)
+			mockGetEdit.mockResolvedValueOnce(APPLIED_EDIT)
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			await act(async () => {
+				result.current.mutate({ ids: ['a', 'b', 'c'] })
+			})
+
+			await waitFor(() => {
+				expect(result.current.data).toBeDefined()
+			})
+
+			expect(mockSubmitMutations).toHaveBeenCalledTimes(1)
+			const callArgs = mockSubmitMutations.mock.calls[0][0]
+			expect(callArgs.mutations).toHaveLength(3)
+			expect(callArgs.mutations).toEqual([
+				{ type: 'deleteEntity', params: { id: 'a' } },
+				{ type: 'deleteEntity', params: { id: 'b' } },
+				{ type: 'deleteEntity', params: { id: 'c' } },
+			])
+		})
+
+		it('polls until settled and resolves on applied', async () => {
+			mockSubmitMutations.mockResolvedValueOnce(BUILD_RESPONSE)
+			mockGetEdit.mockResolvedValueOnce(APPLIED_EDIT)
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			await act(async () => {
+				result.current.mutate({ ids: ['a', 'b'] })
+			})
+
+			await waitFor(() => {
+				expect(result.current.data).toBeDefined()
+			})
+
+			expect(result.current.data?.id).toBe('edit-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+			expect(result.current.error).toBeNull()
+		})
+
+		it('invalidates entityKeys.all on success', async () => {
+			mockSubmitMutations.mockResolvedValueOnce(BUILD_RESPONSE)
+			mockGetEdit.mockResolvedValueOnce(APPLIED_EDIT)
+
+			const client = createQueryClient()
+			const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(client),
+			})
+
+			await act(async () => {
+				result.current.mutate({ ids: ['a'] })
+			})
+
+			await waitFor(() => {
+				expect(result.current.data).toBeDefined()
+			})
+
+			expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: entityKeys.all })
+		})
+
+		it('surfaces error when edit status is failed', async () => {
+			mockSubmitMutations.mockResolvedValueOnce(BUILD_RESPONSE)
+			mockGetEdit.mockResolvedValueOnce(FAILED_EDIT)
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			await act(async () => {
+				result.current.mutate({ ids: ['a', 'b'] })
+			})
+
+			await waitFor(() => expect(result.current.error).toBeTruthy())
+			expect(result.current.error?.message).toBe('Entity not found on chain')
+		})
+
+		it('surfaces submitMutations network error', async () => {
+			mockSubmitMutations.mockRejectedValueOnce(new Error('Network error'))
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			await act(async () => {
+				result.current.mutate({ ids: ['a'] })
+			})
+
+			await waitFor(() => expect(result.current.error).toBeTruthy())
+			expect(result.current.error?.message).toBe('Network error')
+		})
+
+		it('shows isLoading during mutation, false after completion', async () => {
+			let resolveMutation!: (value: unknown) => void
+			const deferredPromise = new Promise<unknown>((resolve) => {
+				resolveMutation = resolve
+			})
+			mockSubmitMutations.mockReturnValueOnce(deferredPromise as never)
+			mockGetEdit.mockResolvedValueOnce(APPLIED_EDIT)
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			expect(result.current.isLoading).toBe(false)
+
+			result.current.mutate({ ids: ['a'] })
+
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(true)
+			})
+
+			await act(async () => {
+				resolveMutation(BUILD_RESPONSE)
+			})
+
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false)
+				expect(result.current.error).toBeNull()
+			})
+		})
+
+		it('aborts in-flight mutation on unmount', async () => {
+			const deferredPromise = new Promise<unknown>(() => {})
+			mockSubmitMutations.mockReturnValueOnce(deferredPromise as never)
+
+			const { result, unmount } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			result.current.mutate({ ids: ['a'] })
+
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(true)
+			})
+
+			// Unmount while mutation is in-flight
+			unmount()
+
+			// The abort should prevent polling from continuing.
+			// Verify no further getEdit calls after unmount.
+			await new Promise((r) => setTimeout(r, 100))
+			expect(mockGetEdit).not.toHaveBeenCalled()
+		})
+
+		it('aborts previous mutation when new one is invoked', async () => {
+			// First mutation never resolves (simulates in-flight)
+			const firstPromise = new Promise<unknown>(() => {})
+
+			// Second mutation resolves successfully
+			let resolveSecond!: (value: unknown) => void
+			const secondPromise = new Promise<unknown>((resolve) => {
+				resolveSecond = resolve
+			})
+
+			mockSubmitMutations
+				.mockReturnValueOnce(firstPromise as never)
+				.mockReturnValueOnce(secondPromise as never)
+			mockGetEdit.mockResolvedValueOnce(APPLIED_EDIT)
+
+			const { result } = renderHook(() => useDeleteEntities(), {
+				wrapper: createWrapper(createQueryClient()),
+			})
+
+			// First mutation starts — never resolves
+			result.current.mutate({ ids: ['a'] })
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(true)
+			})
+
+			// Second mutation replaces the first (first AbortController is aborted)
+			await act(async () => {
+				result.current.mutate({ ids: ['b', 'c'] })
+			})
+
+			// Resolve the second mutation
+			await act(async () => {
+				resolveSecond(BUILD_RESPONSE)
+			})
+
+			// Second mutation completes successfully
+			await waitFor(() => {
+				expect(result.current.data).toBeDefined()
+				expect(result.current.isLoading).toBe(false)
+			})
+
+			// Verify the second call was the one that went through
+			expect(mockSubmitMutations).toHaveBeenCalledTimes(2)
+			const secondCallArgs = mockSubmitMutations.mock.calls[1][0]
+			expect(secondCallArgs.mutations).toHaveLength(2)
+			expect(secondCallArgs.mutations).toEqual([
+				{ type: 'deleteEntity', params: { id: 'b' } },
+				{ type: 'deleteEntity', params: { id: 'c' } },
+			])
 		})
 	})
 

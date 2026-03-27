@@ -95,6 +95,15 @@ async function submitAndPoll(
 	return { ...settled, entityIds: response.entityIds }
 }
 
+async function submitBatchAndPoll(
+	mutations: Mutation[],
+	signal?: AbortSignal,
+): Promise<BuildResponse> {
+	const response = await submitMutations({ mutations })
+	const settled = await pollUntilSettled(response.id, { signal })
+	return { ...settled, entityIds: response.entityIds }
+}
+
 // ---------------------------------------------------------------------------
 // Common Return Type
 // ---------------------------------------------------------------------------
@@ -239,6 +248,41 @@ export function useDeleteEntity(): MutationHookReturn<UseDeleteEntityParams> {
 			const controller = new AbortController()
 			abortRef.current = controller
 			return submitAndPoll({ type: 'deleteEntity', params: { id: params.id } }, controller.signal)
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: entityKeys.all })
+		},
+	})
+
+	return mapMutationResult(mutation)
+}
+
+// ---------------------------------------------------------------------------
+// useDeleteEntities (batch)
+// ---------------------------------------------------------------------------
+
+export interface UseDeleteEntitiesParams {
+	ids: string[]
+}
+
+/**
+ * Delete multiple entities in a single edit (all-or-nothing).
+ * Maps each id to a deleteEntity mutation, submits once, polls until settled.
+ */
+export function useDeleteEntities(): MutationHookReturn<UseDeleteEntitiesParams> {
+	const queryClient = useQueryClient()
+	const abortRef = useMutationAbort()
+
+	const mutation = useMutation({
+		mutationFn: (params: UseDeleteEntitiesParams) => {
+			abortRef.current?.abort()
+			const controller = new AbortController()
+			abortRef.current = controller
+			const mutations: Mutation[] = params.ids.map((id) => ({
+				type: 'deleteEntity' as const,
+				params: { id },
+			}))
+			return submitBatchAndPoll(mutations, controller.signal)
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: entityKeys.all })
