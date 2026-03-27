@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import type { Entity, EntityStatus } from '~/api/types'
 import { Pagination } from '~/components/pagination'
@@ -11,6 +12,9 @@ interface EntityTableProps {
 	onPageChange: (newOffset: number) => void
 	isLoading?: boolean
 	className?: string
+	selectedIds?: Set<string>
+	onToggleSelection?: (id: string) => void
+	onToggleSelectAll?: () => void
 }
 
 /**
@@ -56,8 +60,29 @@ export function EntityTable({
 	onPageChange,
 	isLoading = false,
 	className = '',
+	selectedIds,
+	onToggleSelection,
+	onToggleSelectAll,
 }: EntityTableProps) {
 	const navigate = useNavigate()
+	const hasSelection = selectedIds !== undefined
+	const headerCheckboxRef = useRef<HTMLInputElement>(null)
+
+	const aliveEntities = entities.filter((e) => e.status === 'alive')
+	const selectedAliveCount = hasSelection
+		? aliveEntities.filter((e) => selectedIds.has(e.id)).length
+		: 0
+
+	const setHeaderCheckboxRef = useCallback(
+		(node: HTMLInputElement | null) => {
+			;(headerCheckboxRef as React.MutableRefObject<HTMLInputElement | null>).current = node
+			if (node) {
+				node.indeterminate =
+					hasSelection && selectedAliveCount > 0 && selectedAliveCount < aliveEntities.length
+			}
+		},
+		[hasSelection, selectedAliveCount, aliveEntities.length],
+	)
 
 	const handleRowClick = (entityId: string) => {
 		navigate(`/entities/${encodeURIComponent(entityId)}`)
@@ -65,9 +90,16 @@ export function EntityTable({
 
 	const handleRowKeyDown = (entityId: string, event: React.KeyboardEvent) => {
 		if (event.key === 'Enter' || event.key === ' ') {
+			// Don't hijack keyboard events intended for checkbox inputs
+			if ((event.target as HTMLElement).tagName === 'INPUT') return
 			event.preventDefault()
 			handleRowClick(entityId)
 		}
+	}
+
+	const handleCheckboxClick = (event: React.MouseEvent, entityId: string) => {
+		event.stopPropagation()
+		onToggleSelection?.(entityId)
 	}
 
 	if (isLoading) {
@@ -92,6 +124,20 @@ export function EntityTable({
 				<table className="min-w-full divide-y divide-gray-200">
 					<thead className="bg-gray-50">
 						<tr>
+							{hasSelection && (
+								<th scope="col" className="px-4 py-3 w-10">
+									<input
+										ref={setHeaderCheckboxRef}
+										type="checkbox"
+										checked={
+											aliveEntities.length > 0 && selectedAliveCount === aliveEntities.length
+										}
+										onChange={() => onToggleSelectAll?.()}
+										aria-label="Select all"
+										className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+									/>
+								</th>
+							)}
 							<th
 								scope="col"
 								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -133,6 +179,22 @@ export function EntityTable({
 								tabIndex={0}
 								className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
 							>
+								{hasSelection && (
+									<td className="px-4 py-4 w-10">
+										{entity.status === 'alive' ? (
+											<input
+												type="checkbox"
+												checked={selectedIds?.has(entity.id) ?? false}
+												onChange={() => onToggleSelection?.(entity.id)}
+												onClick={(e) => handleCheckboxClick(e, entity.id)}
+												aria-label={`Select ${entity.id}`}
+												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+											/>
+										) : (
+											<span className="inline-block w-4" />
+										)}
+									</td>
+								)}
 								<td className="px-6 py-4 whitespace-nowrap">
 									<TruncateId id={entity.id} />
 								</td>

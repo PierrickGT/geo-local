@@ -11,12 +11,18 @@ vi.mock('react-router', () => ({
 	useNavigate: () => mockNavigate,
 }))
 
-const mockEntities: Entity[] = [
+const aliveEntities: Entity[] = [
 	{
 		id: 'abc123def456',
 		status: 'alive',
 		createdAt: '2024-01-01T00:00:00Z',
 		updatedAt: '2024-01-02T00:00:00Z',
+	},
+	{
+		id: 'def789ghi012',
+		status: 'alive',
+		createdAt: '2024-01-05T00:00:00Z',
+		updatedAt: '2024-01-06T00:00:00Z',
 	},
 	{
 		id: 'xyz789uvw012',
@@ -25,6 +31,15 @@ const mockEntities: Entity[] = [
 		updatedAt: '2024-01-04T00:00:00Z',
 	},
 ]
+
+// Legacy alias — kept so existing tests that reference mockEntities still compile
+const mockEntities: Entity[] = aliveEntities
+
+const defaultSelectionProps = {
+	selectedIds: new Set<string>(),
+	onToggleSelection: vi.fn(),
+	onToggleSelectAll: vi.fn(),
+}
 
 describe('EntityTable', () => {
 	it('renders table headers', () => {
@@ -64,14 +79,14 @@ describe('EntityTable', () => {
 		render(
 			<EntityTable
 				entities={mockEntities}
-				total={2}
+				total={3}
 				limit={20}
 				offset={0}
 				onPageChange={() => {}}
 			/>,
 		)
 
-		expect(screen.getByText('alive')).toBeInTheDocument()
+		expect(screen.getAllByText('alive')).toHaveLength(2)
 		expect(screen.getByText('deleted')).toBeInTheDocument()
 	})
 
@@ -151,5 +166,182 @@ describe('EntityTable', () => {
 		await user.click(row as HTMLElement)
 
 		expect(mockNavigate).toHaveBeenCalledWith('/entities/abc123def456')
+	})
+
+	describe('checkbox selection', () => {
+		it('no checkbox column when selection props absent', () => {
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+				/>,
+			)
+
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
+		})
+
+		it('header and row checkboxes render when selection props provided', () => {
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					selectedIds={new Set()}
+					onToggleSelection={vi.fn()}
+					onToggleSelectAll={vi.fn()}
+				/>,
+			)
+
+			const checkboxes = screen.getAllByRole('checkbox')
+			// 1 header + 2 alive rows = 3 checkboxes
+			expect(checkboxes).toHaveLength(3)
+		})
+
+		it('deleted entity rows show spacer instead of checkbox', () => {
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					selectedIds={new Set()}
+					onToggleSelection={vi.fn()}
+					onToggleSelectAll={vi.fn()}
+				/>,
+			)
+
+			const checkboxes = screen.getAllByRole('checkbox')
+			// Header (1) + alive rows (2) — no checkbox for the deleted entity
+			expect(checkboxes).toHaveLength(3)
+
+			// Verify the deleted row has a spacer td instead of a checkbox
+			const deletedRow = screen.getByText('xyz789uvw012').closest('tr')
+			expect(deletedRow).not.toBeNull()
+			const deletedRowCheckboxes = deletedRow?.querySelectorAll('input[type="checkbox"]')
+			expect(deletedRowCheckboxes).toHaveLength(0)
+		})
+
+		it('header checkbox toggles select-all', async () => {
+			const user = userEvent.setup()
+			const onToggleSelectAll = vi.fn()
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					{...defaultSelectionProps}
+					onToggleSelectAll={onToggleSelectAll}
+				/>,
+			)
+
+			// Header checkbox is the first one
+			const headerCheckbox = screen.getAllByRole('checkbox')[0]
+			await user.click(headerCheckbox)
+			expect(onToggleSelectAll).toHaveBeenCalledTimes(1)
+
+			await user.click(headerCheckbox)
+			expect(onToggleSelectAll).toHaveBeenCalledTimes(2)
+		})
+
+		it('header checkbox indeterminate state for partial selection', () => {
+			// Select only one of two alive entities
+			const selectedIds = new Set(['abc123def456'])
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					selectedIds={selectedIds}
+					onToggleSelection={vi.fn()}
+					onToggleSelectAll={vi.fn()}
+				/>,
+			)
+
+			const headerCheckbox = screen.getAllByRole('checkbox')[0] as HTMLInputElement
+			expect(headerCheckbox.indeterminate).toBe(true)
+		})
+
+		it('checkbox click does not trigger row navigation', async () => {
+			const user = userEvent.setup()
+			mockNavigate.mockClear()
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					{...defaultSelectionProps}
+				/>,
+			)
+
+			// Click a row checkbox (not the header)
+			const rowCheckboxes = screen.getAllByRole('checkbox').slice(1)
+			await user.click(rowCheckboxes[0])
+
+			expect(mockNavigate).not.toHaveBeenCalled()
+		})
+
+		it('row click outside checkbox still navigates', async () => {
+			const user = userEvent.setup()
+			mockNavigate.mockClear()
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					{...defaultSelectionProps}
+				/>,
+			)
+
+			// Click on the ID cell (not the checkbox)
+			const idCell = screen.getByText('abc123def456').closest('td')
+			expect(idCell).not.toBeNull()
+			await user.click(idCell as HTMLElement)
+
+			expect(mockNavigate).toHaveBeenCalledWith('/entities/abc123def456')
+		})
+
+		it('checkboxes are keyboard accessible', async () => {
+			const user = userEvent.setup()
+			const onToggleSelection = vi.fn()
+
+			render(
+				<EntityTable
+					entities={aliveEntities}
+					total={3}
+					limit={20}
+					offset={0}
+					onPageChange={() => {}}
+					selectedIds={new Set()}
+					onToggleSelection={onToggleSelection}
+					onToggleSelectAll={vi.fn()}
+				/>,
+			)
+
+			// Tab to the first row checkbox and press Space
+			const rowCheckboxes = screen.getAllByRole('checkbox').slice(1)
+			rowCheckboxes[0].focus()
+			expect(rowCheckboxes[0]).toHaveFocus()
+
+			await user.keyboard(' ')
+			expect(onToggleSelection).toHaveBeenCalledWith('abc123def456')
+		})
 	})
 })
