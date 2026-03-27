@@ -1,109 +1,114 @@
 ---
 name: frontend-worker
-description: Implements React/Vite frontend features for the Knowledge Graph Explorer
+description: Implements React/frontend features for the explorer package — hooks, components, pages, and tests.
 ---
 
 # Frontend Worker
 
-NOTE: Startup and cleanup are handled by `mission-worker-base`. This skill defines the WORK PROCEDURE.
+NOTE: Startup and cleanup are handled by `worker-base`. This skill defines the WORK PROCEDURE.
 
 ## When to Use This Skill
 
-Use for frontend implementation features in the `packages/explorer` React/Vite app:
-- Component creation and migration
-- UI refactoring
-- State management updates
-- Styling and theming changes
+Features that modify the `packages/explorer/` package — React hooks, UI components, page-level components, and their tests.
 
 ## Required Skills
 
-- **agent-browser** - Use for interactive browser verification. Invoke after implementation to verify component behavior in the running app. Critical for mutation flows (create, edit, delete, relations) that need end-to-end browser testing with the ingest server running.
+None.
 
 ## Work Procedure
 
-### 1. Understand the Feature
+### 1. Read Context
+- Read `mission.md` and `AGENTS.md` from the mission directory
+- Read `.factory/library/architecture.md` for system understanding
+- Read the feature description from `features.json` carefully
 
-Read the feature description and identify:
-- What files need to be created or modified
-- What components are affected
-- What the expected behavior looks like
-- Whether the feature requires backend services (ingest/indexer) for E2E testing
+### 2. Investigate Existing Code
+Before writing any code, read the files you'll be modifying and the files that contain patterns you need to follow:
+- Read existing hook implementations in `packages/explorer/src/hooks/use-mutations.ts`
+- Read existing test files to match their patterns exactly
+- Read existing component patterns (e.g., `DeleteEntityDialog` in `entity-page.tsx`)
+- Read `EntityTable` props and rendering in `entity-table.tsx`
 
-### 2. Write Tests First (RED)
+### 3. Write Tests First (Red)
+Write failing tests BEFORE implementation. Each test file should:
+- Follow existing test patterns in the codebase (see `use-mutations.test.tsx`, `entity-table.test.tsx`, `entities-page.test.tsx`)
+- Use the same mock strategy (`vi.mock('~/api/mutations')`)
+- Use the same wrapper patterns (`QueryClientProvider`, `MemoryRouter`)
+- Cover the behaviors listed in the feature's `expectedBehavior`
+- Use `data-testid` attributes for selectors where appropriate
 
-Before implementing:
-- Write failing tests that describe expected behavior
-- For form components: test rendering, validation, submission, error states
-- For hooks: test mutation submission, polling behavior, cleanup, error handling
-- For pages: test navigation, data loading, user interactions
-- Run tests to confirm they fail: `pnpm --filter @geo-runtime/explorer run test`
+### 4. Implement (Green)
+Write the minimal implementation to make tests pass:
+- Follow existing code conventions (tabs, single quotes, no semicolons)
+- Follow existing patterns (hook structure, dialog pattern, prop interfaces)
+- Keep changes minimal and focused
 
-### 3. Implement (GREEN)
-
-Implement the feature to make tests pass:
-- Follow existing code patterns (TypeScript strict, tabs, single quotes, no semicolons)
-- Use shadcn/ui components from `~/components/ui/`
-- Follow Nova theme conventions
-- Use `cn()` utility for conditional classes
-- For mutations: use the mutation hooks from `~/hooks/use-mutations.ts`
-- For polling: the hooks handle polling — just wire up the UI state (isLoading, error)
-- For forms: use the shared EntityForm component for create/edit pages
-
-### 4. Manual Verification with agent-browser
-
-For features that modify UI or add new pages:
-1. Ensure required services are running (check services.yaml)
-2. Start the explorer dev server: `pnpm dev:explorer`
-3. For mutation features, also start: `pnpm dev:ingest` and `pnpm dev:indexer`
-4. Use agent-browser to:
-   - Navigate to relevant pages
-   - Verify component renders without console errors
-   - Test user interactions (clicks, typing, navigation)
-   - For mutation flows: submit form, verify spinner/polling, verify navigation
-   - Verify API calls succeed (check network tab)
-
-Each flow tested = one `interactiveChecks` entry with full sequence and outcome.
-
-### 5. Run Quality Gates
-
-Before marking complete:
+### 5. Run Tests
 ```bash
-pnpm --filter @geo-runtime/explorer run typecheck
-pnpm --filter @geo-runtime/explorer run lint
 pnpm --filter @geo-runtime/explorer run test
 ```
+All tests (existing + new) must pass. If existing tests break, investigate why before modifying them.
 
-All must pass.
+### 6. Run Lint and Typecheck
+```bash
+pnpm lint && pnpm --filter @geo-runtime/explorer exec tsc --noEmit
+```
+Fix any issues before proceeding.
 
-### 6. Commit and Handoff
-
-Commit with descriptive conventional commit message, then provide thorough handoff.
+### 7. Verify
+- Confirm all tests pass
+- Confirm no lint/type errors
+- Review your implementation against the feature's `expectedBehavior` checklist
+- Ensure backward compatibility (EntityTable works without new props)
 
 ## Example Handoff
 
 ```json
 {
-  "salientSummary": "Migrated StatusBadge to shadcn Badge with variant system. All 4 status states (pending/processing/applied/failed) display correct variant styling. Tests updated and passing.",
-  "whatWasImplemented": "Refactored src/components/status-badge.tsx to use shadcn Badge component. Added variant mapping: pending=warning, processing=info, applied=success, failed=destructive. Updated tests in status-badge.test.tsx to verify variant props are used correctly. All existing usages in edits-page.tsx continue to work.",
+  "salientSummary": "Implemented useDeleteEntities hook that maps entity IDs to deleteEntity mutations and submits them as a single batch. Added checkbox column to EntityTable with select-all/indeterminate support. Wired selection state and BatchDeleteDialog in EntitiesPage. All 333 existing tests pass plus 22 new tests.",
+  "whatWasImplemented": "useDeleteEntities hook in use-mutations.ts (maps ids to mutations, single submitMutations call, pollUntilSettled, cache invalidation, abort support). Optional checkbox column on EntityTable (selectedIds, onToggleSelection, onToggleSelectAll props, indeterminate state, stopPropagation). BatchDeleteDialog and selection state management in entities-page.tsx (Delete N button, confirmation dialog, page change clearing).",
   "whatWasLeftUndone": "",
   "verification": {
     "commandsRun": [
-      { "command": "pnpm --filter @geo-runtime/explorer run typecheck", "exitCode": 0, "observation": "No type errors" },
-      { "command": "pnpm --filter @geo-runtime/explorer run lint", "exitCode": 1, "observation": "No lint errors" },
-      { "command": "pnpm --filter @geo-runtime/explorer run test -- src/components/status-badge.test.tsx", "exitCode": 1, "observation": "4 tests passed" }
+      { "command": "pnpm --filter @geo-runtime/explorer run test", "exitCode": 0, "observation": "All 355 tests passed (333 existing + 22 new)" },
+      { "command": "pnpm lint", "exitCode": 0, "observation": "No lint errors" },
+      { "command": "pnpm --filter @geo-runtime/explorer exec tsc --noEmit", "exitCode": 0, "observation": "No type errors" }
     ],
     "interactiveChecks": [
-      { "action": "Started dev:explorer on port 3003, navigated to /edits page", "observed": "StatusBadge components render with correct colors: pending=amber, processing=blue, applied=green, failed=red" },
-      { "action": "Verified badge styling with browser dev tools", "observed": "Badge uses shadcn variant classes, not custom Tailwind" }
-    ]
-  },
-  "tests": {
-    "added": [
-      { "file": "src/components/status-badge.test.tsx", "cases": [
-        { "name": "renders pending with warning variant", "verifies": "pending status uses warning variant" },
-        { "name": "renders processing with info variant", "verifies": "processing status uses info variant" },
-        { "name": "renders applied with success variant", "verifies": "applied status uses success variant" },
-        { "name": "renders failed with destructive variant", "verifies": "failed status uses destructive variant" }
+      { "action": "Navigated to /entities", "observed": "Entity list loads with checkboxes on alive entities, no checkbox on deleted entities" },
+      { "action": "Selected 2 entities via checkboxes", "observed": "Delete (2) button appears in CardHeader" },
+      { "action": "Clicked Delete (2), confirmed in dialog", "observed": "Dialog closes, selection clears, entities deleted from list" }
+    ],
+    "tests": [
+      { "file": "packages/explorer/src/hooks/use-mutations.test.tsx", "cases": [
+        { "name": "useDeleteEntities maps ids to deleteEntity mutations", "verifies": "VAL-HOOK-001" },
+        { "name": "useDeleteEntities polls until settled", "verifies": "VAL-HOOK-002" },
+        { "name": "useDeleteEntities invalidates entityKeys.all on success", "verifies": "VAL-HOOK-003" },
+        { "name": "useDeleteEntities surfaces error when edit fails", "verifies": "VAL-HOOK-004" },
+        { "name": "useDeleteEntities surfaces network error", "verifies": "VAL-HOOK-005" },
+        { "name": "useDeleteEntities shows isLoading during mutation", "verifies": "VAL-HOOK-006" },
+        { "name": "useDeleteEntities aborts on unmount", "verifies": "VAL-HOOK-007" },
+        { "name": "useDeleteEntities aborts previous mutation", "verifies": "VAL-HOOK-008" }
+      ]},
+      { "file": "packages/explorer/src/components/entity-table.test.tsx", "cases": [
+        { "name": "no checkbox column without selection props", "verifies": "VAL-TABLE-001" },
+        { "name": "checkboxes render with selection props", "verifies": "VAL-TABLE-002" },
+        { "name": "deleted rows show spacer", "verifies": "VAL-TABLE-003" },
+        { "name": "header checkbox toggles select-all", "verifies": "VAL-TABLE-004" },
+        { "name": "header checkbox indeterminate state", "verifies": "VAL-TABLE-005" },
+        { "name": "checkbox click does not navigate", "verifies": "VAL-TABLE-006" },
+        { "name": "row click outside checkbox navigates", "verifies": "VAL-TABLE-007" },
+        { "name": "checkboxes keyboard accessible", "verifies": "VAL-TABLE-008" }
+      ]},
+      { "file": "packages/explorer/src/pages/entities-page.test.tsx", "cases": [
+        { "name": "Delete (N) button appears on selection", "verifies": "VAL-PAGE-001" },
+        { "name": "batch delete dialog opens with count", "verifies": "VAL-PAGE-002" },
+        { "name": "dialog cancel resets state", "verifies": "VAL-PAGE-003" },
+        { "name": "success clears selection and closes dialog", "verifies": "VAL-PAGE-004" },
+        { "name": "error keeps dialog open", "verifies": "VAL-PAGE-005" },
+        { "name": "delete button disabled with spinner", "verifies": "VAL-PAGE-006" },
+        { "name": "selection clears on page change", "verifies": "VAL-PAGE-007" },
+        { "name": "select-all only selects alive entities", "verifies": "VAL-PAGE-008" }
       ]}
     ]
   },
@@ -113,7 +118,6 @@ Commit with descriptive conventional commit message, then provide thorough hando
 
 ## When to Return to Orchestrator
 
-- Feature depends on an API endpoint or data model that doesn't exist
-- Requirements are ambiguous or contradictory
-- Cannot proceed without violating mission boundaries
-- Blocking bugs in existing code prevent progress
+- Existing tests break and the fix is unclear
+- The feature description is ambiguous or contradictory
+- You encounter a bug in existing code that blocks your work

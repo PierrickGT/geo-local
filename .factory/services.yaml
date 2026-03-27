@@ -2,42 +2,13 @@ commands:
   install: pnpm install
   build: pnpm build
   lint: pnpm lint
-  lint:fix: pnpm lint:fix
-  typecheck: pnpm --filter @geo-runtime/explorer run typecheck
   test: pnpm --filter @geo-runtime/explorer run test
+  typecheck: pnpm --filter @geo-runtime/explorer exec tsc --noEmit
 
 services:
-  postgres:
-    start: docker compose up -d postgres
-    stop: docker compose stop postgres
-    healthcheck: pg_isready -h localhost -p 5433
-    port: 5433
-    depends_on: []
-
-  api:
-    start: pnpm dev:api
-    stop: lsof -ti :3002 | xargs kill 2>/dev/null || true
-    healthcheck: curl -sf http://localhost:3002/api/triples
-    port: 3002
-    depends_on: [postgres]
-
-  ingest:
-    start: pnpm dev:ingest
-    stop: lsof -ti :3001 | xargs kill 2>/dev/null || true
-    healthcheck: curl -sf http://localhost:3001/edits
-    port: 3001
-    depends_on: [postgres]
-
-  indexer:
-    start: pnpm dev:indexer
-    stop: pkill -f "tsx.*indexer" 2>/dev/null || true
-    healthcheck: echo "indexer has no healthcheck endpoint"
-    port: 0
-    depends_on: [postgres]
-
   explorer:
-    start: pnpm dev:explorer
-    stop: lsof -ti :3003 | xargs kill 2>/dev/null || true
+    start: pnpm --filter @geo-runtime/explorer dev
+    stop: lsof -ti :3003 | xargs kill
     healthcheck: curl -sf http://localhost:3003
     port: 3003
-    depends_on: [api, ingest]
+    depends_on: []

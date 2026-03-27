@@ -107,6 +107,7 @@ export function EntitiesPage() {
 	// Selection state
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 	const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
+	const lastClickedIndexRef = useRef<number | null>(null)
 
 	// Parse URL params with defaults
 	const typeFilter = searchParams.get('type') ?? undefined
@@ -143,17 +144,43 @@ export function EntitiesPage() {
 	}
 
 	// Selection handlers
-	const handleToggleSelection = useCallback((id: string) => {
-		setSelectedIds((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) {
-				next.delete(id)
-			} else {
-				next.add(id)
+	const handleToggleSelection = useCallback(
+		(id: string, shiftKey: boolean, index: number) => {
+			setSelectedIds((prev) => {
+				const next = new Set(prev)
+
+				if (shiftKey && lastClickedIndexRef.current !== null) {
+					// Range selection: select all alive entities between last clicked and current
+					const start = Math.min(lastClickedIndexRef.current, index)
+					const end = Math.max(lastClickedIndexRef.current, index)
+					const allEntities = entities?.entities ?? []
+
+					for (let i = start; i <= end; i++) {
+						const entity = allEntities[i]
+						if (entity?.status === 'alive') {
+							next.add(entity.id)
+						}
+					}
+				} else {
+					// Single toggle
+					if (next.has(id)) {
+						next.delete(id)
+					} else {
+						next.add(id)
+					}
+				}
+
+				return next
+			})
+
+			// Update last clicked index (only for alive entities)
+			const entity = entities?.entities?.[index]
+			if (entity?.status === 'alive') {
+				lastClickedIndexRef.current = index
 			}
-			return next
-		})
-	}, [])
+		},
+		[entities],
+	)
 
 	const handleToggleSelectAll = useCallback(() => {
 		const aliveIds = new Set(aliveEntities.map((e) => e.id))

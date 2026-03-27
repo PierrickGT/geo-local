@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
+      '@geoprotocol/geo-sdk':
+        specifier: latest
+        version: 0.14.0(typescript@5.9.3)(zod@3.25.76)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -829,8 +832,15 @@ packages:
   '@geoprotocol/geo-sdk@0.13.0':
     resolution: {integrity: sha512-Jw83RcsHaRfkxXLn1ZFdWFP3gjquRGEcNjt6i6J3hR7NrrU7lR367BhhMB1JEXBg9ELKFskxypUCBQi+vGbMNw==}
 
+  '@geoprotocol/geo-sdk@0.14.0':
+    resolution: {integrity: sha512-/ymutQ2U0CFSgiNRdLhrJlpPfnlpyLz0lbCz2msuUue3EPivAcW/eo8DMdllZZYJaX8KvtjoAUdWFbWAVF+DKg==}
+
   '@geoprotocol/grc-20@0.4.0':
     resolution: {integrity: sha512-pZ42y0/nDR6L0pRPlW/xeLOwAcNvsQvP/9BpSO9DN8U4/dmGjHAxK9M2euXncjnFLoaCKmx8NiANVpHVD94MGA==}
+    engines: {node: '>=18'}
+
+  '@geoprotocol/grc-20@0.4.1':
+    resolution: {integrity: sha512-J5trJZBydDOO5GsEMzy9ukX9GetblBMLnn4ugpTFOcwS4akA54Lxg/uYJbXUDh5EVPir3PAzC6UN6EiBz0K/Ww==}
     engines: {node: '>=18'}
 
   '@hono/node-server@1.19.11':
@@ -4606,7 +4616,28 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@geoprotocol/geo-sdk@0.14.0(typescript@5.9.3)(zod@3.25.76)':
+    dependencies:
+      '@geoprotocol/grc-20': 0.4.1
+      effect: 3.19.19
+      fflate: 0.8.2
+      fractional-indexing-jittered: 1.0.0
+      image-size: 2.0.2
+      permissionless: 0.2.57(viem@2.47.0(typescript@5.9.3)(zod@3.25.76))
+      uuid: 13.0.0
+      viem: 2.47.0(typescript@5.9.3)(zod@3.25.76)
+    transitivePeerDependencies:
+      - bufferutil
+      - ox
+      - typescript
+      - utf-8-validate
+      - zod
+
   '@geoprotocol/grc-20@0.4.0':
+    dependencies:
+      '@bokuweb/zstd-wasm': 0.0.27
+
+  '@geoprotocol/grc-20@0.4.1':
     dependencies:
       '@bokuweb/zstd-wasm': 0.0.27
 
@@ -5555,7 +5586,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

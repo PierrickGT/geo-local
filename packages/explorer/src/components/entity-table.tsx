@@ -13,7 +13,7 @@ interface EntityTableProps {
 	isLoading?: boolean
 	className?: string
 	selectedIds?: Set<string>
-	onToggleSelection?: (id: string) => void
+	onToggleSelection?: (id: string, shiftKey: boolean, index: number) => void
 	onToggleSelectAll?: () => void
 }
 
@@ -97,9 +97,9 @@ export function EntityTable({
 		}
 	}
 
-	const handleCheckboxClick = (event: React.MouseEvent, entityId: string) => {
+	const handleCheckboxClick = (event: React.MouseEvent, entityId: string, index: number) => {
 		event.stopPropagation()
-		onToggleSelection?.(entityId)
+		onToggleSelection?.(entityId, event.shiftKey, index)
 	}
 
 	if (isLoading) {
@@ -171,7 +171,7 @@ export function EntityTable({
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{entities.map((entity) => (
+						{entities.map((entity, index) => (
 							<tr
 								key={entity.id}
 								onClick={() => handleRowClick(entity.id)}
@@ -185,7 +185,7 @@ export function EntityTable({
 											<input
 												type="checkbox"
 												checked={selectedIds?.has(entity.id) ?? false}
-												onClick={(e) => handleCheckboxClick(e, entity.id)}
+												onClick={(e) => handleCheckboxClick(e, entity.id, index)}
 												aria-label={`Select ${entity.id}`}
 												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 											/>
