@@ -567,7 +567,7 @@ export function GraphPage() {
 					<div className="text-sm text-gray-600">
 						<div className="font-medium mb-1">Graph ({graphNodes.length} nodes)</div>
 						<div className="text-xs text-gray-400">
-							Click: view entity | Double-click: expand | Drag: pin
+							Click: view entity | Double-click: expand | Drag: pin | Ctrl+Scroll: zoom
 						</div>
 					</div>
 				</Panel>
