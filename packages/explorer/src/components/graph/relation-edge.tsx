@@ -6,6 +6,7 @@ import {
 	getBezierPath,
 } from '@xyflow/react'
 import { memo } from 'react'
+import { formatPropertyId } from '~/lib/constants'
 import type { GraphEdge } from './force-layout'
 
 /**
@@ -48,7 +49,7 @@ function RelationEdgeBase({
 	})
 
 	const relationType = data?.relationType ?? ''
-	const truncated = relationType.length > 12 ? `${relationType.slice(0, 12)}...` : relationType
+	const formatted = formatPropertyId(relationType)
 
 	const handleClick = (event: React.MouseEvent) => {
 		event.stopPropagation()
@@ -84,7 +85,7 @@ function RelationEdgeBase({
 					aria-label={`Relation ${relationType}`}
 					title={relationType}
 				>
-					{truncated}
+					{formatted}
 				</div>
 			</EdgeLabelRenderer>
 		</>

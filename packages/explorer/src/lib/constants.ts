@@ -70,16 +70,14 @@ export function isWellKnown(propertyId: string): boolean {
  * Format a property ID for display
  * For well-known properties, show the name directly
  * For system property IDs, map to their display names
- * For others, truncate if needed
+ * For others, return as-is
  */
-export function formatPropertyId(propertyId: string, maxLength = 12): string {
-	// Check if it's a string name (well-known)
+export function formatPropertyId(propertyId: string): string {
 	if (isWellKnown(propertyId)) {
 		return propertyId
 	}
-	// Check if it's a system property ID that maps to a known name
 	if (propertyId in PROPERTY_ID_TO_NAME) {
 		return PROPERTY_ID_TO_NAME[propertyId]
 	}
-	return propertyId.length > maxLength ? `${propertyId.slice(0, maxLength)}...` : propertyId
+	return propertyId
 }
