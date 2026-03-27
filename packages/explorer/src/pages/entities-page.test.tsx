@@ -11,10 +11,16 @@ vi.mock('~/hooks/use-entities', () => ({
 	useTypes: vi.fn(),
 }))
 
+vi.mock('~/hooks/use-mutations', () => ({
+	useDeleteEntities: vi.fn(),
+}))
+
 import { useEntities, useTypes } from '~/hooks/use-entities'
+import { useDeleteEntities } from '~/hooks/use-mutations'
 
 const mockUseEntities = vi.mocked(useEntities)
 const mockUseTypes = vi.mocked(useTypes)
+const mockUseDeleteEntities = vi.mocked(useDeleteEntities)
 
 // Helper to create wrapper with all providers
 function createWrapper(initialRoute = '/entities') {
@@ -61,6 +67,18 @@ const mockTypes = ['type-1', 'type-2', 'type-3']
 // Mock refetch function
 const mockRefetch = vi.fn()
 
+// Default useDeleteEntities mock
+function createDefaultDeleteEntitiesMock() {
+	return {
+		mutate: vi.fn(),
+		mutateAsync: vi.fn().mockResolvedValue({ id: 'edit-id' }),
+		isLoading: false,
+		error: null,
+		reset: vi.fn(),
+		data: undefined,
+	}
+}
+
 describe('EntitiesPage', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -82,6 +100,8 @@ describe('EntitiesPage', () => {
 			isError: false,
 			error: null,
 		})
+
+		mockUseDeleteEntities.mockReturnValue(createDefaultDeleteEntitiesMock())
 	})
 
 	describe('rendering', () => {
@@ -301,6 +321,298 @@ describe('EntitiesPage', () => {
 			render(<EntitiesPage />, { wrapper: createWrapper() })
 
 			expect(screen.getByText('No entities found.')).toBeInTheDocument()
+		})
+	})
+
+	describe('batch delete', () => {
+		it('does not show Delete (N) button when no entities are selected', () => {
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			expect(screen.queryByTestId('batch-delete-button')).not.toBeInTheDocument()
+		})
+
+		it('shows Delete (N) button with correct count when entities are selected', async () => {
+			const user = userEvent.setup()
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select first entity via checkbox
+			const checkboxes = screen.getAllByRole('checkbox')
+			// First checkbox is the header (select-all), second and third are row checkboxes
+			await user.click(checkboxes[1]) // Select entity-1
+
+			const batchDeleteBtn = screen.getByTestId('batch-delete-button')
+			expect(batchDeleteBtn).toBeInTheDocument()
+			expect(batchDeleteBtn).toHaveTextContent('Delete (1)')
+
+			// Select second entity
+			await user.click(checkboxes[2]) // Select entity-2
+
+			expect(batchDeleteBtn).toHaveTextContent('Delete (2)')
+		})
+
+		it('Delete (N) button disappears when selection is cleared', async () => {
+			const user = userEvent.setup()
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1]) // Select entity-1
+
+			expect(screen.getByTestId('batch-delete-button')).toBeInTheDocument()
+
+			// Deselect
+			await user.click(checkboxes[1])
+
+			expect(screen.queryByTestId('batch-delete-button')).not.toBeInTheDocument()
+		})
+
+		it('opens batch delete dialog showing entity count', async () => {
+			const user = userEvent.setup()
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select two entities
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(checkboxes[2])
+
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			// Dialog should be open with correct count
+			expect(screen.getByRole('dialog')).toBeInTheDocument()
+			expect(
+				screen.getByRole('dialog').querySelector('[data-slot="dialog-title"]'),
+			).toHaveTextContent('Delete Entities')
+			// Text is split by <span> elements, target the description element
+			const description = screen
+				.getByRole('dialog')
+				.querySelector('[data-slot="dialog-description"]')
+			expect(description?.textContent).toContain('2 entities')
+			expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+			expect(screen.getByTestId('confirm-batch-delete-button')).toBeInTheDocument()
+		})
+
+		it('dialog cancel resets mutation state', async () => {
+			const user = userEvent.setup()
+			const resetFn = vi.fn()
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				reset: resetFn,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities and open dialog
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			// Cancel dialog
+			await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+			expect(resetFn).toHaveBeenCalled()
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+		})
+
+		it('batch delete success clears selection and closes dialog', async () => {
+			const user = userEvent.setup()
+			const mutateAsyncFn = vi.fn().mockResolvedValue({ id: 'edit-id' })
+			const resetFn = vi.fn()
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				mutateAsync: mutateAsyncFn,
+				reset: resetFn,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities and open dialog
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(checkboxes[2])
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			// Confirm deletion
+			await user.click(screen.getByTestId('confirm-batch-delete-button'))
+
+			expect(mutateAsyncFn).toHaveBeenCalledWith({
+				ids: ['entity-1', 'entity-2'],
+			})
+
+			// Wait for async resolution
+			await screen.findByText('Entities')
+
+			// Dialog should be closed and no batch delete button visible (selection cleared)
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+			expect(screen.queryByTestId('batch-delete-button')).not.toBeInTheDocument()
+		})
+
+		it('batch delete error keeps dialog open with error message', async () => {
+			const user = userEvent.setup()
+			const mutateAsyncFn = vi.fn().mockRejectedValue(new Error('Deletion failed'))
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				mutateAsync: mutateAsyncFn,
+				isLoading: false,
+				error: new Error('Deletion failed'),
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities and open dialog
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			// Confirm deletion
+			await user.click(screen.getByTestId('confirm-batch-delete-button'))
+
+			// Dialog should still be open with error
+			expect(screen.getByRole('dialog')).toBeInTheDocument()
+			expect(screen.getByTestId('batch-delete-error')).toHaveTextContent('Deletion failed')
+
+			// Delete button should still be enabled for retry
+			expect(screen.getByTestId('confirm-batch-delete-button')).toBeEnabled()
+		})
+
+		it('delete button disabled with spinner during loading', async () => {
+			const user = userEvent.setup()
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				mutateAsync: vi.fn(), // never resolves — stays pending
+				isLoading: true,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities and open dialog
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			// Both buttons should be disabled during loading
+			const dialog = screen.getByRole('dialog')
+			const buttons = dialog.querySelectorAll('button')
+			const confirmBtn = Array.from(buttons).find((b) => b.textContent?.includes('Delete'))
+			const cancelBtn = Array.from(buttons).find((b) => b.textContent?.includes('Cancel'))
+			expect(confirmBtn).toBeDisabled()
+			expect(cancelBtn).toBeDisabled()
+
+			// Spinner should be visible
+			expect(confirmBtn?.querySelector('[role="status"]')).toBeInTheDocument()
+		})
+
+		it('selection clears on page change', async () => {
+			const user = userEvent.setup()
+
+			mockUseEntities.mockReturnValue({
+				entities: {
+					...mockEntities,
+					total: 100,
+				},
+				total: 100,
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			expect(screen.getByTestId('batch-delete-button')).toBeInTheDocument()
+
+			// Navigate to next page
+			await user.click(screen.getByLabelText('Go to next page'))
+
+			// Selection should be cleared — batch delete button gone
+			expect(screen.queryByTestId('batch-delete-button')).not.toBeInTheDocument()
+		})
+
+		it('select-all only selects alive entities on current page', async () => {
+			const user = userEvent.setup()
+
+			mockUseEntities.mockReturnValue({
+				entities: {
+					entities: [
+						{
+							id: 'entity-1',
+							status: 'alive' as const,
+							createdAt: '2024-01-01T00:00:00Z',
+							updatedAt: '2024-01-02T00:00:00Z',
+						},
+						{
+							id: 'entity-2',
+							status: 'deleted' as const,
+							createdAt: '2024-01-01T00:00:00Z',
+							updatedAt: '2024-01-02T00:00:00Z',
+						},
+						{
+							id: 'entity-3',
+							status: 'alive' as const,
+							createdAt: '2024-01-01T00:00:00Z',
+							updatedAt: '2024-01-02T00:00:00Z',
+						},
+					],
+					total: 3,
+					limit: 20,
+					offset: 0,
+				},
+				total: 3,
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Click header checkbox (select-all)
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[0]) // Header checkbox
+
+			// Should show Delete (2) — only alive entities selected
+			expect(screen.getByTestId('batch-delete-button')).toHaveTextContent('Delete (2)')
+		})
+
+		it('closing dialog resets error state for clean reopen', async () => {
+			const user = userEvent.setup()
+			const resetFn = vi.fn()
+
+			// First render: dialog with error
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				isLoading: false,
+				error: new Error('Some error'),
+				reset: resetFn,
+			})
+
+			render(<EntitiesPage />, { wrapper: createWrapper() })
+
+			// Select entities and open dialog
+			const checkboxes = screen.getAllByRole('checkbox')
+			await user.click(checkboxes[1])
+			await user.click(screen.getByTestId('batch-delete-button'))
+
+			expect(screen.getByTestId('batch-delete-error')).toBeInTheDocument()
+
+			// Close via Cancel
+			await user.click(screen.getByRole('button', { name: 'Cancel' }))
+			expect(resetFn).toHaveBeenCalled()
+
+			// Re-open — update mock to have no error
+			mockUseDeleteEntities.mockReturnValue({
+				...createDefaultDeleteEntitiesMock(),
+				isLoading: false,
+				error: null,
+				reset: vi.fn(),
+			})
+
+			await user.click(screen.getByTestId('batch-delete-button'))
+			expect(screen.queryByTestId('batch-delete-error')).not.toBeInTheDocument()
 		})
 	})
 })

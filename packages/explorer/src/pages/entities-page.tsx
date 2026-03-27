@@ -1,21 +1,112 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { EntityTable } from '~/components/entity-table'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '~/components/ui/dialog'
 import { Skeleton } from '~/components/ui/skeleton'
+import { Spinner } from '~/components/ui/spinner'
 import { useEntities, useTypes } from '~/hooks/use-entities'
+import { useDeleteEntities } from '~/hooks/use-mutations'
 
 const DEFAULT_LIMIT = 20
 const DEFAULT_OFFSET = 0
 
+// ---------------------------------------------------------------------------
+// Batch Delete Dialog
+// ---------------------------------------------------------------------------
+
+function BatchDeleteDialog({
+	selectedIds,
+	open,
+	onOpenChange,
+	onSuccess,
+}: {
+	selectedIds: Set<string>
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	onSuccess: () => void
+}) {
+	const deleteEntities = useDeleteEntities()
+
+	async function handleConfirm() {
+		if (deleteEntities.isLoading) return
+
+		try {
+			await deleteEntities.mutateAsync({ ids: [...selectedIds] })
+			deleteEntities.reset()
+			onOpenChange(false)
+			onSuccess()
+		} catch {
+			// Error is captured in deleteEntities.error, dialog stays open
+		}
+	}
+
+	function handleOpenChange(nextOpen: boolean) {
+		if (!nextOpen) {
+			deleteEntities.reset()
+		}
+		onOpenChange(nextOpen)
+	}
+
+	const count = selectedIds.size
+
+	return (
+		<Dialog open={open} onOpenChange={handleOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Delete Entities</DialogTitle>
+					<DialogDescription>
+						Are you sure you want to delete <span className="font-medium">{count}</span>{' '}
+						{count === 1 ? 'entity' : 'entities'}? This action cannot be undone.
+					</DialogDescription>
+				</DialogHeader>
+				{deleteEntities.error && (
+					<div className="text-sm text-destructive" data-testid="batch-delete-error">
+						{deleteEntities.error.message}
+					</div>
+				)}
+				<DialogFooter>
+					<Button
+						variant="outline"
+						onClick={() => handleOpenChange(false)}
+						disabled={deleteEntities.isLoading}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={handleConfirm}
+						disabled={deleteEntities.isLoading}
+						data-testid="confirm-batch-delete-button"
+					>
+						{deleteEntities.isLoading && <Spinner className="mr-1" />}
+						Delete
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
 /**
- * Entities page with type filter dropdown and pagination.
+ * Entities page with type filter dropdown, pagination, and batch delete.
  * URL syncs ?type=, ?limit=, ?offset=
  */
 export function EntitiesPage() {
 	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
+
+	// Selection state
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+	const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
 
 	// Parse URL params with defaults
 	const typeFilter = searchParams.get('type') ?? undefined
@@ -37,6 +128,68 @@ export function EntitiesPage() {
 
 	// Fetch available types for dropdown
 	const { types, isLoading: isLoadingTypes } = useTypes()
+
+	// Derive alive entities from current page
+	const aliveEntities = useMemo(
+		() => (entities?.entities ?? []).filter((e) => e.status === 'alive'),
+		[entities],
+	)
+
+	// Clear selection on page change (track offset via ref for exhaustive-deps)
+	const prevOffsetRef = useRef(offset)
+	if (prevOffsetRef.current !== offset) {
+		prevOffsetRef.current = offset
+		setSelectedIds(new Set())
+	}
+
+	// Selection handlers
+	// EntityTable fires both onChange and onClick for each checkbox click,
+	// so we derive target state from the checkbox's current DOM checked state
+	// rather than toggling (which would cancel out on the second call).
+	const handleToggleSelection = useCallback((id: string) => {
+		const checkbox = document.querySelector(
+			`input[aria-label="Select ${CSS.escape(id)}"]`,
+		) as HTMLInputElement | null
+		if (!checkbox) return
+
+		setSelectedIds((prev) => {
+			const next = new Set(prev)
+			if (checkbox.checked) {
+				next.add(id)
+			} else {
+				next.delete(id)
+			}
+			return next
+		})
+	}, [])
+
+	const handleToggleSelectAll = useCallback(() => {
+		const aliveIds = new Set(aliveEntities.map((e) => e.id))
+		const allSelected = aliveIds.size > 0 && [...aliveIds].every((id) => selectedIds.has(id))
+
+		if (allSelected) {
+			setSelectedIds((prev) => {
+				const next = new Set(prev)
+				for (const id of aliveIds) {
+					next.delete(id)
+				}
+				return next
+			})
+		} else {
+			setSelectedIds((prev) => {
+				const next = new Set(prev)
+				for (const id of aliveIds) {
+					next.add(id)
+				}
+				return next
+			})
+		}
+	}, [aliveEntities, selectedIds])
+
+	// Batch delete success handler
+	const handleBatchDeleteSuccess = useCallback(() => {
+		setSelectedIds(new Set())
+	}, [])
 
 	// Update URL params
 	const updateParams = (updates: { type?: string | null; limit?: number; offset?: number }) => {
@@ -95,13 +248,25 @@ export function EntitiesPage() {
 			<CardHeader className="px-4">
 				<div className="flex items-center justify-between">
 					<CardTitle>Entities</CardTitle>
-					<Button
-						size="sm"
-						onClick={() => navigate('/entities/new')}
-						data-testid="create-entity-button"
-					>
-						Create Entity
-					</Button>
+					<div className="flex items-center gap-2">
+						{selectedIds.size > 0 && (
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={() => setBatchDeleteOpen(true)}
+								data-testid="batch-delete-button"
+							>
+								Delete ({selectedIds.size})
+							</Button>
+						)}
+						<Button
+							size="sm"
+							onClick={() => navigate('/entities/new')}
+							data-testid="create-entity-button"
+						>
+							Create Entity
+						</Button>
+					</div>
 				</div>
 				<div className="flex items-center gap-2">
 					<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
@@ -164,9 +329,20 @@ export function EntitiesPage() {
 						limit={limit}
 						offset={offset}
 						onPageChange={handlePageChange}
+						selectedIds={selectedIds}
+						onToggleSelection={handleToggleSelection}
+						onToggleSelectAll={handleToggleSelectAll}
 					/>
 				</CardContent>
 			)}
+
+			{/* Batch Delete Dialog */}
+			<BatchDeleteDialog
+				selectedIds={selectedIds}
+				open={batchDeleteOpen}
+				onOpenChange={setBatchDeleteOpen}
+				onSuccess={handleBatchDeleteSuccess}
+			/>
 		</Card>
 	)
 }
