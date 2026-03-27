@@ -97,7 +97,11 @@ export function EntityTable({
 		}
 	}
 
-	const handleCheckboxClick = (event: React.MouseEvent, entityId: string, index: number) => {
+	const handleCheckboxClick = (
+		event: React.MouseEvent<HTMLInputElement>,
+		entityId: string,
+		index: number,
+	) => {
 		event.stopPropagation()
 		onToggleSelection?.(entityId, event.shiftKey, index)
 	}
@@ -186,6 +190,7 @@ export function EntityTable({
 												type="checkbox"
 												checked={selectedIds?.has(entity.id) ?? false}
 												onClick={(e) => handleCheckboxClick(e, entity.id, index)}
+												readOnly
 												aria-label={`Select ${entity.id}`}
 												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 											/>
