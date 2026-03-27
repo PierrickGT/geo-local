@@ -13,7 +13,8 @@ interface TruncateIdProps {
 export function TruncateId({ id, className = '' }: TruncateIdProps) {
 	const [copied, setCopied] = useState(false)
 
-	const handleCopy = async () => {
+	const handleCopy = async (event: React.MouseEvent) => {
+		event.stopPropagation()
 		try {
 			await navigator.clipboard.writeText(id)
 			setCopied(true)
