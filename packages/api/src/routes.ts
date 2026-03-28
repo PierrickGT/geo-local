@@ -71,7 +71,7 @@ export function createRouter(): Router {
 					SELECT e.id, e.status, e.created_at, e.updated_at,
 						(SELECT t.value->>'value' FROM triples t
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
-						 ORDER BY t.property_id LIMIT 1) AS properties_text
+						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
 					INNER JOIN relations r
 						ON r.from_id = e.id AND r.to_id = $${idx} AND r.status = 'alive'
@@ -88,7 +88,7 @@ export function createRouter(): Router {
 					SELECT e.id, e.status, e.created_at, e.updated_at,
 						(SELECT t.value->>'value' FROM triples t
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
-						 ORDER BY t.property_id LIMIT 1) AS properties_text
+						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
 					WHERE e.status = 'alive'
 					ORDER BY e.created_at DESC
@@ -198,18 +198,19 @@ export function createRouter(): Router {
 			)
 
 			// Entity ID search (exact or prefix match on 32-char hex IDs)
-			const entityPromise = q.length >= 4
-				? pool.query(
-						`SELECT id, status, created_at, updated_at,
+			const entityPromise =
+				q.length >= 4
+					? pool.query(
+							`SELECT id, status, created_at, updated_at,
 							(SELECT t.value->>'value' FROM triples t
 							 WHERE t.entity_id = e.id AND t.value_type = 'text'
-							 ORDER BY t.property_id LIMIT 1) AS properties_text
+							 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 						 FROM entities e
 						 WHERE e.status = 'alive' AND e.id ILIKE '%' || $1 || '%'
 						 LIMIT $2`,
-						[q, limit],
-					)
-				: Promise.resolve({ rows: [] })
+							[q, limit],
+						)
+					: Promise.resolve({ rows: [] })
 
 			const [triplesResult, entitiesResult] = await Promise.all([triplesPromise, entityPromise])
 
