@@ -110,7 +110,7 @@ describe('TriplesPanel', () => {
 	})
 
 	describe('truncation', () => {
-		it('truncates long property IDs', () => {
+		it('displays long property IDs in full', () => {
 			const longIdTriple: Triple = {
 				entityId: 'entity-1',
 				propertyId: 'this-is-a-very-long-property-id-that-should-be-truncated',
@@ -121,10 +121,10 @@ describe('TriplesPanel', () => {
 
 			render(<TriplesPanel triples={[longIdTriple]} />)
 
-			// Property ID should be truncated with ellipsis
+			// Property ID is displayed in full (truncation removed)
 			const propertyElement = screen.getByTitle(longIdTriple.propertyId)
 			expect(propertyElement).toBeInTheDocument()
-			expect(propertyElement.textContent).toContain('...')
+			expect(propertyElement.textContent).toBe(longIdTriple.propertyId)
 		})
 
 		it('truncates long text values', () => {

@@ -45,14 +45,14 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('RelationEdge', () => {
-	it('displays truncated relation type', () => {
+	it('displays full relation type without truncation', () => {
 		render(
 			<TestWrapper>
 				<RelationEdge {...defaultProps} data={{ relationType: 'VERY_LONG_RELATION_TYPE' }} />
 			</TestWrapper>,
 		)
 
-		expect(screen.getByText('VERY_LONG_RE...')).toBeInTheDocument()
+		expect(screen.getByText('VERY_LONG_RELATION_TYPE')).toBeInTheDocument()
 	})
 
 	it('displays full relation type in title', () => {

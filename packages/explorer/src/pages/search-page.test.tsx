@@ -49,6 +49,7 @@ const mockResults = {
 			language: null,
 		},
 	],
+	entities: [],
 }
 
 // Mock refetch function
@@ -81,7 +82,7 @@ describe('SearchPage', () => {
 		it('shows empty state message when no query', () => {
 			render(<SearchPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Enter a search query to find entities.')).toBeInTheDocument()
+			expect(screen.getByText('Enter a search query to find entities by name or ID.')).toBeInTheDocument()
 		})
 	})
 
@@ -156,6 +157,36 @@ describe('SearchPage', () => {
 			expect(screen.getByText('Test value 2')).toBeInTheDocument()
 		})
 
+		it('shows entity ID matches when entities are returned', () => {
+			const entityResults = {
+				results: [],
+				entities: [
+					{
+						id: 'abc123',
+						status: 'alive' as const,
+						createdAt: '2026-01-01T00:00:00Z',
+						updatedAt: '2026-01-01T00:00:00Z',
+						propertiesText: 'Test Entity',
+					},
+				],
+			}
+
+			mockUseSearch.mockReturnValue({
+				results: entityResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=abc') })
+
+			expect(screen.getByText('Matching entities (1)')).toBeInTheDocument()
+			expect(screen.getByText('Test Entity')).toBeInTheDocument()
+			expect(screen.getByText('abc123')).toBeInTheDocument()
+		})
+
 		it('shows entity ID and property ID for each result', () => {
 			mockUseSearch.mockReturnValue({
 				results: mockResults,
@@ -174,7 +205,7 @@ describe('SearchPage', () => {
 
 		it('shows no results message when results are empty', () => {
 			mockUseSearch.mockReturnValue({
-				results: { results: [] },
+				results: { results: [], entities: [] },
 				isLoading: false,
 				isDebouncing: false,
 				isError: false,

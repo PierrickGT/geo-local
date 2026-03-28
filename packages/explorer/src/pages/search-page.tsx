@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router'
-import type { SearchResult } from '~/api/types'
+import type { Entity, SearchResult } from '~/api/types'
 import { SearchInput } from '~/components/search-input'
 import { Button } from '~/components/ui/button'
 import { TruncateId } from '~/components/ui/truncate-id'
@@ -10,7 +10,7 @@ import { useSearch } from '~/hooks/use-search'
  * - Query syncs to URL ?q=
  * - Prepopulated on load from URL
  * - Empty query suppresses search
- * - Results show entityId, propertyId, value
+ * - Results show entity ID matches and text triple matches
  * - Clicking result navigates to entity detail
  */
 export function SearchPage() {
@@ -42,6 +42,10 @@ export function SearchPage() {
 		navigate(`/entities/${encodeURIComponent(result.entityId)}`)
 	}
 
+	const handleEntityClick = (entity: Entity) => {
+		navigate(`/entities/${encodeURIComponent(entity.id)}`)
+	}
+
 	// Handle keyboard navigation on result rows
 	const handleResultKeyDown = (result: SearchResult, event: React.KeyboardEvent) => {
 		if (event.key === 'Enter' || event.key === ' ') {
@@ -50,11 +54,20 @@ export function SearchPage() {
 		}
 	}
 
+	const handleEntityKeyDown = (entity: Entity, event: React.KeyboardEvent) => {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault()
+			handleEntityClick(entity)
+		}
+	}
+
 	// Determine current state
 	const isEmptyQuery = !query.trim()
 	const isSearching = isLoading || isDebouncing
-	const hasResults = results && results.results.length > 0
-	const hasNoResults = results && results.results.length === 0
+	const entityResults = results?.entities ?? []
+	const textResults = results?.results ?? []
+	const hasAnyResults = entityResults.length > 0 || textResults.length > 0
+	const hasNoResults = results && !hasAnyResults
 
 	return (
 		<div className="p-6">
@@ -95,7 +108,7 @@ export function SearchPage() {
 			{/* Empty query state */}
 			{isEmptyQuery && !isSearching && !isError && (
 				<div className="bg-white rounded-lg border border-gray-200 p-6">
-					<p className="text-gray-500">Enter a search query to find entities.</p>
+					<p className="text-gray-500">Enter a search query to find entities by name or ID.</p>
 				</div>
 			)}
 
@@ -106,52 +119,106 @@ export function SearchPage() {
 				</div>
 			)}
 
-			{/* Results list */}
-			{hasResults && !isSearching && !isError && (
-				<div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-					<table className="min-w-full divide-y divide-gray-200">
-						<thead className="bg-gray-50">
-							<tr>
-								<th
-									scope="col"
-									className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Entity ID
-								</th>
-								<th
-									scope="col"
-									className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Property ID
-								</th>
-								<th
-									scope="col"
-									className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-								>
-									Value
-								</th>
-							</tr>
-						</thead>
-						<tbody className="bg-white divide-y divide-gray-200">
-							{results.results.map((result, index) => (
-								<tr
-									key={`${result.entityId}-${result.propertyId}-${index}`}
-									onClick={() => handleResultClick(result)}
-									onKeyDown={(e) => handleResultKeyDown(result, e)}
-									tabIndex={0}
-									className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-								>
-									<td className="px-6 py-4 whitespace-nowrap">
-										<TruncateId id={result.entityId} />
-									</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-										<span className="font-mono">{result.propertyId.slice(0, 12)}...</span>
-									</td>
-									<td className="px-6 py-4 text-sm text-gray-900">{formatValue(result.value)}</td>
+			{/* Entity ID matches */}
+			{entityResults.length > 0 && !isSearching && !isError && (
+				<div className="mb-4">
+					<h2 className="text-sm font-medium text-gray-500 mb-2">
+						Matching entities ({entityResults.length})
+					</h2>
+					<div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+						<table className="min-w-full divide-y divide-gray-200">
+							<thead className="bg-gray-50">
+								<tr>
+									<th
+										scope="col"
+										className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Entity ID
+									</th>
+									<th
+										scope="col"
+										className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Name
+									</th>
 								</tr>
-							))}
-						</tbody>
-					</table>
+							</thead>
+							<tbody className="bg-white divide-y divide-gray-200">
+								{entityResults.map((entity) => (
+									<tr
+										key={entity.id}
+										onClick={() => handleEntityClick(entity)}
+										onKeyDown={(e) => handleEntityKeyDown(entity, e)}
+										tabIndex={0}
+										className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+									>
+										<td className="px-6 py-4 whitespace-nowrap">
+											<TruncateId id={entity.id} />
+										</td>
+										<td className="px-6 py-4 text-sm text-gray-900">
+											{entity.propertiesText ?? <span className="text-gray-400 italic">No name</span>}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			)}
+
+			{/* Text results */}
+			{textResults.length > 0 && !isSearching && !isError && (
+				<div>
+					<h2 className="text-sm font-medium text-gray-500 mb-2">
+						Text matches ({textResults.length})
+					</h2>
+					<div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+						<table className="min-w-full divide-y divide-gray-200">
+							<thead className="bg-gray-50">
+								<tr>
+									<th
+										scope="col"
+										className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Entity ID
+									</th>
+									<th
+										scope="col"
+										className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Property ID
+									</th>
+									<th
+										scope="col"
+										className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									>
+										Value
+									</th>
+								</tr>
+							</thead>
+							<tbody className="bg-white divide-y divide-gray-200">
+								{textResults.map((result, index) => (
+									<tr
+										key={`${result.entityId}-${result.propertyId}-${index}`}
+										onClick={() => handleResultClick(result)}
+										onKeyDown={(e) => handleResultKeyDown(result, e)}
+										tabIndex={0}
+										className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+									>
+										<td className="px-6 py-4 whitespace-nowrap">
+											<TruncateId id={result.entityId} />
+										</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+											<span className="font-mono">{result.propertyId.slice(0, 12)}...</span>
+										</td>
+										<td className="px-6 py-4 text-sm text-gray-900">
+											{formatValue(result.value)}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			)}
 		</div>

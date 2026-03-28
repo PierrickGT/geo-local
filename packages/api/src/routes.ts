@@ -187,7 +187,8 @@ export function createRouter(): Router {
 
 			const limit = clampInt(req.query.limit, 20, 100)
 
-			const result = await pool.query(
+			// Text search across triples
+			const triplesPromise = pool.query(
 				`SELECT entity_id, property_id, value, language
 				 FROM triples
 				 WHERE value_type = 'text'
@@ -196,8 +197,25 @@ export function createRouter(): Router {
 				[q, limit],
 			)
 
+			// Entity ID search (exact or prefix match on 32-char hex IDs)
+			const entityPromise = q.length >= 4
+				? pool.query(
+						`SELECT id, status, created_at, updated_at,
+							(SELECT t.value->>'value' FROM triples t
+							 WHERE t.entity_id = e.id AND t.value_type = 'text'
+							 ORDER BY t.property_id LIMIT 1) AS properties_text
+						 FROM entities e
+						 WHERE e.status = 'alive' AND e.id ILIKE '%' || $1 || '%'
+						 LIMIT $2`,
+						[q, limit],
+					)
+				: Promise.resolve({ rows: [] })
+
+			const [triplesResult, entitiesResult] = await Promise.all([triplesPromise, entityPromise])
+
 			res.json({
-				results: result.rows.map(formatRow),
+				results: triplesResult.rows.map(formatRow),
+				entities: entitiesResult.rows.map(formatRow),
 			})
 		} catch (err) {
 			res.status(500).json({ error: 'Internal server error' })

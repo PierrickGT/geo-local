@@ -95,6 +95,7 @@ export interface SearchResult {
 
 export interface SearchResponse {
 	results: SearchResult[]
+	entities: Entity[]
 }
 
 // ---------------------------------------------------------------------------

@@ -258,7 +258,7 @@ describe('RelationsPanel', () => {
 	})
 
 	describe('truncation', () => {
-		it('truncates long relation types', () => {
+		it('displays long relation types in full', () => {
 			const longTypeRelation: Relation = {
 				id: 'rel-long-type',
 				fromId: 'test-entity',
@@ -272,10 +272,10 @@ describe('RelationsPanel', () => {
 				wrapper: createWrapper(),
 			})
 
-			// Relation type should be truncated with ellipsis
+			// Relation type is displayed in full (truncation removed)
 			const truncatedText = screen.getByTitle(longTypeRelation.relationType)
 			expect(truncatedText).toBeInTheDocument()
-			expect(truncatedText.textContent).toContain('...')
+			expect(truncatedText.textContent).toBe(longTypeRelation.relationType)
 		})
 	})
 

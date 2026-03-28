@@ -40,6 +40,7 @@ describe('search API', () => {
 						language: null,
 					},
 				],
+				entities: [],
 			}
 			mockGet.mockResolvedValueOnce(mockResponse)
 
@@ -52,6 +53,7 @@ describe('search API', () => {
 		it('searches with limit', async () => {
 			const mockResponse = {
 				results: [],
+				entities: [],
 			}
 			mockGet.mockResolvedValueOnce(mockResponse)
 
@@ -61,7 +63,7 @@ describe('search API', () => {
 		})
 
 		it('URL encodes query string', async () => {
-			const mockResponse = { results: [] }
+			const mockResponse = { results: [], entities: [] }
 			mockGet.mockResolvedValueOnce(mockResponse)
 
 			await searchEntities({ q: 'hello world & more' })
