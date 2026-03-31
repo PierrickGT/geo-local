@@ -130,11 +130,8 @@ export function EntitiesPage() {
 	// Fetch available types for dropdown
 	const { types, isLoading: isLoadingTypes } = useTypes()
 
-	// Derive alive entities from current page
-	const aliveEntities = useMemo(
-		() => (entities?.entities ?? []).filter((e) => e.status === 'alive'),
-		[entities],
-	)
+	// Derive entities from current page
+	const aliveEntities = useMemo(() => entities?.entities ?? [], [entities])
 
 	// Clear selection on page change (track offset via ref for exhaustive-deps)
 	const prevOffsetRef = useRef(offset)
@@ -155,14 +152,14 @@ export function EntitiesPage() {
 				const next = new Set(prev)
 
 				if (shiftKey && lastClickedIndex !== null) {
-					// Range selection: select all alive entities between last clicked and current
+					// Range selection: select all entities between last clicked and current
 					const start = Math.min(lastClickedIndex, index)
 					const end = Math.max(lastClickedIndex, index)
 					const allEntities = entities?.entities ?? []
 
 					for (let i = start; i <= end; i++) {
 						const entity = allEntities[i]
-						if (entity?.status === 'alive') {
+						if (entity) {
 							next.add(entity.id)
 						}
 					}
@@ -178,11 +175,8 @@ export function EntitiesPage() {
 				return next
 			})
 
-			// Update last clicked index (only for alive entities)
-			const entity = entities?.entities?.[index]
-			if (entity?.status === 'alive') {
-				lastClickedIndexRef.current = index
-			}
+			// Update last clicked index
+			lastClickedIndexRef.current = index
 		},
 		[entities],
 	)
@@ -304,9 +298,9 @@ export function EntitiesPage() {
 						className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 					>
 						<option value="">All types</option>
-						{types?.map((typeId) => (
-							<option key={typeId} value={typeId}>
-								{typeId.slice(0, 12)}...
+						{types?.map((type) => (
+							<option key={type.id} value={type.id}>
+								{type.name ?? type.id.slice(0, 12)}
 							</option>
 						))}
 					</select>

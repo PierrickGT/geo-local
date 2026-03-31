@@ -4,7 +4,7 @@
  */
 
 import { get } from './client'
-import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from './types'
+import type { EntitiesResponse, EntityRelationsResponse, EntityResponse, TypeItem } from './types'
 
 // ---------------------------------------------------------------------------
 // Get Entities (list with pagination)
@@ -92,4 +92,17 @@ export async function getEntityRelations(
 		: `/entities/${encodeURIComponent(id)}/relations`
 
 	return get<EntityRelationsResponse>(path)
+}
+
+// ---------------------------------------------------------------------------
+// Get Types
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch all known entity types (distinct targets of TYPE relations).
+ *
+ * @returns Array of type objects with id and optional name
+ */
+export async function getTypes(): Promise<TypeItem[]> {
+	return get<TypeItem[]>('/types')
 }

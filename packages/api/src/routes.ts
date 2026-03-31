@@ -65,32 +65,28 @@ export function createRouter(): Router {
 					SELECT count(*)::int AS total
 					FROM entities e
 					INNER JOIN relations r
-						ON r.from_id = e.id AND r.to_id = $${idx} AND r.status = 'alive'
-					WHERE e.status = 'alive'`
+						ON r.from_id = e.id AND r.to_id = $${idx}`
 				selectQuery = `
-					SELECT e.id, e.status, e.created_at, e.updated_at,
+					SELECT e.id, e.created_at, e.updated_at,
 						(SELECT t.value->>'value' FROM triples t
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
 						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
 					INNER JOIN relations r
-						ON r.from_id = e.id AND r.to_id = $${idx} AND r.status = 'alive'
-					WHERE e.status = 'alive'
+						ON r.from_id = e.id AND r.to_id = $${idx}
 					ORDER BY e.created_at DESC
 					LIMIT $${idx + 1} OFFSET $${idx + 2}`
 				params.push(String(limit), String(offset))
 			} else {
 				countQuery = `
 					SELECT count(*)::int AS total
-					FROM entities e
-					WHERE e.status = 'alive'`
+					FROM entities e`
 				selectQuery = `
-					SELECT e.id, e.status, e.created_at, e.updated_at,
+					SELECT e.id, e.created_at, e.updated_at,
 						(SELECT t.value->>'value' FROM triples t
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
 						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
-					WHERE e.status = 'alive'
 					ORDER BY e.created_at DESC
 					LIMIT $${idx + 1} OFFSET $${idx + 2}`
 				params.push(String(limit), String(offset))
@@ -119,7 +115,7 @@ export function createRouter(): Router {
 			const { id } = req.params
 
 			const entityRes = await pool.query(
-				'SELECT id, status, created_at, updated_at FROM entities WHERE id = $1',
+				'SELECT id, created_at, updated_at FROM entities WHERE id = $1',
 				[id],
 			)
 			if (entityRes.rows.length === 0) {
@@ -132,8 +128,8 @@ export function createRouter(): Router {
 					'SELECT entity_id, property_id, value_type, value, language FROM triples WHERE entity_id = $1',
 					[id],
 				),
-				pool.query("SELECT * FROM relations WHERE from_id = $1 AND status = 'alive'", [id]),
-				pool.query("SELECT * FROM relations WHERE to_id = $1 AND status = 'alive'", [id]),
+				pool.query('SELECT * FROM relations WHERE from_id = $1', [id]),
+				pool.query('SELECT * FROM relations WHERE to_id = $1', [id]),
 			])
 
 			res.json({
@@ -159,7 +155,7 @@ export function createRouter(): Router {
 
 			const dirColumn = direction === 'out' ? 'from_id' : 'to_id'
 			const params: string[] = [id]
-			let query = `SELECT * FROM relations WHERE ${dirColumn} = $1 AND status = 'alive'`
+			let query = `SELECT * FROM relations WHERE ${dirColumn} = $1`
 
 			if (relationType) {
 				params.push(relationType)
@@ -201,12 +197,12 @@ export function createRouter(): Router {
 			const entityPromise =
 				q.length >= 4
 					? pool.query(
-							`SELECT id, status, created_at, updated_at,
+							`SELECT id, created_at, updated_at,
 							(SELECT t.value->>'value' FROM triples t
 							 WHERE t.entity_id = e.id AND t.value_type = 'text'
 							 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 						 FROM entities e
-						 WHERE e.status = 'alive' AND e.id ILIKE '%' || $1 || '%'
+						 WHERE e.id ILIKE '%' || $1 || '%'
 						 LIMIT $2`,
 							[q, limit],
 						)
@@ -267,6 +263,27 @@ export function createRouter(): Router {
 
 			const edit = formatRow(result.rows[0])
 			res.json(edit)
+		} catch (err) {
+			res.status(500).json({ error: 'Internal server error' })
+		}
+	})
+
+	// GET /types
+	router.get('/types', async (_req: Request, res: Response) => {
+		try {
+			const pool = getPool()
+
+			const result = await pool.query(`
+				SELECT DISTINCT r.to_id AS id,
+					(SELECT t.value->>'value' FROM triples t
+					 WHERE t.entity_id = r.to_id AND t.value_type = 'text'
+					 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS name
+				FROM relations r
+				WHERE r.relation_type = '8f151ba4de204e3c9cb499ddf96f48f1'
+				ORDER BY id
+			`)
+
+			res.json(result.rows.map(formatRow))
 		} catch (err) {
 			res.status(500).json({ error: 'Internal server error' })
 		}

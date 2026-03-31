@@ -5,8 +5,6 @@ import { createRelation } from './ops/create-relation.js'
 import { createValueRef } from './ops/create-value-ref.js'
 import { deleteEntity } from './ops/delete-entity.js'
 import { deleteRelation } from './ops/delete-relation.js'
-import { restoreEntity } from './ops/restore-entity.js'
-import { restoreRelation } from './ops/restore-relation.js'
 import { updateEntity } from './ops/update-entity.js'
 import { updateRelation } from './ops/update-relation.js'
 
@@ -22,9 +20,6 @@ export async function applyEdit(client: pg.PoolClient, edit: Edit, spaceId: stri
 			case 'deleteEntity':
 				await deleteEntity(client, op)
 				break
-			case 'restoreEntity':
-				await restoreEntity(client, op)
-				break
 			case 'createRelation':
 				await createRelation(client, op)
 				break
@@ -34,11 +29,11 @@ export async function applyEdit(client: pg.PoolClient, edit: Edit, spaceId: stri
 			case 'deleteRelation':
 				await deleteRelation(client, op)
 				break
-			case 'restoreRelation':
-				await restoreRelation(client, op)
-				break
 			case 'createValueRef':
 				await createValueRef(client, op)
+				break
+			case 'restoreEntity':
+			case 'restoreRelation':
 				break
 		}
 	}

@@ -4,7 +4,7 @@
  */
 
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { getEntities, getEntity, getEntityRelations } from '~/api/entities'
+import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
 import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
 import { NAME_PROPERTY_ID } from '~/lib/constants'
@@ -151,21 +151,11 @@ export function useEntityRelations(
 }
 
 // ---------------------------------------------------------------------------
-// useTypes - Known entity types (client-side hardcoded list)
+// useTypes - Known entity types (fetched from API)
 // ---------------------------------------------------------------------------
 
-/**
- * Known entity types for the type filter dropdown.
- * This is a hardcoded list since we cannot modify the API to add a /types endpoint.
- * Types are entity IDs from TYPE relations.
- */
-const KNOWN_TYPES: string[] = [
-	// Test type entity for user testing validation
-	'4225e7deb1d442f89f1137daa0750d9c',
-]
-
 export interface UseTypesReturn {
-	types: string[]
+	types: { id: string; name: string | null }[]
 	isLoading: boolean
 	isError: boolean
 	error: Error | null
@@ -173,16 +163,22 @@ export interface UseTypesReturn {
 
 /**
  * Get known entity types for the filter dropdown.
- * Returns a hardcoded list since API modification is not allowed.
+ * Fetches distinct type entities from the /types API endpoint.
  *
- * @returns Hardcoded list of known type IDs
+ * @returns List of type objects with id and optional name
  */
 export function useTypes(): UseTypesReturn {
+	const query = useQuery({
+		queryKey: entityKeys.types(),
+		queryFn: () => getTypes(),
+		staleTime: 60_000,
+	})
+
 	return {
-		types: KNOWN_TYPES,
-		isLoading: false,
-		isError: false,
-		error: null,
+		types: query.data ?? [],
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
 	}
 }
 

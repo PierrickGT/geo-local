@@ -129,6 +129,9 @@ export function createRouter(): Router {
 							spaceId: entitySpaceId,
 						})
 						allOps.push(...result.ops)
+						// SDK only unsets values and deletes relations — add deleteEntity op
+						// so the indexer removes the entity row from the local DB
+						allOps.push(deleteEntityOp(IdUtils.toGrcId(mutation.params.id)))
 						entityIds.push(result.id)
 					} else {
 						// Local-only entity with no space association — generate op directly

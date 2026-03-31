@@ -13,13 +13,13 @@ export async function createEntity(
 	if (spaceId) {
 		await client.query(
 			`INSERT INTO entities (id, space_id) VALUES ($1, $2)
-			 ON CONFLICT (id) DO UPDATE SET status = 'alive', updated_at = now(), space_id = COALESCE(entities.space_id, EXCLUDED.space_id)`,
+			 ON CONFLICT (id) DO UPDATE SET updated_at = now(), space_id = COALESCE(entities.space_id, EXCLUDED.space_id)`,
 			[id, spaceId],
 		)
 	} else {
 		await client.query(
 			`INSERT INTO entities (id) VALUES ($1)
-			 ON CONFLICT (id) DO UPDATE SET status = 'alive', updated_at = now()`,
+			 ON CONFLICT (id) DO UPDATE SET updated_at = now()`,
 			[id],
 		)
 	}

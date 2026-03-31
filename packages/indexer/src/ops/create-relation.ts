@@ -27,7 +27,6 @@ export async function createRelation(client: pg.PoolClient, op: CreateRelation):
 		   to_space = EXCLUDED.to_space,
 		   to_version = EXCLUDED.to_version,
 		   entity_id = EXCLUDED.entity_id,
-		   status = 'alive',
 		   updated_at = now()`,
 		[
 			id,

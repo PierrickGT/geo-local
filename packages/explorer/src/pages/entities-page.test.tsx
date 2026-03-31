@@ -46,13 +46,11 @@ const mockEntities = {
 	entities: [
 		{
 			id: 'entity-1',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 			updatedAt: '2024-01-02T00:00:00Z',
 		},
 		{
 			id: 'entity-2',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 			updatedAt: '2024-01-02T00:00:00Z',
 		},
@@ -62,7 +60,11 @@ const mockEntities = {
 	offset: 0,
 }
 
-const mockTypes = ['type-1', 'type-2', 'type-3']
+const mockTypes = [
+	{ id: 'type-1', name: 'Person' },
+	{ id: 'type-2', name: 'Organization' },
+	{ id: 'type-3', name: 'Event' },
+]
 
 // Mock refetch function
 const mockRefetch = vi.fn()
@@ -145,6 +147,9 @@ describe('EntitiesPage', () => {
 
 			expect(screen.getByLabelText('Filter by type:')).toBeInTheDocument()
 			expect(screen.getByRole('option', { name: 'All types' })).toBeInTheDocument()
+			expect(screen.getByRole('option', { name: 'Person' })).toBeInTheDocument()
+			expect(screen.getByRole('option', { name: 'Organization' })).toBeInTheDocument()
+			expect(screen.getByRole('option', { name: 'Event' })).toBeInTheDocument()
 		})
 
 		it('selecting type filters list and updates URL', async () => {
@@ -532,7 +537,7 @@ describe('EntitiesPage', () => {
 			expect(screen.queryByTestId('batch-delete-button')).not.toBeInTheDocument()
 		})
 
-		it('select-all only selects alive entities on current page', async () => {
+		it('select-all selects all entities on current page', async () => {
 			const user = userEvent.setup()
 
 			mockUseEntities.mockReturnValue({
@@ -540,19 +545,16 @@ describe('EntitiesPage', () => {
 					entities: [
 						{
 							id: 'entity-1',
-							status: 'alive' as const,
 							createdAt: '2024-01-01T00:00:00Z',
 							updatedAt: '2024-01-02T00:00:00Z',
 						},
 						{
 							id: 'entity-2',
-							status: 'deleted' as const,
 							createdAt: '2024-01-01T00:00:00Z',
 							updatedAt: '2024-01-02T00:00:00Z',
 						},
 						{
 							id: 'entity-3',
-							status: 'alive' as const,
 							createdAt: '2024-01-01T00:00:00Z',
 							updatedAt: '2024-01-02T00:00:00Z',
 						},
@@ -574,8 +576,8 @@ describe('EntitiesPage', () => {
 			const checkboxes = screen.getAllByRole('checkbox')
 			await user.click(checkboxes[0]) // Header checkbox
 
-			// Should show Delete (2) — only alive entities selected
-			expect(screen.getByTestId('batch-delete-button')).toHaveTextContent('Delete (2)')
+			// Should show Delete (3) — all entities selected
+			expect(screen.getByTestId('batch-delete-button')).toHaveTextContent('Delete (3)')
 		})
 
 		it('closing dialog resets error state for clean reopen', async () => {

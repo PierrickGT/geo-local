@@ -163,7 +163,6 @@ describe('SearchPage', () => {
 				entities: [
 					{
 						id: 'abc123',
-						status: 'alive' as const,
 						createdAt: '2026-01-01T00:00:00Z',
 						updatedAt: '2026-01-01T00:00:00Z',
 						propertiesText: 'Test Entity',

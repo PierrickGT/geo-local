@@ -50,7 +50,6 @@ function createWrapper(initialRoute = '/entities/test-entity-id') {
 const mockEntityDetail = {
 	entity: {
 		id: 'test-entity-id',
-		status: 'alive' as const,
 		createdAt: '2024-01-01T00:00:00Z',
 		updatedAt: '2024-01-02T00:00:00Z',
 		triples: [
@@ -82,7 +81,6 @@ const mockEntityDetail = {
 				fromId: 'test-entity-id',
 				toId: 'related-entity-1',
 				relationType: 'TYPE',
-				status: 'alive' as const,
 				createdAt: '2024-01-01T00:00:00Z',
 			},
 		],
@@ -92,7 +90,6 @@ const mockEntityDetail = {
 				fromId: 'related-entity-2',
 				toId: 'test-entity-id',
 				relationType: 'REFERENCES',
-				status: 'alive' as const,
 				createdAt: '2024-01-01T00:00:00Z',
 			},
 		],
@@ -153,7 +150,7 @@ describe('EntityPage', () => {
 	})
 
 	describe('rendering', () => {
-		it('renders entity header with name, id, status, and timestamps', async () => {
+		it('renders entity header with name, id, and timestamps', async () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
 			// Check entity name is displayed (from NAME triple) - appears in header
@@ -165,9 +162,6 @@ describe('EntityPage', () => {
 
 			// Check entity type badge (default "Entity" for regular entities)
 			expect(screen.getByText('Entity')).toBeInTheDocument()
-
-			// Check status badge
-			expect(screen.getByText('alive')).toBeInTheDocument()
 
 			// Check timestamps are displayed
 			expect(screen.getByText(/Created:/)).toBeInTheDocument()
@@ -186,7 +180,6 @@ describe('EntityPage', () => {
 								fromId: 'some-entity',
 								toId: 'test-entity-id',
 								relationType: TYPES_PROPERTY_ID,
-								status: 'alive' as const,
 								createdAt: '2024-01-01T00:00:00Z',
 							},
 						],
@@ -355,27 +348,6 @@ describe('EntityPage', () => {
 
 			expect(screen.getByTestId('delete-entity-button')).toBeInTheDocument()
 			expect(screen.getByText('Delete')).toBeInTheDocument()
-		})
-
-		it('hides Delete button for deleted entities', () => {
-			mockUseEntity.mockReturnValue({
-				entity: {
-					entity: {
-						...mockEntityDetail.entity,
-						status: 'deleted',
-					},
-				},
-				isLoading: false,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
-			})
-
-			render(<EntityPage />, { wrapper: createWrapper() })
-
-			expect(screen.queryByTestId('delete-entity-button')).not.toBeInTheDocument()
-			// Edit button should also be hidden for deleted entities
-			expect(screen.queryByTestId('edit-entity-button')).not.toBeInTheDocument()
 		})
 
 		it('opens confirmation dialog when Delete button is clicked', async () => {

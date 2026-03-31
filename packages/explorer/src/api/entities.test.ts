@@ -35,7 +35,6 @@ describe('entities API', () => {
 				entities: [
 					{
 						id: 'entity-1',
-						status: 'alive' as const,
 						createdAt: '2024-01-01',
 						updatedAt: '2024-01-01',
 					},
@@ -106,7 +105,6 @@ describe('entities API', () => {
 			const mockResponse = {
 				entity: {
 					id: 'entity-123',
-					status: 'alive' as const,
 					createdAt: '2024-01-01',
 					updatedAt: '2024-01-01',
 					triples: [],
@@ -126,7 +124,6 @@ describe('entities API', () => {
 			const mockResponse = {
 				entity: {
 					id: 'entity/slash',
-					status: 'alive' as const,
 					createdAt: '2024-01-01',
 					updatedAt: '2024-01-01',
 					triples: [],
@@ -156,7 +153,6 @@ describe('entities API', () => {
 						fromId: 'entity-1',
 						toId: 'entity-2',
 						relationType: 'KNOWS',
-						status: 'alive' as const,
 						createdAt: '2024-01-01',
 					},
 				],

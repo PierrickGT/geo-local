@@ -174,7 +174,7 @@ describe('client', () => {
 
 	describe('get', () => {
 		it('makes GET request', async () => {
-			const mockResponse: SearchResponse = { results: [] }
+			const mockResponse: SearchResponse = { results: [], entities: [] }
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
 				json: () => Promise.resolve(mockResponse),

@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import type { Entity, EntityStatus } from '~/api/types'
+import type { Entity } from '~/api/types'
 import { Pagination } from '~/components/pagination'
 import { TruncateId } from '~/components/ui/truncate-id'
 
@@ -18,23 +18,6 @@ interface EntityTableProps {
 }
 
 /**
- * Status badge component for displaying entity status.
- */
-function StatusBadge({ status }: { status: EntityStatus }) {
-	const isAlive = status === 'alive'
-
-	return (
-		<span
-			className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-				isAlive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-			}`}
-		>
-			{status}
-		</span>
-	)
-}
-
-/**
  * Formats an ISO date string to a human-readable format.
  */
 function formatDate(isoString: string): string {
@@ -49,7 +32,7 @@ function formatDate(isoString: string): string {
 }
 
 /**
- * Paginated table of entities with columns: id, status, timestamps.
+ * Paginated table of entities with columns: id, properties, timestamps.
  * Rows are clickable and navigate to entity detail page.
  */
 export function EntityTable({
@@ -68,20 +51,16 @@ export function EntityTable({
 	const hasSelection = selectedIds !== undefined
 	const headerCheckboxRef = useRef<HTMLInputElement>(null)
 
-	const aliveEntities = entities.filter((e) => e.status === 'alive')
-	const selectedAliveCount = hasSelection
-		? aliveEntities.filter((e) => selectedIds.has(e.id)).length
-		: 0
+	const selectedCount = hasSelection ? entities.filter((e) => selectedIds.has(e.id)).length : 0
 
 	const setHeaderCheckboxRef = useCallback(
 		(node: HTMLInputElement | null) => {
 			;(headerCheckboxRef as React.MutableRefObject<HTMLInputElement | null>).current = node
 			if (node) {
-				node.indeterminate =
-					hasSelection && selectedAliveCount > 0 && selectedAliveCount < aliveEntities.length
+				node.indeterminate = hasSelection && selectedCount > 0 && selectedCount < entities.length
 			}
 		},
-		[hasSelection, selectedAliveCount, aliveEntities.length],
+		[hasSelection, selectedCount, entities.length],
 	)
 
 	const handleRowClick = (entityId: string) => {
@@ -96,7 +75,6 @@ export function EntityTable({
 			handleRowClick(entityId)
 		}
 	}
-
 
 	if (isLoading) {
 		return (
@@ -125,9 +103,7 @@ export function EntityTable({
 									<input
 										ref={setHeaderCheckboxRef}
 										type="checkbox"
-										checked={
-											aliveEntities.length > 0 && selectedAliveCount === aliveEntities.length
-										}
+										checked={entities.length > 0 && selectedCount === entities.length}
 										onChange={() => onToggleSelectAll?.()}
 										aria-label="Select all"
 										className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -145,12 +121,6 @@ export function EntityTable({
 								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
 							>
 								Properties
-							</th>
-							<th
-								scope="col"
-								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Status
 							</th>
 							<th
 								scope="col"
@@ -182,21 +152,17 @@ export function EntityTable({
 							>
 								{hasSelection && (
 									<td className="px-4 py-4 w-10">
-										{entity.status === 'alive' ? (
-											<input
-												type="checkbox"
-												checked={selectedIds?.has(entity.id) ?? false}
-												onChange={() => {}}
-												onClick={(e) => {
-													e.stopPropagation()
-													onToggleSelection?.(entity.id, e.shiftKey, index)
-												}}
-												aria-label={`Select ${entity.id}`}
-												className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-											/>
-										) : (
-											<span className="inline-block w-4" />
-										)}
+										<input
+											type="checkbox"
+											checked={selectedIds?.has(entity.id) ?? false}
+											onChange={() => {}}
+											onClick={(e) => {
+												e.stopPropagation()
+												onToggleSelection?.(entity.id, e.shiftKey, index)
+											}}
+											aria-label={`Select ${entity.id}`}
+											className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+										/>
 									</td>
 								)}
 								<td className="px-6 py-4 whitespace-nowrap">
@@ -204,9 +170,6 @@ export function EntityTable({
 								</td>
 								<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
 									{entity.propertiesText ?? '-'}
-								</td>
-								<td className="px-6 py-4 whitespace-nowrap">
-									<StatusBadge status={entity.status} />
 								</td>
 								<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 									{formatDate(entity.createdAt)}

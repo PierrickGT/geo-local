@@ -57,19 +57,16 @@ const mockEntities = {
 	entities: [
 		{
 			id: 'entity-1',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 			updatedAt: '2024-01-02T00:00:00Z',
 		},
 		{
 			id: 'entity-2',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 			updatedAt: '2024-01-02T00:00:00Z',
 		},
 		{
 			id: 'entity-3',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 			updatedAt: '2024-01-02T00:00:00Z',
 		},
@@ -82,7 +79,6 @@ const mockEntities = {
 const mockEntityDetail = {
 	entity: {
 		id: 'focus-entity',
-		status: 'alive' as const,
 		createdAt: '2024-01-01T00:00:00Z',
 		updatedAt: '2024-01-02T00:00:00Z',
 		triples: [],
@@ -98,7 +94,6 @@ const mockRelations = {
 			fromId: 'focus-entity',
 			toId: 'neighbor-1',
 			relationType: 'RELATES_TO',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 		{
@@ -106,7 +101,6 @@ const mockRelations = {
 			fromId: 'neighbor-2',
 			toId: 'focus-entity',
 			relationType: 'RELATED_FROM',
-			status: 'alive' as const,
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 	],
@@ -332,7 +326,6 @@ describe('GraphPage', () => {
 				entity: {
 					entity: {
 						id: 'test-focus-id',
-						status: 'alive' as const,
 						createdAt: '2024-01-01T00:00:00Z',
 						updatedAt: '2024-01-02T00:00:00Z',
 						triples: [],

@@ -93,7 +93,6 @@ describe('RelationsPanel', () => {
 			fromId: 'test-entity',
 			toId: 'type-entity',
 			relationType: 'TYPE',
-			status: 'alive',
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 		{
@@ -101,7 +100,6 @@ describe('RelationsPanel', () => {
 			fromId: 'test-entity',
 			toId: 'related-entity-1',
 			relationType: 'REFERENCES',
-			status: 'alive',
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 	]
@@ -112,7 +110,6 @@ describe('RelationsPanel', () => {
 			fromId: 'source-entity',
 			toId: 'test-entity',
 			relationType: 'LINKS_TO',
-			status: 'alive',
 			createdAt: '2024-01-01T00:00:00Z',
 		},
 	]
@@ -264,7 +261,6 @@ describe('RelationsPanel', () => {
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'THIS_IS_A_VERY_LONG_RELATION_TYPE_THAT_SHOULD_BE_TRUNCATED',
-				status: 'alive',
 				createdAt: '2024-01-01T00:00:00Z',
 			}
 
@@ -291,7 +287,6 @@ describe('RelationsPanel', () => {
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'property-id-123',
-				status: 'alive',
 				createdAt: '2024-01-01T00:00:00Z',
 			}
 
@@ -313,7 +308,6 @@ describe('RelationsPanel', () => {
 				fromId: 'test-entity',
 				toId: 'target',
 				relationType: 'property-id-456',
-				status: 'alive',
 				createdAt: '2024-01-01T00:00:00Z',
 			}
 

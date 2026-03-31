@@ -7,11 +7,8 @@
 // Entity Types
 // ---------------------------------------------------------------------------
 
-export type EntityStatus = 'alive' | 'deleted'
-
 export interface Entity {
 	id: string
-	status: EntityStatus
 	createdAt: string
 	updatedAt: string
 	propertiesText?: string | null
@@ -60,7 +57,6 @@ export interface Relation {
 	fromId: string
 	toId: string
 	relationType: string
-	status: EntityStatus
 	createdAt: string
 }
 
@@ -118,6 +114,15 @@ export interface Edit {
 
 export interface EditsResponse {
 	edits: Edit[]
+}
+
+// ---------------------------------------------------------------------------
+// Types Endpoint
+// ---------------------------------------------------------------------------
+
+export interface TypeItem {
+	id: string
+	name: string | null
 }
 
 // ---------------------------------------------------------------------------

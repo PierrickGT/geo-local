@@ -14,19 +14,16 @@ vi.mock('react-router', () => ({
 const aliveEntities: Entity[] = [
 	{
 		id: 'abc123def456',
-		status: 'alive',
 		createdAt: '2024-01-01T00:00:00Z',
 		updatedAt: '2024-01-02T00:00:00Z',
 	},
 	{
 		id: 'def789ghi012',
-		status: 'alive',
 		createdAt: '2024-01-05T00:00:00Z',
 		updatedAt: '2024-01-06T00:00:00Z',
 	},
 	{
 		id: 'xyz789uvw012',
-		status: 'deleted',
 		createdAt: '2024-01-03T00:00:00Z',
 		updatedAt: '2024-01-04T00:00:00Z',
 	},
@@ -54,7 +51,7 @@ describe('EntityTable', () => {
 		)
 
 		expect(screen.getByText('ID')).toBeInTheDocument()
-		expect(screen.getByText('Status')).toBeInTheDocument()
+		expect(screen.getByText('Properties')).toBeInTheDocument()
 		expect(screen.getByText('Created')).toBeInTheDocument()
 		expect(screen.getByText('Updated')).toBeInTheDocument()
 	})
@@ -73,21 +70,6 @@ describe('EntityTable', () => {
 		// TruncateId now renders the full ID (CSS truncation via overflow-hidden)
 		expect(screen.getByText('abc123def456')).toBeInTheDocument()
 		expect(screen.getByText('xyz789uvw012')).toBeInTheDocument()
-	})
-
-	it('renders status badges', () => {
-		render(
-			<EntityTable
-				entities={mockEntities}
-				total={3}
-				limit={20}
-				offset={0}
-				onPageChange={() => {}}
-			/>,
-		)
-
-		expect(screen.getAllByText('alive')).toHaveLength(2)
-		expect(screen.getByText('deleted')).toBeInTheDocument()
 	})
 
 	it('shows loading state', () => {
@@ -198,33 +180,8 @@ describe('EntityTable', () => {
 			)
 
 			const checkboxes = screen.getAllByRole('checkbox')
-			// 1 header + 2 alive rows = 3 checkboxes
-			expect(checkboxes).toHaveLength(3)
-		})
-
-		it('deleted entity rows show spacer instead of checkbox', () => {
-			render(
-				<EntityTable
-					entities={aliveEntities}
-					total={3}
-					limit={20}
-					offset={0}
-					onPageChange={() => {}}
-					selectedIds={new Set()}
-					onToggleSelection={vi.fn()}
-					onToggleSelectAll={vi.fn()}
-				/>,
-			)
-
-			const checkboxes = screen.getAllByRole('checkbox')
-			// Header (1) + alive rows (2) — no checkbox for the deleted entity
-			expect(checkboxes).toHaveLength(3)
-
-			// Verify the deleted row has a spacer td instead of a checkbox
-			const deletedRow = screen.getByText('xyz789uvw012').closest('tr')
-			expect(deletedRow).not.toBeNull()
-			const deletedRowCheckboxes = deletedRow?.querySelectorAll('input[type="checkbox"]')
-			expect(deletedRowCheckboxes).toHaveLength(0)
+			// 1 header + 3 rows = 4 checkboxes
+			expect(checkboxes).toHaveLength(4)
 		})
 
 		it('header checkbox toggles select-all', async () => {
@@ -253,7 +210,7 @@ describe('EntityTable', () => {
 		})
 
 		it('header checkbox indeterminate state for partial selection', () => {
-			// Select only one of two alive entities
+			// Select only one of three entities
 			const selectedIds = new Set(['abc123def456'])
 
 			render(

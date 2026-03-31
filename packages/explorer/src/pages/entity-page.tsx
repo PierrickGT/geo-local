@@ -1,7 +1,7 @@
 import { PencilIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import type { EntityStatus, Relation } from '~/api/types'
+import type { Relation } from '~/api/types'
 import { RelationsPanel } from '~/components/relations-panel'
 import { TriplesPanel } from '~/components/triples-panel'
 import { Badge } from '~/components/ui/badge'
@@ -21,15 +21,6 @@ import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
 import { useDeleteEntity } from '~/hooks/use-mutations'
 import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
-
-/**
- * Status badge component for displaying entity status.
- */
-function StatusBadge({ status }: { status: EntityStatus }) {
-	const variant = status === 'alive' ? 'success' : 'destructive'
-
-	return <Badge variant={variant}>{status}</Badge>
-}
 
 /**
  * Entity type badge for displaying the entity's category (Type, Property, or Entity).
@@ -267,7 +258,6 @@ export function EntityPage() {
 										<span className="text-lg font-semibold text-gray-900">{entityName}</span>
 									) : null}
 									<EntityTypeBadge type={entityType} />
-									<StatusBadge status={entityDetail.status} />
 								</div>
 								<TruncateId
 									id={entityDetail.id}
@@ -275,28 +265,26 @@ export function EntityPage() {
 								/>
 							</div>
 						</div>
-						{entityDetail.status === 'alive' && (
-							<div className="flex items-center gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => navigate(`/entities/${entityDetail.id}/edit`)}
-									data-testid="edit-entity-button"
-								>
-									<PencilIcon className="size-4" />
-									Edit
-								</Button>
-								<Button
-									variant="destructive"
-									size="sm"
-									onClick={() => setDeleteDialogOpen(true)}
-									data-testid="delete-entity-button"
-								>
-									<Trash2Icon className="size-4" />
-									Delete
-								</Button>
-							</div>
-						)}
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => navigate(`/entities/${entityDetail.id}/edit`)}
+								data-testid="edit-entity-button"
+							>
+								<PencilIcon className="size-4" />
+								Edit
+							</Button>
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={() => setDeleteDialogOpen(true)}
+								data-testid="delete-entity-button"
+							>
+								<Trash2Icon className="size-4" />
+								Delete
+							</Button>
+						</div>
 					</div>
 					<div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
 						<div>

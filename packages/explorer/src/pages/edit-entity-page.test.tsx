@@ -34,7 +34,6 @@ const ENTITY_ID = 'aabbccddaabbccddaabbccddaabbccdd'
 const mockEntityWithTriples = {
 	entity: {
 		id: ENTITY_ID,
-		status: 'alive' as const,
 		createdAt: '2024-01-01T00:00:00Z',
 		updatedAt: '2024-01-02T00:00:00Z',
 		triples: [
