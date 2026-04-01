@@ -194,7 +194,8 @@ describe('EntityPage', () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
 			// Should show "Type" badge instead of "Entity"
-			expect(screen.getByText('Type')).toBeInTheDocument()
+			const typeElements = screen.getAllByText('Type')
+			expect(typeElements.length).toBeGreaterThanOrEqual(1)
 			expect(screen.queryByText('Entity')).not.toBeInTheDocument()
 		})
 
@@ -204,10 +205,9 @@ describe('EntityPage', () => {
 			// Check properties header
 			expect(screen.getByRole('heading', { name: 'Properties' })).toBeInTheDocument()
 
-			// Check property values (NAME triple shows "Test Entity" in both header and triples)
-			expect(screen.getByText('NAME')).toBeInTheDocument()
+			// Check property labels (NAME shows as "Name", DESCRIPTION shows as "Description")
 			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(1)
-			expect(screen.getByText('DESCRIPTION')).toBeInTheDocument()
+			expect(screen.getByText('Description')).toBeInTheDocument()
 		})
 
 		it('renders relations panel with unified list', async () => {

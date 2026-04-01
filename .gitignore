@@ -12,3 +12,6 @@ dist/
 !.factory/init.sh
 !.factory/library/
 CLAUDE.md
+
+# Playwright
+.playwright-mcp

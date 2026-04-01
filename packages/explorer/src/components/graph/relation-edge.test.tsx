@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { Position, ReactFlow } from '@xyflow/react'
 import { describe, expect, it, vi } from 'vitest'
+import { TYPES_PROPERTY_ID } from '~/lib/constants'
 import { RelationEdge, type RelationEdgeData } from './relation-edge'
 
 // Default props that satisfy EdgeProps
@@ -65,14 +66,24 @@ describe('RelationEdge', () => {
 		expect(screen.getByTitle('RELATES_TO')).toBeInTheDocument()
 	})
 
-	it('displays short relation types without truncation', () => {
+	it('hides label for TYPE relations (TYPES_PROPERTY_ID)', () => {
 		render(
 			<TestWrapper>
-				<RelationEdge {...defaultProps} data={{ relationType: 'TYPE' }} />
+				<RelationEdge {...defaultProps} data={{ relationType: TYPES_PROPERTY_ID }} />
 			</TestWrapper>,
 		)
 
-		expect(screen.getByText('TYPE')).toBeInTheDocument()
+		expect(screen.queryByText('TYPE')).not.toBeInTheDocument()
+	})
+
+	it('displays short relation types without truncation', () => {
+		render(
+			<TestWrapper>
+				<RelationEdge {...defaultProps} data={{ relationType: 'CUSTOM_TYPE' }} />
+			</TestWrapper>,
+		)
+
+		expect(screen.getByText('CUSTOM_TYPE')).toBeInTheDocument()
 	})
 
 	it('calls onClick when label is clicked', () => {

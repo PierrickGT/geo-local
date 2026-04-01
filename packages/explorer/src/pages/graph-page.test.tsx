@@ -10,6 +10,7 @@ vi.mock('~/hooks/use-entities', () => ({
 	useEntities: vi.fn(),
 	useEntity: vi.fn(),
 	useEntityRelations: vi.fn(),
+	usePropertyNames: vi.fn(() => ({ names: new Map(), isLoading: false })),
 }))
 
 vi.mock('~/api/entities', () => ({

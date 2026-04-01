@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import type { Triple, ValueType } from '~/api/types'
+import { usePropertyNames } from '~/hooks/use-entities'
 import { formatPropertyId } from '~/lib/constants'
 
 /**
@@ -59,6 +61,10 @@ function ValueTypeBadge({ type }: { type: ValueType }) {
  * Shows property ID, value type, and value for each triple.
  */
 export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
+	// Extract unique property IDs for name resolution
+	const propertyIds = useMemo(() => [...new Set(triples.map((t) => t.propertyId))], [triples])
+	const { names: propertyNames } = usePropertyNames(propertyIds)
+
 	if (triples.length === 0) {
 		return (
 			<div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
@@ -77,14 +83,16 @@ export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
 				{triples.map((triple, index) => {
 					const displayValue = formatValue(triple.value.value, triple.valueType)
 					const isReference = triple.valueType === 'reference'
+					const resolvedName = propertyNames.get(triple.propertyId)
+					const displayName = resolvedName ?? formatPropertyId(triple.propertyId)
 
 					return (
 						<div key={`${triple.propertyId}-${index}`} className="px-4 py-3 hover:bg-gray-50">
 							<div className="flex items-start justify-between gap-4">
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-2 mb-1">
-										<span className="font-mono text-sm text-gray-700" title={triple.propertyId}>
-											{formatPropertyId(triple.propertyId)}
+										<span className="text-sm font-medium text-gray-900" title={triple.propertyId}>
+											{displayName}
 										</span>
 										<ValueTypeBadge type={triple.valueType} />
 									</div>

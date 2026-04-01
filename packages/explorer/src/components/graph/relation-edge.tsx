@@ -6,7 +6,7 @@ import {
 	getBezierPath,
 } from '@xyflow/react'
 import { memo } from 'react'
-import { formatPropertyId } from '~/lib/constants'
+import { TYPES_PROPERTY_ID, formatPropertyId } from '~/lib/constants'
 import type { GraphEdge } from './force-layout'
 
 /**
@@ -14,6 +14,8 @@ import type { GraphEdge } from './force-layout'
  */
 export type RelationEdgeData = {
 	relationType: string
+	/** Resolved property name (from usePropertyNames), used as display label */
+	propertyDisplayName?: string
 }
 
 export type RelationEdge = Edge<RelationEdgeData>
@@ -49,7 +51,7 @@ function RelationEdgeBase({
 	})
 
 	const relationType = data?.relationType ?? ''
-	const formatted = formatPropertyId(relationType)
+	const displayName = data?.propertyDisplayName ?? formatPropertyId(relationType)
 
 	const handleClick = (event: React.MouseEvent) => {
 		event.stopPropagation()
@@ -85,7 +87,7 @@ function RelationEdgeBase({
 					aria-label={`Relation ${relationType}`}
 					title={relationType}
 				>
-					{formatted}
+					{displayName}
 				</div>
 			</EdgeLabelRenderer>
 		</>
@@ -97,13 +99,16 @@ export const RelationEdge = memo(RelationEdgeBase)
 /**
  * Converts a GraphEdge (from force-layout) to ReactFlow edge format.
  */
-export function toReactFlowEdge(edge: GraphEdge): RelationEdge {
+export function toReactFlowEdge(
+	edge: GraphEdge,
+	displayNames?: Map<string, string | undefined>,
+): RelationEdge {
 	return {
 		id: edge.id,
 		source: edge.source,
 		target: edge.target,
 		type: 'relation',
-		data: { relationType: edge.type },
+		data: { relationType: edge.type, propertyDisplayName: displayNames?.get(edge.type) },
 	}
 }
 

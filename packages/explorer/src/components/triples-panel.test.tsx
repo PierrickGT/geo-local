@@ -1,7 +1,24 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Triple } from '~/api/types'
 import { TriplesPanel } from './triples-panel'
+
+// Mock the usePropertyNames hook
+vi.mock('~/hooks/use-entities', () => ({
+	usePropertyNames: vi.fn(),
+}))
+
+import { usePropertyNames } from '~/hooks/use-entities'
+
+const mockUsePropertyNames = vi.mocked(usePropertyNames)
+
+beforeEach(() => {
+	vi.clearAllMocks()
+	mockUsePropertyNames.mockReturnValue({
+		names: new Map<string, string | undefined>(),
+		isLoading: false,
+	})
+})
 
 describe('TriplesPanel', () => {
 	const mockTriples: Triple[] = [
@@ -52,11 +69,11 @@ describe('TriplesPanel', () => {
 		it('displays all property IDs', () => {
 			render(<TriplesPanel triples={mockTriples} />)
 
-			expect(screen.getByText('NAME')).toBeInTheDocument()
-			expect(screen.getByText('COUNT')).toBeInTheDocument()
-			expect(screen.getByText('ACTIVE')).toBeInTheDocument()
-			expect(screen.getByText('REF')).toBeInTheDocument()
-			expect(screen.getByText('DATA')).toBeInTheDocument()
+			expect(screen.getByTitle('NAME')).toHaveTextContent('Name')
+			expect(screen.getByTitle('COUNT')).toHaveTextContent('Count')
+			expect(screen.getByTitle('ACTIVE')).toHaveTextContent('Active')
+			expect(screen.getByTitle('REF')).toHaveTextContent('Ref')
+			expect(screen.getByTitle('DATA')).toHaveTextContent('Data')
 		})
 
 		it('displays value type badges', () => {
@@ -125,6 +142,28 @@ describe('TriplesPanel', () => {
 			const propertyElement = screen.getByTitle(longIdTriple.propertyId)
 			expect(propertyElement).toBeInTheDocument()
 			expect(propertyElement.textContent).toBe(longIdTriple.propertyId)
+		})
+
+		it('displays resolved name for long property IDs', () => {
+			const longId = 'this-is-a-very-long-property-id-with-a-name'
+			const longIdTriple: Triple = {
+				entityId: 'entity-1',
+				propertyId: longId,
+				valueType: 'text',
+				value: { value: 'some value' },
+				language: null,
+			}
+
+			const namesMap = new Map<string, string | undefined>()
+			namesMap.set(longId, 'Format')
+			mockUsePropertyNames.mockReturnValue({ names: namesMap, isLoading: false })
+
+			render(<TriplesPanel triples={[longIdTriple]} />)
+
+			// Should display resolved name, not raw ID
+			expect(screen.getByText('Format')).toBeInTheDocument()
+			// Title still shows the raw ID
+			expect(screen.getByTitle(longId)).toBeInTheDocument()
 		})
 
 		it('truncates long text values', () => {

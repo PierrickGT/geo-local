@@ -3,6 +3,7 @@
  * useEntities, useEntity, useEntityRelations, useTypes
  */
 
+import { useMemo } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
@@ -210,19 +211,33 @@ export function usePropertyNames(ids: string[]): UsePropertyNamesReturn {
 		})),
 	})
 
-	// Build map of ID -> NAME value
-	const names = new Map<string, string | undefined>()
 	const isLoading = queries.some((q) => q.isLoading)
 
-	for (let i = 0; i < uniqueIds.length; i++) {
-		const entity = queries[i]?.data?.entity
-		if (entity) {
-			const nameTriple = entity.triples.find(
+	// Memoize the Map to preserve reference identity across renders
+	const resolvedNames = uniqueIds
+		.map((id, i) => {
+			const entity = queries[i]?.data?.entity
+			const nameTriple = entity?.triples.find(
 				(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
 			)
-			names.set(uniqueIds[i], nameTriple?.value.value as string | undefined)
+			return `${id}=${nameTriple?.value.value ?? ''}`
+		})
+		.join('|')
+
+	const names = useMemo(() => {
+		const map = new Map<string, string | undefined>()
+		for (let i = 0; i < uniqueIds.length; i++) {
+			const entity = queries[i]?.data?.entity
+			if (entity) {
+				const nameTriple = entity.triples.find(
+					(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
+				)
+				map.set(uniqueIds[i], nameTriple?.value.value as string | undefined)
+			}
 		}
-	}
+		return map
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [resolvedNames])
 
 	return { names, isLoading }
 }

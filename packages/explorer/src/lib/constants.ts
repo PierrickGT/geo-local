@@ -52,11 +52,14 @@ export const WELL_KNOWN_PROPERTIES = [RELATION_TYPE, PROPERTY_NAME, PROPERTY_DES
 /**
  * Mapping from system property IDs to their display names
  * These IDs come from @geoprotocol/geo-sdk SystemIds
+ *
+ * These serve as fallback names when the entity doesn't exist in the DB
+ * (usePropertyNames will override these when the entity has a NAME triple).
  */
 export const PROPERTY_ID_TO_NAME: Record<string, string> = {
-	[NAME_PROPERTY_ID]: PROPERTY_NAME,
-	[DESCRIPTION_PROPERTY_ID]: PROPERTY_DESCRIPTION,
-	[TYPES_PROPERTY_ID]: RELATION_TYPE,
+	[NAME_PROPERTY_ID]: 'Name',
+	[DESCRIPTION_PROPERTY_ID]: 'Description',
+	[TYPES_PROPERTY_ID]: 'Type',
 }
 
 /**
@@ -73,11 +76,11 @@ export function isWellKnown(propertyId: string): boolean {
  * For others, return as-is
  */
 export function formatPropertyId(propertyId: string): string {
-	if (isWellKnown(propertyId)) {
-		return propertyId
-	}
 	if (propertyId in PROPERTY_ID_TO_NAME) {
 		return PROPERTY_ID_TO_NAME[propertyId]
+	}
+	if (isWellKnown(propertyId)) {
+		return propertyId.charAt(0).toUpperCase() + propertyId.slice(1).toLowerCase()
 	}
 	return propertyId
 }

@@ -25,7 +25,7 @@ import {
 	useNodesState,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { getEntity, getEntityRelations } from '~/api/entities'
 import {
@@ -47,7 +47,7 @@ import {
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
-import { useEntities, useEntity, useEntityRelations } from '~/hooks/use-entities'
+import { useEntities, useEntity, useEntityRelations, usePropertyNames } from '~/hooks/use-entities'
 import { NAME_PROPERTY_ID } from '~/lib/constants'
 
 // Custom node and edge types
@@ -103,6 +103,32 @@ export function GraphPage() {
 		: seedQuery.isLoading
 
 	const isError = focusId ? focusQuery.isError || focusRelationsQuery.isError : seedQuery.isError
+
+	// Resolve relation type property names for graph edges
+	const relationTypeIds = useMemo(() => [...new Set(graphEdges.map((e) => e.type))], [graphEdges])
+	const { names: propertyDisplayNames } = usePropertyNames(relationTypeIds)
+	const propertyDisplayNamesRef = useRef(propertyDisplayNames)
+	propertyDisplayNamesRef.current = propertyDisplayNames
+
+	// Update edge labels when property names resolve
+	useEffect(() => {
+		if (propertyDisplayNames.size === 0) return
+
+		setEdges((prev) => {
+			let changed = false
+			const next = prev.map((edge) => {
+				const relationType = edge.data?.relationType ?? ''
+				const resolvedName = propertyDisplayNames.get(relationType)
+				if (resolvedName === edge.data?.propertyDisplayName) return edge
+				changed = true
+				return {
+					...edge,
+					data: { relationType, propertyDisplayName: resolvedName },
+				}
+			})
+			return changed ? next : prev
+		})
+	}, [propertyDisplayNames, setEdges])
 
 	// Convert seed data to graph format
 	const seedGraphData = useMemo(() => {
@@ -208,7 +234,7 @@ export function GraphPage() {
 			// Convert to ReactFlow format
 			const rfNodes = simNodes.map((n, i) => toReactFlowNode(n, i))
 			const rfEdges = simEdges.map((e) => ({
-				...toReactFlowEdge(e),
+				...toReactFlowEdge(e, propertyDisplayNamesRef.current),
 				markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
 			}))
 
@@ -396,7 +422,7 @@ export function GraphPage() {
 					setGraphEdges(allGraphEdges)
 
 					const rfEdges = allGraphEdges.map((e) => ({
-						...toReactFlowEdge(e),
+						...toReactFlowEdge(e, propertyDisplayNamesRef.current),
 						markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
 					}))
 					setEdges(rfEdges)
@@ -415,7 +441,7 @@ export function GraphPage() {
 
 					const rfNodes = allNodes.map((n, i) => toReactFlowNode(n, i))
 					const rfEdges = allEdges.map((e) => ({
-						...toReactFlowEdge(e),
+						...toReactFlowEdge(e, propertyDisplayNamesRef.current),
 						markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
 					}))
 
@@ -455,7 +481,7 @@ export function GraphPage() {
 				setGraphNodes((prev) => prev.map((n) => (n.id === entityId ? graphNode : n)))
 			}
 		},
-		[graphNodes],
+		[graphNodes, graphEdges],
 	)
 
 	// Handle node changes (for dragging)

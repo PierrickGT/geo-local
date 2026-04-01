@@ -137,7 +137,7 @@ describe('RelationsPanel', () => {
 			)
 
 			// Outgoing relations
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			expect(screen.getByText('Type')).toBeInTheDocument()
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 			// Incoming relation
 			expect(screen.getByText('LINKS_TO')).toBeInTheDocument()
@@ -249,7 +249,7 @@ describe('RelationsPanel', () => {
 			})
 
 			// Should show outgoing relations, not empty state
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			expect(screen.getByText('Type')).toBeInTheDocument()
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 	})
@@ -326,8 +326,8 @@ describe('RelationsPanel', () => {
 				wrapper: createWrapper(),
 			})
 
-			// Well-known properties like TYPE are shown as-is
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			// Well-known properties like TYPE are shown as title-cased
+			expect(screen.getByText('Type')).toBeInTheDocument()
 		})
 
 		it('prefers resolved name over well-known property format', () => {
@@ -637,7 +637,7 @@ describe('RelationsPanel', () => {
 				wrapper: createWrapper(),
 			})
 
-			expect(screen.getByLabelText(/Remove TYPE relation/)).toBeInTheDocument()
+			expect(screen.getByLabelText(/Remove Type relation/)).toBeInTheDocument()
 			expect(screen.getByLabelText(/Remove REFERENCES relation/)).toBeInTheDocument()
 		})
 
@@ -669,7 +669,7 @@ describe('RelationsPanel', () => {
 				'Remove Relation',
 			)
 			// Description should mention the relation type
-			expect(dialog).toHaveTextContent('TYPE')
+			expect(dialog).toHaveTextContent('Type')
 		})
 
 		it('shows incoming relation details correctly', async () => {
