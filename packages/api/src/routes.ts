@@ -1,6 +1,8 @@
-import { getPool } from '@geo-runtime/shared'
+import { createLogger, getPool } from '@geo-runtime/shared'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
+
+const log = createLogger('api:routes')
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -74,36 +76,33 @@ export function createRouter(): Router {
 					FROM entities e
 					INNER JOIN relations r
 						ON r.from_id = e.id AND r.to_id = $${idx}
-					ORDER BY e.created_at DESC
+					GROUP BY e.id
+					ORDER BY e.updated_at DESC
 					LIMIT $${idx + 1} OFFSET $${idx + 2}`
-				params.push(String(limit), String(offset))
 			} else {
-				countQuery = `
-					SELECT count(*)::int AS total
-					FROM entities e`
+				countQuery = 'SELECT count(*)::int AS total FROM entities'
 				selectQuery = `
 					SELECT e.id, e.created_at, e.updated_at,
 						(SELECT t.value->>'value' FROM triples t
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
 						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
-					ORDER BY e.created_at DESC
-					LIMIT $${idx + 1} OFFSET $${idx + 2}`
-				params.push(String(limit), String(offset))
+					ORDER BY e.updated_at DESC
+					LIMIT $1 OFFSET $2`
 			}
 
-			const [countRes, entitiesRes] = await Promise.all([
-				pool.query(countQuery, typeId ? [params[0]] : []),
+			params.push(String(limit), String(offset))
+			const [countResult, entitiesResult] = await Promise.all([
+				pool.query(countQuery, params.slice(0, idx)),
 				pool.query(selectQuery, params),
 			])
 
 			res.json({
-				entities: entitiesRes.rows.map(formatRow),
-				total: countRes.rows[0]?.total ?? 0,
-				limit,
-				offset,
+				total: countResult.rows[0].total,
+				entities: entitiesResult.rows.map(formatRow),
 			})
 		} catch (err) {
+			log.error({ err }, 'GET /entities failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -125,22 +124,25 @@ export function createRouter(): Router {
 
 			const [triplesRes, outgoingRes, incomingRes] = await Promise.all([
 				pool.query(
-					'SELECT entity_id, property_id, value_type, value, language FROM triples WHERE entity_id = $1',
+					'SELECT property_id, value_type, value, language FROM triples WHERE entity_id = $1',
 					[id],
 				),
-				pool.query('SELECT * FROM relations WHERE from_id = $1', [id]),
-				pool.query('SELECT * FROM relations WHERE to_id = $1', [id]),
+				pool.query('SELECT id, relation_type, to_id, position FROM relations WHERE from_id = $1', [
+					id,
+				]),
+				pool.query('SELECT id, relation_type, from_id, position FROM relations WHERE to_id = $1', [
+					id,
+				]),
 			])
 
 			res.json({
-				entity: {
-					...formatRow(entityRes.rows[0]),
-					triples: triplesRes.rows.map(formatRow),
-					outgoing: outgoingRes.rows.map(formatRow),
-					incoming: incomingRes.rows.map(formatRow),
-				},
+				entity: formatRow(entityRes.rows[0]),
+				triples: triplesRes.rows.map(formatRow),
+				outgoingRelations: outgoingRes.rows.map(formatRow),
+				incomingRelations: incomingRes.rows.map(formatRow),
 			})
 		} catch (err) {
+			log.error({ err }, 'GET /entities/:id failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -150,23 +152,21 @@ export function createRouter(): Router {
 		try {
 			const pool = getPool()
 			const { id } = req.params
-			const direction = req.query.direction === 'in' ? 'in' : 'out'
-			const relationType = typeof req.query.type === 'string' ? req.query.type.trim() : undefined
+			const dir = req.query.dir === 'incoming' ? 'incoming' : 'outgoing'
+			const limit = clampInt(req.query.limit, 20, 100)
+			const offset = clampInt(req.query.offset, 0, Number.MAX_SAFE_INTEGER)
 
-			const dirColumn = direction === 'out' ? 'from_id' : 'to_id'
-			const params: string[] = [id]
-			let query = `SELECT * FROM relations WHERE ${dirColumn} = $1`
-
-			if (relationType) {
-				params.push(relationType)
-				query += ` AND relation_type = $${params.length}`
-			}
-
-			query += ' ORDER BY created_at DESC'
-
-			const result = await pool.query(query, params)
+			const column = dir === 'incoming' ? 'to_id' : 'from_id'
+			const query = `
+				SELECT id, relation_type, from_id, to_id, position
+				FROM relations
+				WHERE ${column} = $1
+				ORDER BY updated_at DESC
+				LIMIT $2 OFFSET $3`
+			const result = await pool.query(query, [id, limit, offset])
 			res.json({ relations: result.rows.map(formatRow) })
 		} catch (err) {
+			log.error({ err }, 'GET /entities/:id/relations failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -198,23 +198,24 @@ export function createRouter(): Router {
 				q.length >= 4
 					? pool.query(
 							`SELECT id, created_at, updated_at,
-							(SELECT t.value->>'value' FROM triples t
-							 WHERE t.entity_id = e.id AND t.value_type = 'text'
-							 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
-						 FROM entities e
-						 WHERE e.id ILIKE '%' || $1 || '%'
-						 LIMIT $2`,
+								(SELECT t.value->>'value' FROM triples t
+								 WHERE t.entity_id = e.id AND t.value_type = 'text'
+								 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
+							 FROM entities e
+							 WHERE e.id ILIKE '%' || $1 || '%'
+							 LIMIT $2`,
 							[q, limit],
 						)
 					: Promise.resolve({ rows: [] })
 
-			const [triplesResult, entitiesResult] = await Promise.all([triplesPromise, entityPromise])
+			const [triplesResult, entityResult] = await Promise.all([triplesPromise, entityPromise])
 
 			res.json({
-				results: triplesResult.rows.map(formatRow),
-				entities: entitiesResult.rows.map(formatRow),
+				triples: triplesResult.rows.map(formatRow),
+				entities: entityResult.rows.map(formatRow),
 			})
 		} catch (err) {
+			log.error({ err }, 'GET /search failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -227,7 +228,8 @@ export function createRouter(): Router {
 			const limit = clampInt(req.query.limit, 20, 100)
 
 			const params: string[] = []
-			let query = `SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg FROM edits`
+			let query =
+				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg FROM edits'
 
 			if (status) {
 				params.push(status)
@@ -241,6 +243,7 @@ export function createRouter(): Router {
 			const result = await pool.query(query, params)
 			res.json({ edits: result.rows.map(formatRow) })
 		} catch (err) {
+			log.error({ err }, 'GET /edits failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -264,6 +267,7 @@ export function createRouter(): Router {
 			const edit = formatRow(result.rows[0])
 			res.json(edit)
 		} catch (err) {
+			log.error({ err }, 'GET /edits/:id failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
@@ -285,6 +289,7 @@ export function createRouter(): Router {
 
 			res.json(result.rows.map(formatRow))
 		} catch (err) {
+			log.error({ err }, 'GET /types failed')
 			res.status(500).json({ error: 'Internal server error' })
 		}
 	})
