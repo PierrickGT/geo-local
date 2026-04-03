@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import dotenv from 'dotenv'
 
 // Load .env from project root (monorepo root, not package directory)
