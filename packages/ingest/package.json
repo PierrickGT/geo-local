@@ -6,18 +6,22 @@
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsx --watch src/index.ts",
-		"start": "node dist/index.js"
+		"start": "node dist/index.js",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@geo-runtime/shared": "workspace:*",
-		"@geoprotocol/grc-20": "latest",
 		"@geoprotocol/geo-sdk": "latest",
+		"@geoprotocol/grc-20": "latest",
 		"express": "^5.0.0"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.0",
 		"@types/node": "^22.0.0",
+		"@types/supertest": "^7.2.0",
+		"supertest": "^7.2.2",
 		"tsup": "^8.3.0",
-		"tsx": "^4.19.0"
+		"tsx": "^4.19.0",
+		"vitest": "^4.1.2"
 	}
 }

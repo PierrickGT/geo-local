@@ -1,6 +1,12 @@
 import { config, createLogger, getPool, idToHex } from '@geo-runtime/shared'
 import { Graph, IdUtils } from '@geoprotocol/geo-sdk'
-import { createEdit, decodeEdit, deleteEntity as deleteEntityOp, encodeEdit, formatId } from '@geoprotocol/grc-20'
+import {
+	createEdit,
+	decodeEdit,
+	deleteEntity as deleteEntityOp,
+	encodeEdit,
+	formatId,
+} from '@geoprotocol/grc-20'
 import express, { Router } from 'express'
 
 import type {
@@ -14,26 +20,31 @@ import type { Request, Response } from 'express'
 
 const log = createLogger('ingest:routes')
 
+type Mutation =
+	| { type: 'createEntity'; params: EntityParams }
+	| { type: 'createRelation'; params: RelationParams }
+	| { type: 'updateEntity'; params: UpdateEntityParams }
+	| { type: 'deleteEntity'; params: { id: string } }
+	| { type: 'deleteRelation'; params: DeleteRelationParams }
+
 interface BuildBody {
 	name?: string
 	author?: string
-	mutations: Array<
-		| { type: 'createEntity'; params: EntityParams }
-		| { type: 'createRelation'; params: RelationParams }
-		| { type: 'updateEntity'; params: UpdateEntityParams }
-		| { type: 'deleteEntity'; params: { id: string } }
-		| { type: 'deleteRelation'; params: DeleteRelationParams }
-	>
+	mutations: Mutation[]
 }
 
-const MUTATION_HANDLERS = {
-	createEntity: Graph.createEntity,
-	createRelation: Graph.createRelation,
-	updateEntity: Graph.updateEntity,
-	deleteRelation: Graph.deleteRelation,
-} as const
-
-type MutationType = keyof typeof MUTATION_HANDLERS
+function applyMutation(mutation: Mutation): Promise<{ id: string; ops: Op[] }> {
+	switch (mutation.type) {
+		case 'createEntity':
+			return Graph.createEntity(mutation.params)
+		case 'createRelation':
+			return Graph.createRelation(mutation.params)
+		case 'updateEntity':
+			return Graph.updateEntity(mutation.params)
+		case 'deleteRelation':
+			return Graph.deleteRelation(mutation.params)
+	}
+}
 
 function resolveSpaceId(req: Request): string {
 	return (req.headers['x-space-id'] as string | undefined) ?? config.spaceId
@@ -44,10 +55,7 @@ const ZERO_SPACE_ID = '00000000000000000000000000000000'
 async function resolveEntitySpaceId(entityId: string, fallbackSpaceId: string): Promise<string> {
 	const pool = getPool()
 
-	const { rows } = await pool.query(
-		`SELECT space_id FROM entities WHERE id = $1`,
-		[entityId],
-	)
+	const { rows } = await pool.query('SELECT space_id FROM entities WHERE id = $1', [entityId])
 
 	const spaceId = rows[0]?.space_id
 	if (spaceId && spaceId !== '' && spaceId !== ZERO_SPACE_ID) return spaceId
@@ -122,7 +130,8 @@ export function createRouter(): Router {
 			for (const mutation of body.mutations) {
 				if (mutation.type === 'deleteEntity') {
 					const entitySpaceId = await resolveEntitySpaceId(mutation.params.id, spaceId)
-					const hasValidSpace = entitySpaceId && entitySpaceId !== '' && entitySpaceId !== ZERO_SPACE_ID
+					const hasValidSpace =
+						entitySpaceId && entitySpaceId !== '' && entitySpaceId !== ZERO_SPACE_ID
 					if (hasValidSpace) {
 						const result = await Graph.deleteEntity({
 							id: mutation.params.id,
@@ -142,14 +151,7 @@ export function createRouter(): Router {
 					continue
 				}
 
-				const handler = MUTATION_HANDLERS[mutation.type as MutationType]
-				if (!handler) {
-					res.status(400).json({ error: `Unknown mutation type: ${mutation.type}` })
-					return
-				}
-
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (handler as any)(mutation.params)
+				const result = await applyMutation(mutation)
 				allOps.push(...result.ops)
 				entityIds.push(result.id)
 			}
