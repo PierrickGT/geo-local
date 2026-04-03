@@ -74,7 +74,7 @@ describe('triplesToFormData', () => {
 		expect(data.properties[0].propertyId).toBe('custom-prop-id')
 		expect(data.properties[0].valueType).toBe('number')
 		expect(data.properties[0].value).toBe('42')
-		expect(data.properties[0]._key).toBeTypeOf('number')
+		expect(data.properties[0]._key).toBeTypeOf('string')
 	})
 
 	it('excludes system property IDs from dynamic properties', () => {
@@ -386,7 +386,7 @@ describe('EntityForm', () => {
 				description: 'Desc',
 				types: 'TypeA',
 				properties: [
-					{ _key: expect.any(Number), propertyId: 'color', valueType: 'text', value: 'blue' },
+					{ _key: expect.any(String), propertyId: 'color', valueType: 'text', value: 'blue' },
 				],
 			})
 		})

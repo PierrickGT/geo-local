@@ -18,14 +18,12 @@ import { DESCRIPTION_PROPERTY_ID, NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/
 // Types
 // ---------------------------------------------------------------------------
 
-let nextRowId = 0
-
 export interface PropertyRow {
 	propertyId: string
 	valueType: ValueType
 	value: string
 	/** @internal stable key for React rendering; auto-assigned if missing */
-	_key?: number
+	_key?: string
 }
 
 export interface EntityFormData {
@@ -53,7 +51,7 @@ const SYSTEM_PROPERTY_IDS = new Set([NAME_PROPERTY_ID, DESCRIPTION_PROPERTY_ID, 
 // ---------------------------------------------------------------------------
 
 function emptyRow(): PropertyRow {
-	return { _key: nextRowId++, propertyId: '', valueType: 'text', value: '' }
+	return { _key: crypto.randomUUID(), propertyId: '', valueType: 'text', value: '' }
 }
 
 function parseTypes(triple: Triple): string {
@@ -81,7 +79,7 @@ export function triplesToFormData(triples: Triple[]): EntityFormData {
 			types = parseTypes(triple)
 		} else if (!SYSTEM_PROPERTY_IDS.has(triple.propertyId)) {
 			properties.push({
-				_key: nextRowId++,
+				_key: crypto.randomUUID(),
 				propertyId: triple.propertyId,
 				valueType: triple.valueType,
 				value: String(triple.value?.value ?? ''),
@@ -108,7 +106,7 @@ export function EntityForm({
 	const [description, setDescription] = useState(initialData?.description ?? '')
 	const [types, setTypes] = useState(initialData?.types ?? '')
 	const [properties, setProperties] = useState<PropertyRow[]>(() =>
-		(initialData?.properties ?? []).map((p) => ({ ...p, _key: p._key ?? nextRowId++ })),
+		(initialData?.properties ?? []).map((p) => ({ ...p, _key: p._key ?? crypto.randomUUID() })),
 	)
 	const [nameError, setNameError] = useState('')
 
