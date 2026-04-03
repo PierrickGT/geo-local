@@ -20,7 +20,7 @@ export function TruncateId({ id, className = '' }: TruncateIdProps) {
 			setCopied(true)
 			setTimeout(() => setCopied(false), 2000)
 		} catch {
-			console.error('Failed to copy to clipboard')
+			setCopied(false)
 		}
 	}
 

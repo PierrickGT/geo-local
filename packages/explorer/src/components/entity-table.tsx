@@ -49,13 +49,13 @@ export function EntityTable({
 }: EntityTableProps) {
 	const navigate = useNavigate()
 	const hasSelection = selectedIds !== undefined
-	const headerCheckboxRef = useRef<HTMLInputElement>(null)
+	const headerCheckboxRef = useRef<HTMLInputElement | null>(null)
 
 	const selectedCount = hasSelection ? entities.filter((e) => selectedIds.has(e.id)).length : 0
 
 	const setHeaderCheckboxRef = useCallback(
 		(node: HTMLInputElement | null) => {
-			;(headerCheckboxRef as React.MutableRefObject<HTMLInputElement | null>).current = node
+			headerCheckboxRef.current = node
 			if (node) {
 				node.indeterminate = hasSelection && selectedCount > 0 && selectedCount < entities.length
 			}

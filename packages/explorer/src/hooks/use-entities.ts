@@ -213,8 +213,10 @@ export function usePropertyNames(ids: string[]): UsePropertyNamesReturn {
 
 	const isLoading = queries.some((q) => q.isLoading)
 
-	// Memoize the Map to preserve reference identity across renders
-	const resolvedNames = uniqueIds
+	// Serialize resolved names to create a stable memoization key.
+	// This ensures the Map is recomputed when any query result changes,
+	// while preserving reference identity across renders when data is unchanged.
+	const resolvedKey = uniqueIds
 		.map((id, i) => {
 			const entity = queries[i]?.data?.entity
 			const nameTriple = entity?.triples.find(
@@ -237,7 +239,7 @@ export function usePropertyNames(ids: string[]): UsePropertyNamesReturn {
 		}
 		return map
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [resolvedNames])
+	}, [resolvedKey])
 
 	return { names, isLoading }
 }

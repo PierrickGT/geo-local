@@ -3,7 +3,7 @@
  * Each hook: submits mutation → polls getEdit until applied/failed → invalidates queries
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { type UseMutationResult, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { getEdit, submitMutations } from '~/api/mutations'
 import type {
@@ -121,21 +121,16 @@ interface MutationHookReturn<TParams> {
  * Map TanStack Query useMutation result to our MutationHookReturn.
  * Aliases isPending → isLoading for ergonomics in UI components.
  */
-function mapMutationResult<TParams>(mutation: {
-	mutate: unknown
-	mutateAsync: unknown
-	isPending: boolean
-	error: Error | null
-	reset: () => void
-	data: unknown
-}): MutationHookReturn<TParams> {
+function mapMutationResult<TParams>(
+	mutation: UseMutationResult<BuildResponse, Error, TParams>,
+): MutationHookReturn<TParams> {
 	return {
-		mutate: mutation.mutate as MutationHookReturn<TParams>['mutate'],
-		mutateAsync: mutation.mutateAsync as MutationHookReturn<TParams>['mutateAsync'],
+		mutate: mutation.mutate,
+		mutateAsync: mutation.mutateAsync,
 		isLoading: mutation.isPending,
 		error: mutation.error,
 		reset: mutation.reset,
-		data: mutation.data as BuildResponse | undefined,
+		data: mutation.data,
 	}
 }
 

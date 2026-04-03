@@ -376,12 +376,7 @@ export function GraphPage() {
 
 			// Fetch relations for this entity
 			try {
-				const response = await fetch(`/api/entities/${encodeURIComponent(entityId)}/relations`)
-				if (!response.ok) {
-					console.error('Failed to fetch relations')
-					return
-				}
-				const data = await response.json()
+				const data = await getEntityRelations(entityId)
 				const relations = data.relations ?? []
 
 				if (relations.length === 0) return
@@ -451,8 +446,8 @@ export function GraphPage() {
 
 				// Mark as expanded
 				setExpandedNodes((prev) => new Set(prev).add(entityId))
-			} catch (err) {
-				console.error('Error expanding node:', err)
+			} catch {
+				// Silently ignore expansion errors
 			}
 		},
 		[graphNodes, graphEdges, setNodes, setEdges, expandedNodes, pendingClick],
