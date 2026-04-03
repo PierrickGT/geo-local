@@ -9,11 +9,12 @@
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
-		"migrate": "tsx src/db/migrate.ts"
+		"migrate": "tsx src/db/migrate.ts",
+		"test": "vitest run"
 	},
 	"dependencies": {
-		"@geoprotocol/grc-20": "latest",
 		"@geoprotocol/geo-sdk": "latest",
+		"@geoprotocol/grc-20": "latest",
 		"dotenv": "^16.4.0",
 		"pg": "^8.13.0",
 		"pino": "^9.6.0"
@@ -22,6 +23,7 @@
 		"@types/node": "^22.0.0",
 		"@types/pg": "^8.11.0",
 		"tsup": "^8.3.0",
-		"tsx": "^4.19.0"
+		"tsx": "^4.19.0",
+		"vitest": "^3.2.4"
 	}
 }
