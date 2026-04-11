@@ -25,7 +25,7 @@ export interface EntitiesResponse {
 // Triple Types
 // ---------------------------------------------------------------------------
 
-export type ValueType = 'text' | 'number' | 'boolean' | 'reference' | 'json'
+export type ValueType = 'text' | 'number' | 'boolean' | 'reference' | 'json' | 'date'
 
 /**
  * StoredValue represents the JSON-encoded value in triples.

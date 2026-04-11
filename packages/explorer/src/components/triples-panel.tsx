@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import type { Triple, ValueType } from '~/api/types'
 import { usePropertyNames } from '~/hooks/use-entities'
 import { formatPropertyId } from '~/lib/constants'
@@ -16,9 +17,23 @@ interface TriplesPanelProps {
 }
 
 /**
+ * Extracts the raw value from a triple.
+ * Handles both wrapped values ({ value: "..." }) and raw values ("...").
+ * Date values from the API may be stored as plain strings instead of wrapped objects.
+ */
+function getRawValue(triple: Triple): unknown {
+	const v = triple.value
+	if (typeof v === 'object' && v !== null && 'value' in v) {
+		return v.value
+	}
+	return v
+}
+
+/**
  * Formats a value based on its type for display.
  */
 function formatValue(value: unknown, valueType: ValueType): string {
+	if (value == null) return '—'
 	switch (valueType) {
 		case 'text':
 			return String(value)
@@ -26,8 +41,18 @@ function formatValue(value: unknown, valueType: ValueType): string {
 			return typeof value === 'number' ? value.toLocaleString() : String(value)
 		case 'boolean':
 			return value ? 'true' : 'false'
+		case 'date':
+			try {
+				return new Date(String(value)).toLocaleDateString('en-US', {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+				})
+			} catch {
+				return String(value)
+			}
 		case 'reference':
-			return String(value) // Entity ID
+			return String(value)
 		case 'json':
 			return JSON.stringify(value)
 		default:
@@ -45,6 +70,7 @@ function ValueTypeBadge({ type }: { type: ValueType }) {
 		boolean: 'bg-yellow-100 text-yellow-800',
 		reference: 'bg-green-100 text-green-800',
 		json: 'bg-gray-100 text-gray-800',
+		date: 'bg-orange-100 text-orange-800',
 	}
 
 	return (
@@ -61,9 +87,24 @@ function ValueTypeBadge({ type }: { type: ValueType }) {
  * Shows property ID, value type, and value for each triple.
  */
 export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
+	const navigate = useNavigate()
+
 	// Extract unique property IDs for name resolution
 	const propertyIds = useMemo(() => [...new Set(triples.map((t) => t.propertyId))], [triples])
 	const { names: propertyNames } = usePropertyNames(propertyIds)
+
+	// Resolve reference entity IDs to their names
+	const referenceIds = useMemo(
+		() => [
+			...new Set(
+				triples
+					.filter((t) => t.valueType === 'reference' && getRawValue(t) != null)
+					.map((t) => String(getRawValue(t))),
+			),
+		],
+		[triples],
+	)
+	const { names: referenceNames } = usePropertyNames(referenceIds)
 
 	if (triples.length === 0) {
 		return (
@@ -81,7 +122,8 @@ export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
 			</div>
 			<div className="divide-y divide-gray-100">
 				{triples.map((triple, index) => {
-					const displayValue = formatValue(triple.value.value, triple.valueType)
+					const rawValue = getRawValue(triple)
+					const displayValue = formatValue(rawValue, triple.valueType)
 					const isReference = triple.valueType === 'reference'
 					const resolvedName = propertyNames.get(triple.propertyId)
 					const displayName = resolvedName ?? formatPropertyId(triple.propertyId)
@@ -96,10 +138,19 @@ export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
 										</span>
 										<ValueTypeBadge type={triple.valueType} />
 									</div>
-									{isReference ? (
-										<span className="font-mono text-sm text-green-700" title={displayValue}>
-											{truncateEntityId(displayValue, 16)}
-										</span>
+									{isReference && rawValue != null ? (
+										<a
+											href={`/entities/${encodeURIComponent(String(rawValue))}`}
+											onClick={(e) => {
+												e.preventDefault()
+												navigate(`/entities/${encodeURIComponent(String(rawValue))}`)
+											}}
+											className="text-blue-600 hover:text-blue-800 hover:underline text-sm"
+											title={String(rawValue)}
+										>
+											{referenceNames.get(String(rawValue)) ??
+												truncateEntityId(String(rawValue))}
+										</a>
 									) : (
 										<p className="text-sm text-gray-900 break-all" title={displayValue}>
 											{displayValue.length > 200

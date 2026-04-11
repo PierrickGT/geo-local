@@ -40,7 +40,13 @@ export function serializeValue(v: Value): StoredValue {
 			}
 		case 'bytes':
 			return { type: 'bytes', payload: bufToBase64(v.value) }
-		case 'date':
+		case 'date': {
+			const raw = String(v.value)
+			const normalized = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+				? raw
+				: new Date(raw).toISOString().slice(0, 10)
+			return { type: 'date', payload: normalized }
+		}
 		case 'time':
 		case 'datetime':
 		case 'schedule':

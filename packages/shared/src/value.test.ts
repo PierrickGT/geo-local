@@ -120,6 +120,16 @@ describe('serializeValue', () => {
 		expect(serializeValue(v)).toEqual({ type: 'date', payload: '2024-01-15' })
 	})
 
+	it('normalizes date with timezone suffix to YYYY-MM-DD', () => {
+		const v: Value = { type: 'date', value: '2002-07-01Z' }
+		expect(serializeValue(v)).toEqual({ type: 'date', payload: '2002-07-01' })
+	})
+
+	it('normalizes date with datetime format to YYYY-MM-DD', () => {
+		const v: Value = { type: 'date', value: '2002-07-01T00:00:00Z' }
+		expect(serializeValue(v)).toEqual({ type: 'date', payload: '2002-07-01' })
+	})
+
 	it('serializes time', () => {
 		const v: Value = { type: 'time', value: '14:30:45Z' }
 		expect(serializeValue(v)).toEqual({ type: 'time', payload: '14:30:45Z' })

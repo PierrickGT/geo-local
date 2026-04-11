@@ -8,6 +8,13 @@ vi.mock('~/hooks/use-entities', () => ({
 	usePropertyNames: vi.fn(),
 }))
 
+const { mockNavigate } = vi.hoisted(() => ({
+	mockNavigate: vi.fn(),
+}))
+vi.mock('react-router', () => ({
+	useNavigate: () => mockNavigate,
+}))
+
 import { usePropertyNames } from '~/hooks/use-entities'
 
 const mockUsePropertyNames = vi.mocked(usePropertyNames)
@@ -104,17 +111,57 @@ describe('TriplesPanel', () => {
 			expect(screen.getByText('true')).toBeInTheDocument()
 		})
 
-		it('displays reference values with TruncateId', () => {
+		it('displays reference values as clickable links', () => {
 			render(<TriplesPanel triples={mockTriples} />)
 
-			// Reference values show truncated ID
-			expect(screen.getByText(/referenced/)).toBeInTheDocument()
+			const link = screen.getByRole('link', { name: /referenced/ })
+			expect(link).toHaveAttribute('href', '/entities/referenced-entity-id')
 		})
 
 		it('displays formatted JSON values', () => {
 			render(<TriplesPanel triples={mockTriples} />)
 
 			expect(screen.getByText('{"key":"value"}')).toBeInTheDocument()
+		})
+
+		it('shows dash for null values instead of undefined', () => {
+			const nullTriple: Triple = {
+				entityId: 'entity-1',
+				propertyId: 'EMPTY',
+				valueType: 'text',
+				value: { value: null },
+				language: null,
+			}
+
+			render(<TriplesPanel triples={[nullTriple]} />)
+
+			expect(screen.getByText('—')).toBeInTheDocument()
+			expect(screen.queryByText('undefined')).not.toBeInTheDocument()
+		})
+
+		it('displays formatted date values', () => {
+			const dateTriple: Triple = {
+				entityId: 'entity-1',
+				propertyId: 'DATE_ADDED',
+				valueType: 'date',
+				value: { value: '2024-01-15T10:30:00.000Z' },
+				language: null,
+			}
+
+			render(<TriplesPanel triples={[dateTriple]} />)
+
+			expect(screen.getByText('date')).toBeInTheDocument()
+			expect(screen.queryByText('undefined')).not.toBeInTheDocument()
+		})
+
+		it('resolves reference entity names to link text', () => {
+			const namesMap = new Map<string, string | undefined>()
+			namesMap.set('referenced-entity-id', 'Collection Item')
+			mockUsePropertyNames.mockReturnValue({ names: namesMap, isLoading: false })
+
+			render(<TriplesPanel triples={mockTriples} />)
+
+			expect(screen.getByRole('link', { name: 'Collection Item' })).toBeInTheDocument()
 		})
 	})
 

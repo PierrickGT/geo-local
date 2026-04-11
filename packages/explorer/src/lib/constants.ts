@@ -40,6 +40,24 @@ export const DESCRIPTION_PROPERTY_ID = '9b1f76ff9711404c861e59dc3fa7d037'
  */
 export const TYPES_PROPERTY_ID = '8f151ba4de204e3c9cb499ddf96f48f1'
 
+/**
+ * DATA_TYPE relation type ID (from @geoprotocol/geo-sdk SystemIds)
+ * Used to define the data type of a property (Text, Number, Boolean, etc.)
+ */
+export const DATA_TYPE_PROPERTY_ID = '6d29d57849bb4959baf72cc696b1671a'
+
+/**
+ * PROPERTIES relation type ID (from @geoprotocol/geo-sdk SystemIds)
+ * Used to link a Type entity to its Property entities
+ */
+export const PROPERTIES_PROPERTY_ID = '01412f8381894ab1836565c7fd358cc1'
+
+/**
+ * COLLECTION_ITEM relation type ID (from @geoprotocol/geo-sdk SystemIds)
+ * Used to denote collection items in data blocks
+ */
+export const COLLECTION_ITEM_PROPERTY_ID = 'a99f9ce12ffa4dac8c61f6310d46064a'
+
 // ---------------------------------------------------------------------------
 // Common Property IDs (may be entity IDs or string identifiers)
 // ---------------------------------------------------------------------------
@@ -60,6 +78,9 @@ export const PROPERTY_ID_TO_NAME: Record<string, string> = {
 	[NAME_PROPERTY_ID]: 'Name',
 	[DESCRIPTION_PROPERTY_ID]: 'Description',
 	[TYPES_PROPERTY_ID]: 'Type',
+	[DATA_TYPE_PROPERTY_ID]: 'Data type',
+	[PROPERTIES_PROPERTY_ID]: 'Properties',
+	[COLLECTION_ITEM_PROPERTY_ID]: 'Collection item',
 }
 
 /**
