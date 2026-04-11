@@ -17,7 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_edits_status ON edits (status) WHERE status = 'pe
 -- entities: materialized graph entities
 CREATE TABLE IF NOT EXISTS entities (
   id          char(32) PRIMARY KEY,
-  status      text NOT NULL DEFAULT 'alive' CHECK (status IN ('alive', 'deleted')),
+  space_id    char(32),
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS relations (
   to_space        char(32),
   to_version      char(32),
   entity_id       char(32),
-  status          text NOT NULL DEFAULT 'alive' CHECK (status IN ('alive', 'deleted')),
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
