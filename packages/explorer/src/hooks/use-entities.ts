@@ -6,6 +6,7 @@
 import { useMemo } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
+import { SYSTEM_ENTITY_NAMES } from '~/lib/constants'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
 import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
 import { NAME_PROPERTY_ID } from '~/lib/constants'
@@ -234,7 +235,10 @@ export function usePropertyNames(ids: string[]): UsePropertyNamesReturn {
 				const nameTriple = entity.triples.find(
 					(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
 				)
-				map.set(uniqueIds[i], nameTriple?.value.value as string | undefined)
+				const resolved = nameTriple?.value.value as string | undefined
+				map.set(uniqueIds[i], resolved ?? SYSTEM_ENTITY_NAMES[uniqueIds[i]])
+			} else {
+				map.set(uniqueIds[i], SYSTEM_ENTITY_NAMES[uniqueIds[i]])
 			}
 		}
 		return map

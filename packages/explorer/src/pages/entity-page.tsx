@@ -20,7 +20,7 @@ import { Spinner } from '~/components/ui/spinner'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
 import { useDeleteEntity } from '~/hooks/use-mutations'
-import { NAME_PROPERTY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
+import { NAME_PROPERTY_ID, SYSTEM_ENTITY_NAMES, TYPE_ENTITY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
 
 /**
  * Entity type badge for displaying the entity's category (Type, Property, or Entity).
@@ -33,16 +33,23 @@ function EntityTypeBadge({ type }: { type: 'type' | 'property' | 'entity' }) {
 }
 
 /**
- * Determines the entity type based on incoming relations.
- * - "Type": if there are incoming TYPE relations (other entities use this as their type)
+ * Determines the entity type based on relations.
+ * - "Type": if there are incoming TYPE relations (other entities use this as their type),
+ *           OR if the entity has an outgoing TYPE relation to the "Type" entity (e.g. data types like Text, Boolean)
  * - "Property": reserved for future detection (currently unused)
  * - "Entity": default for regular entities
  */
-function getEntityType(incoming: Relation[]): 'type' | 'property' | 'entity' {
+function getEntityType(outgoing: Relation[], incoming: Relation[]): 'type' | 'property' | 'entity' {
 	const hasIncomingTypeRelations = incoming.some(
 		(relation) => relation.relationType === TYPES_PROPERTY_ID,
 	)
 	if (hasIncomingTypeRelations) {
+		return 'type'
+	}
+	const isOfTypeType = outgoing.some(
+		(relation) => relation.relationType === TYPES_PROPERTY_ID && relation.toId === TYPE_ENTITY_ID,
+	)
+	if (isOfTypeType) {
 		return 'type'
 	}
 	return 'entity'
@@ -149,6 +156,7 @@ export function EntityPage() {
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
+
 	// Loading state
 	if (isLoading) {
 		return (
@@ -238,12 +246,13 @@ export function EntityPage() {
 	}
 
 	const { entity: entityDetail } = entity
-	const entityType = getEntityType(entityDetail.incoming)
+	const entityType = getEntityType(entityDetail.outgoing, entityDetail.incoming)
 
 	const nameTriple = entityDetail.triples.find(
 		(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
 	)
-	const entityName = (nameTriple?.value.value as string | undefined) ?? undefined
+	const entityName =
+		(nameTriple?.value.value as string | undefined) ?? SYSTEM_ENTITY_NAMES[entityDetail.id]
 
 	return (
 		<div className="p-6 space-y-6">

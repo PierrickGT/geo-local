@@ -136,10 +136,12 @@ export function createRouter(): Router {
 			])
 
 			res.json({
-				entity: formatRow(entityRes.rows[0]),
-				triples: triplesRes.rows.map(formatRow),
-				outgoingRelations: outgoingRes.rows.map(formatRow),
-				incomingRelations: incomingRes.rows.map(formatRow),
+				entity: {
+					...formatRow(entityRes.rows[0]),
+					triples: triplesRes.rows.map(formatRow),
+					outgoing: outgoingRes.rows.map(formatRow),
+					incoming: incomingRes.rows.map(formatRow),
+				},
 			})
 		} catch (err) {
 			log.error({ err }, 'GET /entities/:id failed')
