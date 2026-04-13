@@ -20,36 +20,72 @@ import { Spinner } from '~/components/ui/spinner'
 import { TruncateId } from '~/components/ui/truncate-id'
 import { useEntity } from '~/hooks/use-entities'
 import { useDeleteEntity } from '~/hooks/use-mutations'
-import { NAME_PROPERTY_ID, SYSTEM_ENTITY_NAMES, TYPE_ENTITY_ID, TYPES_PROPERTY_ID } from '~/lib/constants'
+import {
+	DATA_TYPE_ENTITY_ID,
+	NAME_PROPERTY_ID,
+	PROPERTY_ENTITY_ID,
+	RELATION_ENTITY_ID,
+	RENDERABLE_TYPE_ENTITY_ID,
+	SYSTEM_ENTITY_NAMES,
+	TYPES_PROPERTY_ID,
+	TYPE_ENTITY_ID,
+} from '~/lib/constants'
+
+type EntityCategory = 'type' | 'property' | 'relation' | 'renderable type' | 'data type' | 'entity'
+
+const ENTITY_TYPE_VARIANT: Record<EntityCategory, string> = {
+	type: 'info',
+	property: 'outline',
+	relation: 'warning',
+	'renderable type': 'success',
+	'data type': 'secondary',
+	entity: 'outline',
+}
 
 /**
- * Entity type badge for displaying the entity's category (Type, Property, or Entity).
- * An entity is a "Type" if it has incoming TYPE relations (other entities pointing to it).
+ * Entity type badge for displaying the entity's category.
  */
-function EntityTypeBadge({ type }: { type: 'type' | 'property' | 'entity' }) {
-	const variant = type === 'type' ? 'info' : type === 'property' ? 'secondary' : 'outline'
-
-	return <Badge variant={variant}>{type.charAt(0).toUpperCase() + type.slice(1)}</Badge>
+function EntityTypeBadge({ type }: { type: EntityCategory }) {
+	return (
+		<Badge variant={ENTITY_TYPE_VARIANT[type]}>
+			{type.charAt(0).toUpperCase() + type.slice(1)}
+		</Badge>
+	)
 }
 
 /**
  * Determines the entity type based on relations.
  * - "Type": if there are incoming TYPE relations (other entities use this as their type),
  *           OR if the entity has an outgoing TYPE relation to the "Type" entity (e.g. data types like Text, Boolean)
- * - "Property": reserved for future detection (currently unused)
+ * - "Relation": if the entity has an outgoing TYPE relation to the "Relation" entity
+ * - "Renderable type": if the entity has an outgoing TYPE relation to the "Renderable type" entity
+ * - "Property": if the entity has an outgoing TYPE relation to the "Property" entity
  * - "Entity": default for regular entities
  */
-function getEntityType(outgoing: Relation[], incoming: Relation[]): 'type' | 'property' | 'entity' {
+function getEntityType(outgoing: Relation[], incoming: Relation[]): EntityCategory {
+	const outTypeInfo = outgoing
+		.filter((relation) => relation.relationType === TYPES_PROPERTY_ID)
+		.map((relation) => relation.toId)
+
+	if (outTypeInfo.includes(DATA_TYPE_ENTITY_ID)) {
+		return 'data type'
+	}
+	if (outTypeInfo.includes(RENDERABLE_TYPE_ENTITY_ID)) {
+		return 'renderable type'
+	}
+	if (outTypeInfo.includes(RELATION_ENTITY_ID)) {
+		return 'relation'
+	}
+	if (outTypeInfo.includes(PROPERTY_ENTITY_ID)) {
+		return 'property'
+	}
 	const hasIncomingTypeRelations = incoming.some(
 		(relation) => relation.relationType === TYPES_PROPERTY_ID,
 	)
 	if (hasIncomingTypeRelations) {
 		return 'type'
 	}
-	const isOfTypeType = outgoing.some(
-		(relation) => relation.relationType === TYPES_PROPERTY_ID && relation.toId === TYPE_ENTITY_ID,
-	)
-	if (isOfTypeType) {
+	if (outTypeInfo.includes(TYPE_ENTITY_ID)) {
 		return 'type'
 	}
 	return 'entity'
@@ -155,7 +191,6 @@ export function EntityPage() {
 	const navigate = useNavigate()
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
 
 	// Loading state
 	if (isLoading) {
