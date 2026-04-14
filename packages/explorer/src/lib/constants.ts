@@ -93,6 +93,12 @@ export const PROPERTIES_PROPERTY_ID = '01412f8381894ab1836565c7fd358cc1'
  */
 export const COLLECTION_ITEM_PROPERTY_ID = 'a99f9ce12ffa4dac8c61f6310d46064a'
 
+/**
+ * SPACE entity ID (from @geoprotocol/geo-sdk SystemIds)
+ * This is the entity that represents the "Space" concept.
+ */
+export const SPACE_ENTITY_ID = '362c1dbddc6444bba3c4652f38a642d7'
+
 // ---------------------------------------------------------------------------
 // System Entity Names
 // ---------------------------------------------------------------------------
@@ -121,6 +127,7 @@ export const SYSTEM_ENTITY_NAMES: Record<string, string> = {
 	'283127c96142468492ed90b0ebc7f29a': 'URL',
 	df250d17e364413d97792ddaae841e34: 'Point',
 	'4b6d9fc1fbfe474c861c83398e1b50d9': 'Relation',
+	[SPACE_ENTITY_ID]: 'Space',
 }
 
 // ---------------------------------------------------------------------------

@@ -77,7 +77,7 @@ export function createRouter(): Router {
 					INNER JOIN relations r
 						ON r.from_id = e.id AND r.to_id = $${idx}
 					GROUP BY e.id
-					ORDER BY e.updated_at DESC
+					ORDER BY e.updated_at DESC, e.id
 					LIMIT $${idx + 1} OFFSET $${idx + 2}`
 			} else {
 				countQuery = 'SELECT count(*)::int AS total FROM entities'
@@ -87,7 +87,7 @@ export function createRouter(): Router {
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
 						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
-					ORDER BY e.updated_at DESC
+					ORDER BY e.updated_at DESC, e.id
 					LIMIT $1 OFFSET $2`
 			}
 
@@ -213,7 +213,7 @@ export function createRouter(): Router {
 			const [triplesResult, entityResult] = await Promise.all([triplesPromise, entityPromise])
 
 			res.json({
-				triples: triplesResult.rows.map(formatRow),
+				results: triplesResult.rows.map(formatRow),
 				entities: entityResult.rows.map(formatRow),
 			})
 		} catch (err) {

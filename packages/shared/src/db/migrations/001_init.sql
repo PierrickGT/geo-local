@@ -92,7 +92,8 @@ INSERT INTO entities (id) VALUES
   ('8f151ba4de204e3c9cb499ddf96f48f1'),  -- Types
   ('6d29d57849bb4959baf72cc696b1671a'),  -- Data type (property)
   ('01412f8381894ab1836565c7fd358cc1'),  -- Properties
-  ('a99f9ce12ffa4dac8c61f6310d46064a')   -- Collection item
+  ('a99f9ce12ffa4dac8c61f6310d46064a'),  -- Collection item
+  ('362c1dbddc6444bba3c4652f38a642d7')   -- Space
 ON CONFLICT DO NOTHING;
 
 -- NAME property ID: a126ca530c8e48d5b88882c734c38935
@@ -120,7 +121,8 @@ INSERT INTO triples (entity_id, property_id, value_type, value, language) VALUES
   ('8f151ba4de204e3c9cb499ddf96f48f1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Types"}',           ''),
   ('6d29d57849bb4959baf72cc696b1671a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type"}',       ''),
   ('01412f8381894ab1836565c7fd358cc1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Properties"}',      ''),
-  ('a99f9ce12ffa4dac8c61f6310d46064a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Collection item"}', '')
+  ('a99f9ce12ffa4dac8c61f6310d46064a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Collection item"}', ''),
+  ('362c1dbddc6444bba3c4652f38a642d7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Space"}',               '')
 ON CONFLICT DO NOTHING;
 
 -- DESCRIPTION property ID: 9b1f76ff9711404c861e59dc3fa7d037
@@ -178,5 +180,7 @@ INSERT INTO relations (id, relation_type, from_id, to_id) VALUES
   ('00000000000000000000000000000037', '8f151ba4de204e3c9cb499ddf96f48f1', '8f151ba4de204e3c9cb499ddf96f48f1', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Types
   ('00000000000000000000000000000038', '8f151ba4de204e3c9cb499ddf96f48f1', '6d29d57849bb4959baf72cc696b1671a', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Data type (property)
   ('00000000000000000000000000000039', '8f151ba4de204e3c9cb499ddf96f48f1', '01412f8381894ab1836565c7fd358cc1', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Properties
-  ('00000000000000000000000000000040', '8f151ba4de204e3c9cb499ddf96f48f1', 'a99f9ce12ffa4dac8c61f6310d46064a', '4b6d9fc1fbfe474c861c83398e1b50d9')   -- Collection item
+  ('00000000000000000000000000000040', '8f151ba4de204e3c9cb499ddf96f48f1', 'a99f9ce12ffa4dac8c61f6310d46064a', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Collection item
+  -- Space → Type (e7d737c536764c609fa16aa64a8c90ad)
+  ('00000000000000000000000000000041', '8f151ba4de204e3c9cb499ddf96f48f1', '362c1dbddc6444bba3c4652f38a642d7', 'e7d737c536764c609fa16aa64a8c90ad')   -- Space
 ON CONFLICT DO NOTHING;
