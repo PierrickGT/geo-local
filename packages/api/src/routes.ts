@@ -39,6 +39,30 @@ function clampInt(raw: unknown, defaultVal: number, max: number): number {
 	return Math.min(Math.floor(n), max)
 }
 
+type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
+type SortOrder = 'asc' | 'desc'
+
+const VALID_SORT_COLUMNS: readonly string[] = ['updated_at', 'created_at', 'properties_text']
+const VALID_SORT_ORDERS: readonly string[] = ['asc', 'desc']
+
+function parseSortParam(raw: unknown): SortColumn {
+	return typeof raw === 'string' && VALID_SORT_COLUMNS.includes(raw)
+		? (raw as SortColumn)
+		: 'updated_at'
+}
+
+function parseOrderParam(raw: unknown): SortOrder {
+	return typeof raw === 'string' && VALID_SORT_ORDERS.includes(raw) ? (raw as SortOrder) : 'desc'
+}
+
+function buildOrderBy(sort: SortColumn, order: SortOrder): string {
+	const direction = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+	if (sort === 'properties_text') {
+		return `ORDER BY properties_text ${direction} NULLS LAST, e.id`
+	}
+	return `ORDER BY e.${sort} ${direction}, e.id`
+}
+
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
@@ -53,6 +77,9 @@ export function createRouter(): Router {
 			const typeId = typeof req.query.type === 'string' ? req.query.type.trim() : undefined
 			const limit = clampInt(req.query.limit, 20, 100)
 			const offset = clampInt(req.query.offset, 0, Number.MAX_SAFE_INTEGER)
+			const sort = parseSortParam(req.query.sort)
+			const order = parseOrderParam(req.query.order)
+			const orderByClause = buildOrderBy(sort, order)
 
 			const params: string[] = []
 			let idx = 0
@@ -77,7 +104,7 @@ export function createRouter(): Router {
 					INNER JOIN relations r
 						ON r.from_id = e.id AND r.to_id = $${idx}
 					GROUP BY e.id
-					ORDER BY e.updated_at DESC, e.id
+					${orderByClause}
 					LIMIT $${idx + 1} OFFSET $${idx + 2}`
 			} else {
 				countQuery = 'SELECT count(*)::int AS total FROM entities'
@@ -87,7 +114,7 @@ export function createRouter(): Router {
 						 WHERE t.entity_id = e.id AND t.value_type = 'text'
 						 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
 					FROM entities e
-					ORDER BY e.updated_at DESC, e.id
+					${orderByClause}
 					LIMIT $1 OFFSET $2`
 			}
 

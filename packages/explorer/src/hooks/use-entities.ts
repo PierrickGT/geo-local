@@ -32,6 +32,8 @@ export interface UseEntitiesParams {
 	type?: string
 	limit?: number
 	offset?: number
+	sort?: 'updated_at' | 'created_at' | 'properties_text'
+	order?: 'asc' | 'desc'
 }
 
 export interface UseEntitiesReturn {
@@ -50,11 +52,11 @@ export interface UseEntitiesReturn {
  * @returns Query result with entities, total, loading/error states, and refetch
  */
 export function useEntities(params: UseEntitiesParams = {}): UseEntitiesReturn {
-	const { type, limit = 20, offset = 0 } = params
+	const { type, limit = 20, offset = 0, sort, order } = params
 
 	const query = useQuery({
-		queryKey: entityKeys.list({ type, limit, offset }),
-		queryFn: () => getEntities({ type, limit, offset }),
+		queryKey: entityKeys.list({ type, limit, offset, sort, order }),
+		queryFn: () => getEntities({ type, limit, offset, sort, order }),
 	})
 
 	return {

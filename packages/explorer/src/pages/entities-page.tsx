@@ -18,6 +18,11 @@ import { useDeleteEntities } from '~/hooks/use-mutations'
 
 const DEFAULT_LIMIT = 20
 const DEFAULT_OFFSET = 0
+const DEFAULT_SORT = 'updated_at'
+const DEFAULT_ORDER = 'desc'
+
+type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
+type SortOrder = 'asc' | 'desc'
 
 // ---------------------------------------------------------------------------
 // Batch Delete Dialog
@@ -119,12 +124,24 @@ export function EntitiesPage() {
 		const raw = searchParams.get('offset')
 		return raw ? Math.max(0, Number.parseInt(raw, 10) || DEFAULT_OFFSET) : DEFAULT_OFFSET
 	}, [searchParams])
+	const sort = useMemo(() => {
+		const raw = searchParams.get('sort')
+		return raw === 'updated_at' || raw === 'created_at' || raw === 'properties_text'
+			? raw
+			: (DEFAULT_SORT as SortColumn)
+	}, [searchParams])
+	const order = useMemo(() => {
+		const raw = searchParams.get('order')
+		return raw === 'asc' || raw === 'desc' ? raw : (DEFAULT_ORDER as SortOrder)
+	}, [searchParams])
 
 	// Fetch entities with current filters
 	const { entities, isLoading, isError, error, refetch } = useEntities({
 		type: typeFilter,
 		limit,
 		offset,
+		sort,
+		order,
 	})
 
 	// Fetch available types for dropdown
@@ -210,7 +227,13 @@ export function EntitiesPage() {
 	}, [])
 
 	// Update URL params
-	const updateParams = (updates: { type?: string | null; limit?: number; offset?: number }) => {
+	const updateParams = (updates: {
+		type?: string | null
+		limit?: number
+		offset?: number
+		sort?: SortColumn
+		order?: SortOrder
+	}) => {
 		const newParams = new URLSearchParams(searchParams)
 
 		if (updates.type !== undefined) {
@@ -233,6 +256,22 @@ export function EntitiesPage() {
 			}
 		}
 
+		if (updates.sort !== undefined) {
+			if (updates.sort === DEFAULT_SORT) {
+				newParams.delete('sort')
+			} else {
+				newParams.set('sort', updates.sort)
+			}
+		}
+
+		if (updates.order !== undefined) {
+			if (updates.order === DEFAULT_ORDER) {
+				newParams.delete('order')
+			} else {
+				newParams.set('order', updates.order)
+			}
+		}
+
 		setSearchParams(newParams, { replace: true })
 	}
 
@@ -245,6 +284,11 @@ export function EntitiesPage() {
 	// Handle pagination change
 	const handlePageChange = (newOffset: number) => {
 		updateParams({ offset: newOffset })
+	}
+
+	// Handle sort change
+	const handleSortChange = (newSort: SortColumn, newOrder: SortOrder) => {
+		updateParams({ sort: newSort, order: newOrder, offset: 0 })
 	}
 
 	// Handle retry on error
@@ -347,6 +391,9 @@ export function EntitiesPage() {
 						limit={limit}
 						offset={offset}
 						onPageChange={handlePageChange}
+						currentSort={sort}
+						currentOrder={order}
+						onSortChange={handleSortChange}
 						selectedIds={selectedIds}
 						onToggleSelection={handleToggleSelection}
 						onToggleSelectAll={handleToggleSelectAll}

@@ -14,6 +14,8 @@ export interface GetEntitiesParams {
 	type?: string
 	limit?: number
 	offset?: number
+	sort?: 'updated_at' | 'created_at' | 'properties_text'
+	order?: 'asc' | 'desc'
 }
 
 /**
@@ -23,7 +25,7 @@ export interface GetEntitiesParams {
  * @returns Entities response with pagination metadata
  */
 export async function getEntities(params: GetEntitiesParams = {}): Promise<EntitiesResponse> {
-	const { type, limit, offset } = params
+	const { type, limit, offset, sort, order } = params
 
 	const searchParams = new URLSearchParams()
 	if (type !== undefined) {
@@ -34,6 +36,12 @@ export async function getEntities(params: GetEntitiesParams = {}): Promise<Entit
 	}
 	if (offset !== undefined) {
 		searchParams.set('offset', String(offset))
+	}
+	if (sort !== undefined) {
+		searchParams.set('sort', sort)
+	}
+	if (order !== undefined) {
+		searchParams.set('order', order)
 	}
 
 	const queryString = searchParams.toString()

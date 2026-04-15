@@ -1,8 +1,12 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import type { Entity } from '~/api/types'
 import { Pagination } from '~/components/pagination'
 import { TruncateId } from '~/components/ui/truncate-id'
+
+type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
+type SortOrder = 'asc' | 'desc'
 
 interface EntityTableProps {
 	entities: Entity[]
@@ -10,6 +14,9 @@ interface EntityTableProps {
 	limit: number
 	offset: number
 	onPageChange: (newOffset: number) => void
+	currentSort?: SortColumn
+	currentOrder?: SortOrder
+	onSortChange?: (sort: SortColumn, order: SortOrder) => void
 	isLoading?: boolean
 	className?: string
 	selectedIds?: Set<string>
@@ -41,6 +48,9 @@ export function EntityTable({
 	limit,
 	offset,
 	onPageChange,
+	currentSort = 'updated_at',
+	currentOrder = 'desc',
+	onSortChange,
 	isLoading = false,
 	className = '',
 	selectedIds,
@@ -62,6 +72,52 @@ export function EntityTable({
 		},
 		[hasSelection, selectedCount, entities.length],
 	)
+
+	const handleSortClick = (column: SortColumn) => {
+		if (!onSortChange) return
+		if (currentSort === column) {
+			onSortChange(column, currentOrder === 'desc' ? 'asc' : 'desc')
+		} else {
+			onSortChange(column, 'desc')
+		}
+	}
+
+	function SortIcon({ column }: { column: SortColumn }) {
+		if (currentSort !== column) {
+			return <ArrowUpDown className="inline w-3 h-3 ml-1 text-gray-400" />
+		}
+		return currentOrder === 'desc' ? (
+			<ArrowDown className="inline w-3 h-3 ml-1 text-blue-600" />
+		) : (
+			<ArrowUp className="inline w-3 h-3 ml-1 text-blue-600" />
+		)
+	}
+
+	function SortableHeader({
+		column,
+		label,
+	}: {
+		column: SortColumn
+		label: string
+	}) {
+		return (
+			<th
+				scope="col"
+				className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors"
+				onClick={() => handleSortClick(column)}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault()
+						handleSortClick(column)
+					}
+				}}
+				data-sort-column={column}
+			>
+				<span className={currentSort === column ? 'text-blue-600' : 'text-gray-500'}>{label}</span>
+				<SortIcon column={column} />
+			</th>
+		)
+	}
 
 	const handleRowClick = (entityId: string) => {
 		navigate(`/entities/${encodeURIComponent(entityId)}`)
@@ -116,24 +172,9 @@ export function EntityTable({
 							>
 								ID
 							</th>
-							<th
-								scope="col"
-								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Properties
-							</th>
-							<th
-								scope="col"
-								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Created
-							</th>
-							<th
-								scope="col"
-								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Updated
-							</th>
+							<SortableHeader column="properties_text" label="Properties" />
+							<SortableHeader column="created_at" label="Created" />
+							<SortableHeader column="updated_at" label="Updated" />
 						</tr>
 					</thead>
 					<tbody
