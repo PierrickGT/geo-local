@@ -63,19 +63,29 @@ function formatValue(value: unknown, valueType: ValueType): string {
 /**
  * Badge component for displaying value type.
  */
-function ValueTypeBadge({ type }: { type: ValueType }) {
-	const colors: Record<ValueType, string> = {
+function ValueTypeBadge({ type }: { type: string }) {
+	const colors: Record<string, string> = {
 		text: 'bg-blue-100 text-blue-800',
-		number: 'bg-purple-100 text-purple-800',
+		number: 'bg-indigo-100 text-indigo-900',
 		boolean: 'bg-yellow-100 text-yellow-800',
 		reference: 'bg-green-100 text-green-800',
 		json: 'bg-gray-100 text-gray-800',
 		date: 'bg-orange-100 text-orange-800',
+		integer: 'bg-indigo-100 text-indigo-900',
+		float: 'bg-violet-100 text-violet-900',
+		decimal: 'bg-violet-100 text-violet-900',
+		time: 'bg-orange-100 text-orange-800',
+		datetime: 'bg-orange-100 text-orange-800',
+		schedule: 'bg-orange-100 text-orange-800',
+		bytes: 'bg-gray-100 text-gray-700',
+		point: 'bg-teal-100 text-teal-800',
+		rect: 'bg-teal-100 text-teal-800',
+		embedding: 'bg-cyan-100 text-cyan-800',
 	}
 
 	return (
 		<span
-			className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colors[type]}`}
+			className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colors[type] ?? 'bg-gray-100 text-gray-700'}`}
 		>
 			{type}
 		</span>

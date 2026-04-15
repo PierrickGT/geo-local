@@ -93,7 +93,19 @@ INSERT INTO entities (id) VALUES
   ('6d29d57849bb4959baf72cc696b1671a'),  -- Data type (property)
   ('01412f8381894ab1836565c7fd358cc1'),  -- Properties
   ('a99f9ce12ffa4dac8c61f6310d46064a'),  -- Collection item
-  ('362c1dbddc6444bba3c4652f38a642d7')   -- Space
+  ('362c1dbddc6444bba3c4652f38a642d7'),  -- Space
+  -- Property-schema entities (metadata properties on Property/Relation types)
+  ('2316bbe1c76f463583f23e03b4f1fe46'),  -- Renderable type (property)
+  ('34f535072e6b42c5a84443981a77cfa2'),  -- Cover
+  ('9eea393f17dd4971a62ea603e8bfec20'),  -- To entity types
+  ('d2c1a10114e3464a8272f4e75b0f1407'),  -- Is type property
+  ('f394b9b4420d4ab4bceb81ded11df4d5'),  -- Relation entity types
+  ('c321a10651d846bf98a9ad68a33658f7'),  -- Related properties
+  -- Additional data types
+  ('f732849378ba4577a33fac5f1c964f18'),  -- Embedding
+  -- Content types and properties
+  ('e0fcc66c9e8643f480802469d8a1a93a'),  -- Tag (type)
+  ('257090341ba5406f94e4d4af90042fba')   -- Tags (property)
 ON CONFLICT DO NOTHING;
 
 -- NAME property ID: a126ca530c8e48d5b88882c734c38935
@@ -122,7 +134,18 @@ INSERT INTO triples (entity_id, property_id, value_type, value, language) VALUES
   ('6d29d57849bb4959baf72cc696b1671a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type"}',       ''),
   ('01412f8381894ab1836565c7fd358cc1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Properties"}',      ''),
   ('a99f9ce12ffa4dac8c61f6310d46064a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Collection item"}', ''),
-  ('362c1dbddc6444bba3c4652f38a642d7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Space"}',               '')
+  ('362c1dbddc6444bba3c4652f38a642d7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Space"}',               ''),
+  -- Property-schema entities
+  ('2316bbe1c76f463583f23e03b4f1fe46', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Renderable type"}', ''),
+  ('34f535072e6b42c5a84443981a77cfa2', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Cover"}', ''),
+  ('9eea393f17dd4971a62ea603e8bfec20', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"To entity types"}', ''),
+  ('d2c1a10114e3464a8272f4e75b0f1407', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Is type property"}', ''),
+  ('f394b9b4420d4ab4bceb81ded11df4d5', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Relation entity types"}', ''),
+  ('c321a10651d846bf98a9ad68a33658f7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Related properties"}', ''),
+  ('f732849378ba4577a33fac5f1c964f18', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Embedding"}', ''),
+  -- Content types and properties
+  ('e0fcc66c9e8643f480802469d8a1a93a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tag"}', ''),
+  ('257090341ba5406f94e4d4af90042fba', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tags"}', '')
 ON CONFLICT DO NOTHING;
 
 -- DESCRIPTION property ID: 9b1f76ff9711404c861e59dc3fa7d037
@@ -132,7 +155,12 @@ INSERT INTO triples (entity_id, property_id, value_type, value, language) VALUES
   ('e661d10292794449a22367dbae1be05a', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 date (year, year-month, or year-month-day)"}', ''),
   ('ad75102b03c04d59903813ede9482742', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 time with timezone"}',                    ''),
   ('caf4dd12ba4844b99171aff6c1313b50', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"RFC 5545 schedule or availability"}',              ''),
-  ('66b433247667496899b48a89bd1de22b', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Opaque byte array"}',                              '')
+  ('66b433247667496899b48a89bd1de22b', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Opaque byte array"}',                              ''),
+  -- Property-schema entities
+  ('9eea393f17dd4971a62ea603e8bfec20', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s to entity"}', ''),
+  ('f394b9b4420d4ab4bceb81ded11df4d5', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s relation entity"}', ''),
+  ('c321a10651d846bf98a9ad68a33658f7', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Related properties may share a relation entity when created between the same two entities"}', ''),
+  ('f732849378ba4577a33fac5f1c964f18', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Dense vector"}', '')
 ON CONFLICT DO NOTHING;
 
 -- TYPE relations for data type entities
@@ -182,5 +210,33 @@ INSERT INTO relations (id, relation_type, from_id, to_id) VALUES
   ('00000000000000000000000000000039', '8f151ba4de204e3c9cb499ddf96f48f1', '01412f8381894ab1836565c7fd358cc1', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Properties
   ('00000000000000000000000000000040', '8f151ba4de204e3c9cb499ddf96f48f1', 'a99f9ce12ffa4dac8c61f6310d46064a', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Collection item
   -- Space → Type (e7d737c536764c609fa16aa64a8c90ad)
-  ('00000000000000000000000000000041', '8f151ba4de204e3c9cb499ddf96f48f1', '362c1dbddc6444bba3c4652f38a642d7', 'e7d737c536764c609fa16aa64a8c90ad')   -- Space
+  ('00000000000000000000000000000041', '8f151ba4de204e3c9cb499ddf96f48f1', '362c1dbddc6444bba3c4652f38a642d7', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Space
+  -- Embedding → Type + Data type
+  ('00000000000000000000000000000042', '8f151ba4de204e3c9cb499ddf96f48f1', 'f732849378ba4577a33fac5f1c964f18', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Embedding → Type
+  ('00000000000000000000000000000043', '8f151ba4de204e3c9cb499ddf96f48f1', 'f732849378ba4577a33fac5f1c964f18', 'a35e058b52d148d2b02d773933d90b7e'),  -- Embedding → Data type
+  -- Property-schema entities → Property (808a04ceb21c4d888ad12e240613e5ca) + Type
+  ('00000000000000000000000000000044', '8f151ba4de204e3c9cb499ddf96f48f1', '2316bbe1c76f463583f23e03b4f1fe46', '808a04ceb21c4d888ad12e240613e5ca'),  -- Renderable type → Property
+  ('00000000000000000000000000000045', '8f151ba4de204e3c9cb499ddf96f48f1', '34f535072e6b42c5a84443981a77cfa2', '808a04ceb21c4d888ad12e240613e5ca'),  -- Cover → Property
+  ('00000000000000000000000000000046', '8f151ba4de204e3c9cb499ddf96f48f1', '2316bbe1c76f463583f23e03b4f1fe46', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Renderable type → Relation
+  ('00000000000000000000000000000047', '8f151ba4de204e3c9cb499ddf96f48f1', '2316bbe1c76f463583f23e03b4f1fe46', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Renderable type → Type
+  ('00000000000000000000000000000048', '8f151ba4de204e3c9cb499ddf96f48f1', '34f535072e6b42c5a84443981a77cfa2', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Cover → Type
+  -- Cover → Image (renderable type relation via Renderable type property)
+  ('00000000000000000000000000000057', '2316bbe1c76f463583f23e03b4f1fe46', '34f535072e6b42c5a84443981a77cfa2', 'f3f790c4c74e4d23a0a91e8ef84e30d9'),  -- Cover → Image
+  -- Tag → Type
+  ('00000000000000000000000000000058', '8f151ba4de204e3c9cb499ddf96f48f1', 'e0fcc66c9e8643f480802469d8a1a93a', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Tag → Type
+  -- Tags → Property + Relation + Type
+  ('00000000000000000000000000000059', '8f151ba4de204e3c9cb499ddf96f48f1', '257090341ba5406f94e4d4af90042fba', '808a04ceb21c4d888ad12e240613e5ca'),  -- Tags → Property
+  ('00000000000000000000000000000060', '8f151ba4de204e3c9cb499ddf96f48f1', '257090341ba5406f94e4d4af90042fba', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Tags → Relation
+  ('00000000000000000000000000000061', '8f151ba4de204e3c9cb499ddf96f48f1', '257090341ba5406f94e4d4af90042fba', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Tags → Type
+  -- Tags → Tag (to entity types relation)
+  ('00000000000000000000000000000062', '9eea393f17dd4971a62ea603e8bfec20', '257090341ba5406f94e4d4af90042fba', 'e0fcc66c9e8643f480802469d8a1a93a'),  -- Tags → Tag
+  -- Relation-schema entities → Relation (4b6d9fc1fbfe474c861c83398e1b50d9) + Type
+  ('00000000000000000000000000000049', '8f151ba4de204e3c9cb499ddf96f48f1', '9eea393f17dd4971a62ea603e8bfec20', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- To entity types → Relation
+  ('00000000000000000000000000000050', '8f151ba4de204e3c9cb499ddf96f48f1', '9eea393f17dd4971a62ea603e8bfec20', 'e7d737c536764c609fa16aa64a8c90ad'),  -- To entity types → Type
+  ('00000000000000000000000000000051', '8f151ba4de204e3c9cb499ddf96f48f1', 'd2c1a10114e3464a8272f4e75b0f1407', '808a04ceb21c4d888ad12e240613e5ca'),  -- Is type property → Property
+  ('00000000000000000000000000000052', '8f151ba4de204e3c9cb499ddf96f48f1', 'd2c1a10114e3464a8272f4e75b0f1407', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Is type property → Type
+  ('00000000000000000000000000000053', '8f151ba4de204e3c9cb499ddf96f48f1', 'f394b9b4420d4ab4bceb81ded11df4d5', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Relation entity types → Relation
+  ('00000000000000000000000000000054', '8f151ba4de204e3c9cb499ddf96f48f1', 'f394b9b4420d4ab4bceb81ded11df4d5', 'e7d737c536764c609fa16aa64a8c90ad'),  -- Relation entity types → Type
+  ('00000000000000000000000000000055', '8f151ba4de204e3c9cb499ddf96f48f1', 'c321a10651d846bf98a9ad68a33658f7', '4b6d9fc1fbfe474c861c83398e1b50d9'),  -- Related properties → Relation
+  ('00000000000000000000000000000056', '8f151ba4de204e3c9cb499ddf96f48f1', 'c321a10651d846bf98a9ad68a33658f7', 'e7d737c536764c609fa16aa64a8c90ad')   -- Related properties → Type
 ON CONFLICT DO NOTHING;

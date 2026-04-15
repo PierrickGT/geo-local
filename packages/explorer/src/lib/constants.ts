@@ -100,6 +100,65 @@ export const COLLECTION_ITEM_PROPERTY_ID = 'a99f9ce12ffa4dac8c61f6310d46064a'
 export const SPACE_ENTITY_ID = '362c1dbddc6444bba3c4652f38a642d7'
 
 // ---------------------------------------------------------------------------
+// Property-Schema Entities (from @geoprotocol/geo-sdk SystemIds)
+// These define the type system's own metadata: what data types, renderable
+// types, and relation constraints apply to properties and relations.
+// ---------------------------------------------------------------------------
+
+/**
+ * RENDERABLE_TYPE_PROPERTY_ID: Property on Property/Relation types that
+ * specifies which renderable type to use (e.g. Image, URL).
+ */
+export const RENDERABLE_TYPE_PROPERTY_ID = '2316bbe1c76f463583f23e03b4f1fe46'
+
+/**
+ * COVER_PROPERTY_ID: Property with renderable type Image, used for cover images.
+ */
+export const COVER_PROPERTY_ID = '34f535072e6b42c5a84443981a77cfa2'
+
+/**
+ * TO_ENTITY_TYPES_PROPERTY_ID: Property on the Relation type that constrains
+ * which entity types a relation's to-entity can be.
+ */
+export const TO_ENTITY_TYPES_PROPERTY_ID = '9eea393f17dd4971a62ea603e8bfec20'
+
+/**
+ * IS_TYPE_PROPERTY_ID: Checkbox property on the Relation type indicating
+ * whether the relation acts as a type classifier.
+ */
+export const IS_TYPE_PROPERTY_ID = 'd2c1a10114e3464a8272f4e75b0f1407'
+
+/**
+ * RELATION_ENTITY_TYPES_PROPERTY_ID: Property on the Relation type that
+ * constrains which entity types can serve as the relation entity.
+ */
+export const RELATION_ENTITY_TYPES_PROPERTY_ID = 'f394b9b4420d4ab4bceb81ded11df4d5'
+
+/**
+ * RELATED_PROPERTIES_PROPERTY_ID: Property on the Relation type linking
+ * properties that share a relation entity between the same two entities.
+ */
+export const RELATED_PROPERTIES_PROPERTY_ID = 'c321a10651d846bf98a9ad68a33658f7'
+
+/**
+ * EMBEDDING data type entity ID (from @geoprotocol/geo-sdk SystemIds)
+ * Dense vector data type.
+ */
+export const EMBEDDING_ENTITY_ID = 'f732849378ba4577a33fac5f1c964f18'
+
+/**
+ * TAG type entity ID (from @geoprotocol/geo-sdk ContentIds)
+ * The Tag type used for categorizing entities.
+ */
+export const TAG_ENTITY_ID = 'e0fcc66c9e8643f480802469d8a1a93a'
+
+/**
+ * TAGS property entity ID (from @geoprotocol/geo-sdk ContentIds)
+ * Relation property that links entities to Tag-type entities.
+ */
+export const TAGS_PROPERTY_ID = '257090341ba5406f94e4d4af90042fba'
+
+// ---------------------------------------------------------------------------
 // System Entity Names
 // ---------------------------------------------------------------------------
 
@@ -128,6 +187,15 @@ export const SYSTEM_ENTITY_NAMES: Record<string, string> = {
 	df250d17e364413d97792ddaae841e34: 'Point',
 	'4b6d9fc1fbfe474c861c83398e1b50d9': 'Relation',
 	[SPACE_ENTITY_ID]: 'Space',
+	[RENDERABLE_TYPE_PROPERTY_ID]: 'Renderable type',
+	[COVER_PROPERTY_ID]: 'Cover',
+	[TO_ENTITY_TYPES_PROPERTY_ID]: 'To entity types',
+	[IS_TYPE_PROPERTY_ID]: 'Is type property',
+	[RELATION_ENTITY_TYPES_PROPERTY_ID]: 'Relation entity types',
+	[RELATED_PROPERTIES_PROPERTY_ID]: 'Related properties',
+	[EMBEDDING_ENTITY_ID]: 'Embedding',
+	[TAG_ENTITY_ID]: 'Tag',
+	[TAGS_PROPERTY_ID]: 'Tags',
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +221,13 @@ export const PROPERTY_ID_TO_NAME: Record<string, string> = {
 	[DATA_TYPE_PROPERTY_ID]: 'Data type',
 	[PROPERTIES_PROPERTY_ID]: 'Properties',
 	[COLLECTION_ITEM_PROPERTY_ID]: 'Collection item',
+	[RENDERABLE_TYPE_PROPERTY_ID]: 'Renderable type',
+	[COVER_PROPERTY_ID]: 'Cover',
+	[TO_ENTITY_TYPES_PROPERTY_ID]: 'To entity types',
+	[IS_TYPE_PROPERTY_ID]: 'Is type property',
+	[RELATION_ENTITY_TYPES_PROPERTY_ID]: 'Relation entity types',
+	[RELATED_PROPERTIES_PROPERTY_ID]: 'Related properties',
+	[TAGS_PROPERTY_ID]: 'Tags',
 }
 
 /**
