@@ -7,20 +7,19 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.4
+        version: 1.9.4
+      '@geoprotocol/geo-sdk':
+        specifier: ^0.14.0
+        version: 0.14.0(typescript@5.9.3)(zod@4.3.6)
       '@remotion/cli':
         specifier: ^4.0.448
         version: 4.0.448(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       remotion:
         specifier: ^4.0.448
         version: 4.0.448(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^1.9.4
-        version: 1.9.4
-      '@geoprotocol/geo-sdk':
-        specifier: latest
-        version: 0.14.0(typescript@5.9.3)(zod@4.3.6)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -153,8 +152,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@geoprotocol/grc-20':
-        specifier: latest
-        version: 0.4.0
+        specifier: ^0.4.0
+        version: 0.4.1
       pg:
         specifier: ^8.13.0
         version: 8.20.0
@@ -171,6 +170,9 @@ importers:
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@22.19.13)(jiti@2.6.1)(jsdom@28.1.0(@noble/hashes@1.8.0))(lightningcss@1.31.1)(msw@2.12.11(@types/node@22.19.13)(typescript@5.9.3))(terser@5.46.1)(tsx@4.21.0)
 
   packages/ingest:
     dependencies:
@@ -178,11 +180,11 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@geoprotocol/geo-sdk':
-        specifier: latest
+        specifier: ^0.13.0
         version: 0.13.0(typescript@5.9.3)(zod@4.3.6)
       '@geoprotocol/grc-20':
-        specifier: latest
-        version: 0.4.0
+        specifier: ^0.4.0
+        version: 0.4.1
       express:
         specifier: ^5.0.0
         version: 5.2.1
@@ -212,11 +214,11 @@ importers:
   packages/shared:
     dependencies:
       '@geoprotocol/geo-sdk':
-        specifier: latest
+        specifier: ^0.13.0
         version: 0.13.0(typescript@5.9.3)(zod@4.3.6)
       '@geoprotocol/grc-20':
-        specifier: latest
-        version: 0.4.0
+        specifier: ^0.4.0
+        version: 0.4.1
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
@@ -1030,10 +1032,6 @@ packages:
 
   '@geoprotocol/geo-sdk@0.14.0':
     resolution: {integrity: sha512-/ymutQ2U0CFSgiNRdLhrJlpPfnlpyLz0lbCz2msuUue3EPivAcW/eo8DMdllZZYJaX8KvtjoAUdWFbWAVF+DKg==}
-
-  '@geoprotocol/grc-20@0.4.0':
-    resolution: {integrity: sha512-pZ42y0/nDR6L0pRPlW/xeLOwAcNvsQvP/9BpSO9DN8U4/dmGjHAxK9M2euXncjnFLoaCKmx8NiANVpHVD94MGA==}
-    engines: {node: '>=18'}
 
   '@geoprotocol/grc-20@0.4.1':
     resolution: {integrity: sha512-J5trJZBydDOO5GsEMzy9ukX9GetblBMLnn4ugpTFOcwS4akA54Lxg/uYJbXUDh5EVPir3PAzC6UN6EiBz0K/Ww==}
@@ -5634,7 +5632,7 @@ snapshots:
 
   '@geoprotocol/geo-sdk@0.13.0(typescript@5.9.3)(zod@4.3.6)':
     dependencies:
-      '@geoprotocol/grc-20': 0.4.0
+      '@geoprotocol/grc-20': 0.4.1
       effect: 3.19.19
       fflate: 0.8.2
       fractional-indexing-jittered: 1.0.0
@@ -5665,10 +5663,6 @@ snapshots:
       - typescript
       - utf-8-validate
       - zod
-
-  '@geoprotocol/grc-20@0.4.0':
-    dependencies:
-      '@bokuweb/zstd-wasm': 0.0.27
 
   '@geoprotocol/grc-20@0.4.1':
     dependencies:

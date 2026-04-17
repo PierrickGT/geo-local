@@ -1,13 +1,13 @@
-import React from 'react'
+import type React from 'react'
 import {
 	AbsoluteFill,
+	Img,
 	Sequence,
 	interpolate,
 	spring,
+	staticFile,
 	useCurrentFrame,
 	useVideoConfig,
-	Img,
-	staticFile,
 } from 'remotion'
 
 const BACKGROUND = '#0f172a'
@@ -29,15 +29,14 @@ const SlideIn: React.FC<{
 		config: { damping: 25, stiffness: 120 },
 	})
 
-	const translateX = direction === 'left'
-		? interpolate(progress, [0, 1], [-100, 0])
-		: direction === 'right'
-			? interpolate(progress, [0, 1], [100, 0])
-			: 0
+	const translateX =
+		direction === 'left'
+			? interpolate(progress, [0, 1], [-100, 0])
+			: direction === 'right'
+				? interpolate(progress, [0, 1], [100, 0])
+				: 0
 
-	const translateY = direction === 'bottom'
-		? interpolate(progress, [0, 1], [80, 0])
-		: 0
+	const translateY = direction === 'bottom' ? interpolate(progress, [0, 1], [80, 0]) : 0
 
 	return (
 		<div
@@ -64,11 +63,7 @@ const FadeIn: React.FC<{
 		config: { damping: 30 },
 	})
 
-	return (
-		<div style={{ opacity: progress }}>
-			{children}
-		</div>
-	)
+	return <div style={{ opacity: progress }}>{children}</div>
 }
 
 const TitleScreen: React.FC = () => {
@@ -205,9 +200,7 @@ const SectionTitle: React.FC<{
 						borderRadius: 2,
 					}}
 				/>
-				<div style={{ fontSize: 20, color: TEXT_SECONDARY }}>
-					{subtitle}
-				</div>
+				<div style={{ fontSize: 20, color: TEXT_SECONDARY }}>{subtitle}</div>
 			</div>
 		</AbsoluteFill>
 	)
@@ -274,9 +267,7 @@ const ScreenshotShowcase: React.FC<{
 				<div style={{ fontSize: 28, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 12 }}>
 					{caption}
 				</div>
-				<div style={{ fontSize: 16, color: TEXT_SECONDARY, lineHeight: 1.6 }}>
-					{description}
-				</div>
+				<div style={{ fontSize: 16, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{description}</div>
 			</div>
 		</AbsoluteFill>
 	)
@@ -310,59 +301,71 @@ const DualScreenshotShowcase: React.FC<{
 				gap: 30,
 			}}
 		>
-			<div style={{
-				fontSize: 18,
-				color: TEXT_SECONDARY,
-				textAlign: 'center',
-				marginBottom: 10,
-				opacity: interpolate(frame, [5, 20], [0, 1], { extrapolateLeft: 'clamp' }),
-			}}>
+			<div
+				style={{
+					fontSize: 18,
+					color: TEXT_SECONDARY,
+					textAlign: 'center',
+					marginBottom: 10,
+					opacity: interpolate(frame, [5, 20], [0, 1], { extrapolateLeft: 'clamp' }),
+				}}
+			>
 				{description}
 			</div>
 			<div style={{ display: 'flex', gap: 30, justifyContent: 'center' }}>
-				<div style={{
-					transform: `scale(${interpolate(progress, [0, 1], [0.85, 1])})`,
-					opacity: progress,
-					borderRadius: 12,
-					overflow: 'hidden',
-					boxShadow: activeIndex === 0
-						? `0 0 30px ${ACCENT}44, 0 25px 50px -12px rgba(0,0,0,0.5)`
-						: '0 25px 50px -12px rgba(0,0,0,0.3)',
-					border: `1px solid ${activeIndex === 0 ? ACCENT : `${ACCENT}33`}`,
-					width: 540,
-				}}>
+				<div
+					style={{
+						transform: `scale(${interpolate(progress, [0, 1], [0.85, 1])})`,
+						opacity: progress,
+						borderRadius: 12,
+						overflow: 'hidden',
+						boxShadow:
+							activeIndex === 0
+								? `0 0 30px ${ACCENT}44, 0 25px 50px -12px rgba(0,0,0,0.5)`
+								: '0 25px 50px -12px rgba(0,0,0,0.3)',
+						border: `1px solid ${activeIndex === 0 ? ACCENT : `${ACCENT}33`}`,
+						width: 540,
+					}}
+				>
 					<Img src={staticFile(imageSrc1)} style={{ width: '100%', display: 'block' }} />
-					<div style={{
-						padding: '10px 16px',
-						background: '#1e293b',
-						fontSize: 14,
-						color: activeIndex === 0 ? ACCENT : TEXT_SECONDARY,
-						fontWeight: activeIndex === 0 ? 600 : 400,
-						borderTop: `1px solid ${ACCENT}22`,
-					}}>
+					<div
+						style={{
+							padding: '10px 16px',
+							background: '#1e293b',
+							fontSize: 14,
+							color: activeIndex === 0 ? ACCENT : TEXT_SECONDARY,
+							fontWeight: activeIndex === 0 ? 600 : 400,
+							borderTop: `1px solid ${ACCENT}22`,
+						}}
+					>
 						{caption1}
 					</div>
 				</div>
-				<div style={{
-					transform: `scale(${interpolate(progress, [0, 1], [0.85, 1])})`,
-					opacity: progress,
-					borderRadius: 12,
-					overflow: 'hidden',
-					boxShadow: activeIndex === 1
-						? `0 0 30px ${ACCENT}44, 0 25px 50px -12px rgba(0,0,0,0.5)`
-						: '0 25px 50px -12px rgba(0,0,0,0.3)',
-					border: `1px solid ${activeIndex === 1 ? ACCENT : `${ACCENT}33`}`,
-					width: 540,
-				}}>
+				<div
+					style={{
+						transform: `scale(${interpolate(progress, [0, 1], [0.85, 1])})`,
+						opacity: progress,
+						borderRadius: 12,
+						overflow: 'hidden',
+						boxShadow:
+							activeIndex === 1
+								? `0 0 30px ${ACCENT}44, 0 25px 50px -12px rgba(0,0,0,0.5)`
+								: '0 25px 50px -12px rgba(0,0,0,0.3)',
+						border: `1px solid ${activeIndex === 1 ? ACCENT : `${ACCENT}33`}`,
+						width: 540,
+					}}
+				>
 					<Img src={staticFile(imageSrc2)} style={{ width: '100%', display: 'block' }} />
-					<div style={{
-						padding: '10px 16px',
-						background: '#1e293b',
-						fontSize: 14,
-						color: activeIndex === 1 ? ACCENT : TEXT_SECONDARY,
-						fontWeight: activeIndex === 1 ? 600 : 400,
-						borderTop: `1px solid ${ACCENT}22`,
-					}}>
+					<div
+						style={{
+							padding: '10px 16px',
+							background: '#1e293b',
+							fontSize: 14,
+							color: activeIndex === 1 ? ACCENT : TEXT_SECONDARY,
+							fontWeight: activeIndex === 1 ? 600 : 400,
+							borderTop: `1px solid ${ACCENT}22`,
+						}}
+					>
 						{caption2}
 					</div>
 				</div>
@@ -500,11 +503,7 @@ export const FeatureShowcase: React.FC = () => {
 
 			{/* Search section title: frames 270-314 (1.5s) */}
 			<Sequence from={270} durationInFrames={45}>
-				<SectionTitle
-					number="02"
-					title="Search"
-					subtitle="Find entities by name or ID instantly"
-				/>
+				<SectionTitle number="02" title="Search" subtitle="Find entities by name or ID instantly" />
 			</Sequence>
 
 			{/* Search by name + ID: frames 315-359 (1.5s) */}
