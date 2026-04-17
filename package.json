@@ -20,7 +20,9 @@
 		"db:reset": "docker compose down -v && docker compose up -d --wait && pnpm db:migrate",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"video:studio": "npx remotion studio",
+		"video:render": "npx remotion render FeatureShowcase media/features-showcase.mp4 --width=1920 --height=1080"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
@@ -28,6 +30,13 @@
 		"typescript": "^5.7.0"
 	},
 	"pnpm": {
-		"onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"esbuild"
+		]
+	},
+	"dependencies": {
+		"@remotion/cli": "^4.0.448",
+		"remotion": "^4.0.448"
 	}
 }

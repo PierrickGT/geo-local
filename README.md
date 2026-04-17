@@ -2,6 +2,8 @@
 
 Self-hosted knowledge graph runtime that replaces IPFS/blockchain with local Postgres storage. Stage, test, and iterate on GRC-20 edits before publishing to the public Geo network.
 
+https://github.com/PierrickGT/geo-runtime-postgres/raw/main/media/features-showcase.mp4
+
 ## Architecture
 
 ```
