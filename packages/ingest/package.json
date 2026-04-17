@@ -1,7 +1,6 @@
 {
-	"name": "@geo-runtime/ingest",
-	"version": "0.0.1",
-	"private": true,
+	"name": "@geo-local/ingest",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"build": "tsup",
@@ -10,7 +9,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@geo-runtime/shared": "workspace:*",
+		"@geo-local/shared": "workspace:*",
 		"@geoprotocol/geo-sdk": "latest",
 		"@geoprotocol/grc-20": "latest",
 		"express": "^5.0.0"

@@ -1,7 +1,6 @@
 {
-	"name": "@geo-runtime/indexer",
-	"version": "0.0.1",
-	"private": true,
+	"name": "@geo-local/indexer",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"build": "tsup",
@@ -9,7 +8,7 @@
 		"start": "node dist/index.js"
 	},
 	"dependencies": {
-		"@geo-runtime/shared": "workspace:*",
+		"@geo-local/shared": "workspace:*",
 		"@geoprotocol/grc-20": "latest",
 		"pg": "^8.13.0"
 	},

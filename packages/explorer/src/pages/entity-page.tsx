@@ -33,7 +33,18 @@ import {
 
 type EntityCategory = 'type' | 'property' | 'relation' | 'renderable type' | 'data type' | 'entity'
 
-const ENTITY_TYPE_VARIANT: Record<EntityCategory, string> = {
+type BadgeVariant =
+	| 'default'
+	| 'secondary'
+	| 'destructive'
+	| 'outline'
+	| 'ghost'
+	| 'link'
+	| 'warning'
+	| 'info'
+	| 'success'
+
+const ENTITY_TYPE_VARIANT: Record<EntityCategory, BadgeVariant> = {
 	type: 'info',
 	property: 'outline',
 	relation: 'warning',

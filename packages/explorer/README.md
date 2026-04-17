@@ -47,16 +47,16 @@ pnpm dev:explorer
 
 ```bash
 # Type check
-pnpm --filter @geo-runtime/explorer run typecheck
+pnpm --filter @geo-local/explorer run typecheck
 
 # Lint
 pnpm biome check packages/explorer/src
 
 # Test
-pnpm --filter @geo-runtime/explorer run test
+pnpm --filter @geo-local/explorer run test
 
 # Build
-pnpm --filter @geo-runtime/explorer run build
+pnpm --filter @geo-local/explorer run build
 ```
 
 ## API Proxy

@@ -1,4 +1,4 @@
-import { createLogger, getPool } from '@geo-runtime/shared'
+import { createLogger, getPool } from '@geo-local/shared'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 

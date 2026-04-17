@@ -1,4 +1,4 @@
-import { idToHex } from '@geo-runtime/shared'
+import { idToHex } from '@geo-local/shared'
 import type { CreateValueRef } from '@geoprotocol/grc-20'
 import type pg from 'pg'
 import { ensureEntity } from './shared.js'

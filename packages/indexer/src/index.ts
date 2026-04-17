@@ -1,4 +1,4 @@
-import { closePool, config, createLogger, getPool } from '@geo-runtime/shared'
+import { closePool, config, createLogger, getPool } from '@geo-local/shared'
 import { pollOnce } from './poller.js'
 
 const log = createLogger('indexer')

@@ -1,11 +1,10 @@
 {
-	"name": "@geo-runtime/explorer",
-	"version": "0.0.1",
-	"private": true,
+	"name": "@geo-local/explorer",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc -b && vite build",
+		"build": "tsc -b tsconfig.build.json && vite build",
 		"preview": "vite preview",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check src",

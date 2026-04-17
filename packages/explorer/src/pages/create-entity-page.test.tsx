@@ -280,7 +280,7 @@ describe('CreateEntityPage', () => {
 
 			// Resolve the mutation
 			mockGetEdit.mockResolvedValueOnce({ id: 'edit-1', status: 'applied' })
-			resolveSubmit!()
+			resolveSubmit?.()
 
 			await waitFor(() => {
 				expect(mockGetEdit).toHaveBeenCalled()

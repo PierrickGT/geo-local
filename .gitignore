@@ -7,10 +7,6 @@ dist/
 # AI CLIs
 .claude
 .factory
-!.factory/skills/
-!.factory/services.yaml
-!.factory/init.sh
-!.factory/library/
 CLAUDE.md
 
 # Playwright

@@ -6,7 +6,7 @@ import {
 	getBezierPath,
 } from '@xyflow/react'
 import { memo } from 'react'
-import { TYPES_PROPERTY_ID, formatPropertyId } from '~/lib/constants'
+import { formatPropertyId } from '~/lib/constants'
 import type { GraphEdge } from './force-layout'
 
 /**

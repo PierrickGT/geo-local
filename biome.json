@@ -1,5 +1,8 @@
 {
 	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"files": {
+		"ignore": ["opensrc/", "node_modules/", "dist/", ".playwright-mcp/", ".factory/", ".claude/"]
+	},
 	"organizeImports": {
 		"enabled": true
 	},
@@ -14,7 +17,8 @@
 			"recommended": true,
 			"correctness": {
 				"noUnusedImports": "warn",
-				"noUnusedVariables": "warn"
+				"noUnusedVariables": "warn",
+				"useExhaustiveDependencies": "off"
 			},
 			"a11y": {
 				"useSemanticElements": "off"

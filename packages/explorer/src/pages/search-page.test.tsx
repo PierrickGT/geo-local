@@ -82,7 +82,9 @@ describe('SearchPage', () => {
 		it('shows empty state message when no query', () => {
 			render(<SearchPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByText('Enter a search query to find entities by name or ID.')).toBeInTheDocument()
+			expect(
+				screen.getByText('Enter a search query to find entities by name or ID.'),
+			).toBeInTheDocument()
 		})
 	})
 

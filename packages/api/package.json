@@ -1,7 +1,6 @@
 {
-	"name": "@geo-runtime/api",
-	"version": "0.0.1",
-	"private": true,
+	"name": "@geo-local/api",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"build": "tsup",
@@ -11,7 +10,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@geo-runtime/shared": "workspace:*",
+		"@geo-local/shared": "workspace:*",
 		"express": "^5.0.0"
 	},
 	"devDependencies": {

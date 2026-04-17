@@ -1,4 +1,4 @@
-import { closePool, config, createLogger } from '@geo-runtime/shared'
+import { closePool, config, createLogger } from '@geo-local/shared'
 import express from 'express'
 import { createRouter } from './routes.js'
 

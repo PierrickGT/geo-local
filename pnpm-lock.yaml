@@ -20,7 +20,7 @@ importers:
 
   packages/api:
     dependencies:
-      '@geo-runtime/shared':
+      '@geo-local/shared':
         specifier: workspace:*
         version: link:../shared
       express:
@@ -142,7 +142,7 @@ importers:
 
   packages/indexer:
     dependencies:
-      '@geo-runtime/shared':
+      '@geo-local/shared':
         specifier: workspace:*
         version: link:../shared
       '@geoprotocol/grc-20':
@@ -167,7 +167,7 @@ importers:
 
   packages/ingest:
     dependencies:
-      '@geo-runtime/shared':
+      '@geo-local/shared':
         specifier: workspace:*
         version: link:../shared
       '@geoprotocol/geo-sdk':

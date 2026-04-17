@@ -1,4 +1,4 @@
-import { idToHex, serializeValue } from '@geo-runtime/shared'
+import { idToHex, serializeValue } from '@geo-local/shared'
 import type { PropertyValue } from '@geoprotocol/grc-20'
 import type pg from 'pg'
 
@@ -15,7 +15,7 @@ export async function ensureEntity(
 			[id, spaceId],
 		)
 	} else {
-		await client.query(`INSERT INTO entities (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`, [id])
+		await client.query('INSERT INTO entities (id) VALUES ($1) ON CONFLICT (id) DO NOTHING', [id])
 	}
 }
 

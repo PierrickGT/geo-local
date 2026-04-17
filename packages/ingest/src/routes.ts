@@ -1,4 +1,4 @@
-import { config, createLogger, getPool, idToHex } from '@geo-runtime/shared'
+import { config, createLogger, getPool, idToHex } from '@geo-local/shared'
 import { Graph, IdUtils } from '@geoprotocol/geo-sdk'
 import {
 	createEdit,

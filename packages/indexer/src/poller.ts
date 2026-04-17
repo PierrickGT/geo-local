@@ -1,4 +1,4 @@
-import { createLogger } from '@geo-runtime/shared'
+import { createLogger } from '@geo-local/shared'
 import { decodeEdit } from '@geoprotocol/grc-20'
 import type pg from 'pg'
 import { applyEdit } from './applier.js'

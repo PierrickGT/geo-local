@@ -108,59 +108,63 @@ INSERT INTO entities (id) VALUES
   ('257090341ba5406f94e4d4af90042fba')   -- Tags (property)
 ON CONFLICT DO NOTHING;
 
+-- English language ID (from @geoprotocol/grc-20 languages.english())
+-- derived_uuid("grc20:genesis:language:en") = 090adac0fca4822e8e719263e67620ec
+-- Base64 of the 16-byte ID: CQrawPykgi6OcZJj5nYg7A==
+
 -- NAME property ID: a126ca530c8e48d5b88882c734c38935
 INSERT INTO triples (entity_id, property_id, value_type, value, language) VALUES
-  ('e7d737c536764c609fa16aa64a8c90ad', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Type"}',         ''),
-  ('a35e058b52d148d2b02d773933d90b7e', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type"}',      ''),
-  ('5338cc2897044e96b5477dfc58da6fc7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Renderable type"}', ''),
-  ('9edb6fcce4544aa5861139d7f024c010', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Text"}',           ''),
-  ('808a04ceb21c4d888ad12e240613e5ca', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Property"}',     ''),
-  ('7aa4792eeacd41868272fa7fc18298ac', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Checkbox"}',      ''),
-  ('149fd752d9d04f80820d1d942eea7841', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Integer"}',      ''),
-  ('9b597aaec31c46c88565a370da0c2a65', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Float"}',        ''),
-  ('a3288c22a0564f6fb409fbcccb2c118c', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Decimal"}',      ''),
-  ('e661d10292794449a22367dbae1be05a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Date"}',         ''),
-  ('ad75102b03c04d59903813ede9482742', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Time"}',         ''),
-  ('167664f668f840e1976b20bd16ed8d47', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Datetime"}',     ''),
-  ('caf4dd12ba4844b99171aff6c1313b50', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Schedule"}',     ''),
-  ('66b433247667496899b48a89bd1de22b', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Bytes"}',        ''),
-  ('f3f790c4c74e4d23a0a91e8ef84e30d9', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Image"}',        ''),
-  ('283127c96142468492ed90b0ebc7f29a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"URL"}',          ''),
-  ('df250d17e364413d97792ddaae841e34', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Point"}',        ''),
-  ('4b6d9fc1fbfe474c861c83398e1b50d9', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Relation"}',        ''),
-  ('a126ca530c8e48d5b88882c734c38935', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Name"}',            ''),
-  ('9b1f76ff9711404c861e59dc3fa7d037', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Description"}',     ''),
-  ('8f151ba4de204e3c9cb499ddf96f48f1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Types"}',           ''),
-  ('6d29d57849bb4959baf72cc696b1671a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type"}',       ''),
-  ('01412f8381894ab1836565c7fd358cc1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Properties"}',      ''),
-  ('a99f9ce12ffa4dac8c61f6310d46064a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Collection item"}', ''),
-  ('362c1dbddc6444bba3c4652f38a642d7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Space"}',               ''),
+  ('e7d737c536764c609fa16aa64a8c90ad', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Type","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec'),
+  ('a35e058b52d148d2b02d773933d90b7e', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type","language":"CQrawPykgi6OcZJj5nYg7A=="}',      '090adac0fca4822e8e719263e67620ec'),
+  ('5338cc2897044e96b5477dfc58da6fc7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Renderable type","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('9edb6fcce4544aa5861139d7f024c010', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Text","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec'),
+  ('808a04ceb21c4d888ad12e240613e5ca', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Property","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('7aa4792eeacd41868272fa7fc18298ac', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Checkbox","language":"CQrawPykgi6OcZJj5nYg7A=="}',      '090adac0fca4822e8e719263e67620ec'),
+  ('149fd752d9d04f80820d1d942eea7841', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Integer","language":"CQrawPykgi6OcZJj5nYg7A=="}',      '090adac0fca4822e8e719263e67620ec'),
+  ('9b597aaec31c46c88565a370da0c2a65', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Float","language":"CQrawPykgi6OcZJj5nYg7A=="}',        '090adac0fca4822e8e719263e67620ec'),
+  ('a3288c22a0564f6fb409fbcccb2c118c', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Decimal","language":"CQrawPykgi6OcZJj5nYg7A=="}',      '090adac0fca4822e8e719263e67620ec'),
+  ('e661d10292794449a22367dbae1be05a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Date","language":"CQrawPykgi6OcZJj5nYg7A=="}',         '090adac0fca4822e8e719263e67620ec'),
+  ('ad75102b03c04d59903813ede9482742', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Time","language":"CQrawPykgi6OcZJj5nYg7A=="}',         '090adac0fca4822e8e719263e67620ec'),
+  ('167664f668f840e1976b20bd16ed8d47', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Datetime","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('caf4dd12ba4844b99171aff6c1313b50', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Schedule","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('66b433247667496899b48a89bd1de22b', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Bytes","language":"CQrawPykgi6OcZJj5nYg7A=="}',        '090adac0fca4822e8e719263e67620ec'),
+  ('f3f790c4c74e4d23a0a91e8ef84e30d9', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Image","language":"CQrawPykgi6OcZJj5nYg7A=="}',        '090adac0fca4822e8e719263e67620ec'),
+  ('283127c96142468492ed90b0ebc7f29a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"URL","language":"CQrawPykgi6OcZJj5nYg7A=="}',          '090adac0fca4822e8e719263e67620ec'),
+  ('df250d17e364413d97792ddaae841e34', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Point","language":"CQrawPykgi6OcZJj5nYg7A=="}',        '090adac0fca4822e8e719263e67620ec'),
+  ('4b6d9fc1fbfe474c861c83398e1b50d9', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Relation","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('a126ca530c8e48d5b88882c734c38935', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Name","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec'),
+  ('9b1f76ff9711404c861e59dc3fa7d037', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Description","language":"CQrawPykgi6OcZJj5nYg7A=="}',    '090adac0fca4822e8e719263e67620ec'),
+  ('8f151ba4de204e3c9cb499ddf96f48f1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Types","language":"CQrawPykgi6OcZJj5nYg7A=="}',          '090adac0fca4822e8e719263e67620ec'),
+  ('6d29d57849bb4959baf72cc696b1671a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Data type","language":"CQrawPykgi6OcZJj5nYg7A=="}',      '090adac0fca4822e8e719263e67620ec'),
+  ('01412f8381894ab1836565c7fd358cc1', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Properties","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('a99f9ce12ffa4dac8c61f6310d46064a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Collection item","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('362c1dbddc6444bba3c4652f38a642d7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Space","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec'),
   -- Property-schema entities
-  ('2316bbe1c76f463583f23e03b4f1fe46', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Renderable type"}', ''),
-  ('34f535072e6b42c5a84443981a77cfa2', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Cover"}', ''),
-  ('9eea393f17dd4971a62ea603e8bfec20', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"To entity types"}', ''),
-  ('d2c1a10114e3464a8272f4e75b0f1407', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Is type property"}', ''),
-  ('f394b9b4420d4ab4bceb81ded11df4d5', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Relation entity types"}', ''),
-  ('c321a10651d846bf98a9ad68a33658f7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Related properties"}', ''),
-  ('f732849378ba4577a33fac5f1c964f18', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Embedding"}', ''),
+  ('2316bbe1c76f463583f23e03b4f1fe46', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Renderable type","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('34f535072e6b42c5a84443981a77cfa2', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Cover","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec'),
+  ('9eea393f17dd4971a62ea603e8bfec20', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"To entity types","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('d2c1a10114e3464a8272f4e75b0f1407', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Is type property","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('f394b9b4420d4ab4bceb81ded11df4d5', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Relation entity types","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('c321a10651d846bf98a9ad68a33658f7', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Related properties","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('f732849378ba4577a33fac5f1c964f18', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Embedding","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
   -- Content types and properties
-  ('e0fcc66c9e8643f480802469d8a1a93a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tag"}', ''),
-  ('257090341ba5406f94e4d4af90042fba', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tags"}', '')
+  ('e0fcc66c9e8643f480802469d8a1a93a', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tag","language":"CQrawPykgi6OcZJj5nYg7A=="}',            '090adac0fca4822e8e719263e67620ec'),
+  ('257090341ba5406f94e4d4af90042fba', 'a126ca530c8e48d5b88882c734c38935', 'text', '{"value":"Tags","language":"CQrawPykgi6OcZJj5nYg7A=="}',           '090adac0fca4822e8e719263e67620ec')
 ON CONFLICT DO NOTHING;
 
 -- DESCRIPTION property ID: 9b1f76ff9711404c861e59dc3fa7d037
 INSERT INTO triples (entity_id, property_id, value_type, value, language) VALUES
-  ('149fd752d9d04f80820d1d942eea7841', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"64-bit signed integer"}',                          ''),
-  ('a3288c22a0564f6fb409fbcccb2c118c', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Arbitrary-precision decimal"}',                    ''),
-  ('e661d10292794449a22367dbae1be05a', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 date (year, year-month, or year-month-day)"}', ''),
-  ('ad75102b03c04d59903813ede9482742', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 time with timezone"}',                    ''),
-  ('caf4dd12ba4844b99171aff6c1313b50', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"RFC 5545 schedule or availability"}',              ''),
-  ('66b433247667496899b48a89bd1de22b', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Opaque byte array"}',                              ''),
+  ('149fd752d9d04f80820d1d942eea7841', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"64-bit signed integer","language":"CQrawPykgi6OcZJj5nYg7A=="}',                '090adac0fca4822e8e719263e67620ec'),
+  ('a3288c22a0564f6fb409fbcccb2c118c', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Arbitrary-precision decimal","language":"CQrawPykgi6OcZJj5nYg7A=="}',                '090adac0fca4822e8e719263e67620ec'),
+  ('e661d10292794449a22367dbae1be05a', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 date (year, year-month, or year-month-day)","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('ad75102b03c04d59903813ede9482742', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"ISO 8601 time with timezone","language":"CQrawPykgi6OcZJj5nYg7A=="}',                '090adac0fca4822e8e719263e67620ec'),
+  ('caf4dd12ba4844b99171aff6c1313b50', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"RFC 5545 schedule or availability","language":"CQrawPykgi6OcZJj5nYg7A=="}',             '090adac0fca4822e8e719263e67620ec'),
+  ('66b433247667496899b48a89bd1de22b', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Opaque byte array","language":"CQrawPykgi6OcZJj5nYg7A=="}',                             '090adac0fca4822e8e719263e67620ec'),
   -- Property-schema entities
-  ('9eea393f17dd4971a62ea603e8bfec20', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s to entity"}', ''),
-  ('f394b9b4420d4ab4bceb81ded11df4d5', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s relation entity"}', ''),
-  ('c321a10651d846bf98a9ad68a33658f7', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Related properties may share a relation entity when created between the same two entities"}', ''),
-  ('f732849378ba4577a33fac5f1c964f18', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Dense vector"}', '')
+  ('9eea393f17dd4971a62ea603e8bfec20', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s to entity","language":"CQrawPykgi6OcZJj5nYg7A=="}',     '090adac0fca4822e8e719263e67620ec'),
+  ('f394b9b4420d4ab4bceb81ded11df4d5', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Defines the entity type options for a relation''s relation entity","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('c321a10651d846bf98a9ad68a33658f7', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Related properties may share a relation entity when created between the same two entities","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec'),
+  ('f732849378ba4577a33fac5f1c964f18', '9b1f76ff9711404c861e59dc3fa7d037', 'text', '{"value":"Dense vector","language":"CQrawPykgi6OcZJj5nYg7A=="}', '090adac0fca4822e8e719263e67620ec')
 ON CONFLICT DO NOTHING;
 
 -- TYPE relations for data type entities

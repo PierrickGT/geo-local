@@ -156,7 +156,9 @@ export function SearchPage() {
 											<TruncateId id={entity.id} />
 										</td>
 										<td className="px-6 py-4 text-sm text-gray-900">
-											{entity.propertiesText ?? <span className="text-gray-400 italic">No name</span>}
+											{entity.propertiesText ?? (
+												<span className="text-gray-400 italic">No name</span>
+											)}
 										</td>
 									</tr>
 								))}
@@ -211,9 +213,7 @@ export function SearchPage() {
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 											<span className="font-mono">{result.propertyId.slice(0, 12)}...</span>
 										</td>
-										<td className="px-6 py-4 text-sm text-gray-900">
-											{formatValue(result.value)}
-										</td>
+										<td className="px-6 py-4 text-sm text-gray-900">{formatValue(result.value)}</td>
 									</tr>
 								))}
 							</tbody>

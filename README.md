@@ -1,6 +1,6 @@
-# geo-runtime-postgres
+# geo-local
 
-Private, self-hosted knowledge graph runtime that replaces IPFS/blockchain with local Postgres storage. Stage, test, and iterate on GRC-20 edits before publishing to the public Geo network.
+Self-hosted knowledge graph runtime that replaces IPFS/blockchain with local Postgres storage. Stage, test, and iterate on GRC-20 edits before publishing to the public Geo network.
 
 ## Architecture
 

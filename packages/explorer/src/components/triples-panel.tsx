@@ -158,8 +158,7 @@ export function TriplesPanel({ triples, className = '' }: TriplesPanelProps) {
 											className="text-blue-600 hover:text-blue-800 hover:underline text-sm"
 											title={String(rawValue)}
 										>
-											{referenceNames.get(String(rawValue)) ??
-												truncateEntityId(String(rawValue))}
+											{referenceNames.get(String(rawValue)) ?? truncateEntityId(String(rawValue))}
 										</a>
 									) : (
 										<p className="text-sm text-gray-900 break-all" title={displayValue}>

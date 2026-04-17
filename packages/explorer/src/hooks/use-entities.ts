@@ -3,12 +3,12 @@
  * useEntities, useEntity, useEntityRelations, useTypes
  */
 
-import { useMemo } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { getEntities, getEntity, getEntityRelations, getTypes } from '~/api/entities'
-import { SYSTEM_ENTITY_NAMES } from '~/lib/constants'
 import type { GetEntitiesParams, GetEntityRelationsParams } from '~/api/entities'
 import type { EntitiesResponse, EntityRelationsResponse, EntityResponse } from '~/api/types'
+import { SYSTEM_ENTITY_NAMES } from '~/lib/constants'
 import { NAME_PROPERTY_ID } from '~/lib/constants'
 
 // ---------------------------------------------------------------------------
