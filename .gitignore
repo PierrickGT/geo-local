@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.vite/
+.env
+*.tsbuildinfo
+
+# AI CLIs
+.claude
+.factory
+CLAUDE.md
+
+# Playwright
+.playwright-mcp
+
+# opensrc - source code for packages
+opensrc/

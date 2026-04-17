@@ -1,0 +1,37 @@
+{
+	"name": "geo-local",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Self-hosted knowledge graph runtime with local Postgres storage",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PierrickGT/geo-runtime-postgres.git"
+	},
+	"type": "module",
+	"scripts": {
+		"build": "pnpm -r run build",
+		"dev:ingest": "pnpm --filter @geo-local/ingest run dev",
+		"dev:indexer": "pnpm --filter @geo-local/indexer run dev",
+		"dev:api": "pnpm --filter @geo-local/api run dev",
+		"dev:explorer": "pnpm --filter @geo-local/explorer run dev",
+		"dev": "docker compose up -d --wait && pnpm db:migrate && pnpm -r --parallel run dev",
+		"db:migrate": "pnpm --filter @geo-local/shared run migrate",
+		"db:reset": "docker compose down -v && docker compose up -d --wait && pnpm db:migrate",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"video:studio": "npx remotion studio",
+		"video:render": "npx remotion render FeatureShowcase media/features-showcase.mp4 --width=1920 --height=1080"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@geoprotocol/geo-sdk": "^0.14.0",
+		"@remotion/cli": "^4.0.448",
+		"remotion": "^4.0.448",
+		"typescript": "^5.7.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+	}
+}
