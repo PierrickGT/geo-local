@@ -1,6 +1,9 @@
 {
 	"name": "@geo-local/explorer",
 	"version": "0.1.0",
+	"private": true,
+	"description": "React SPA for browsing and managing the knowledge graph",
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",

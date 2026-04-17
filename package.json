@@ -1,6 +1,13 @@
 {
 	"name": "geo-local",
 	"version": "0.1.0",
+	"private": true,
+	"description": "Self-hosted knowledge graph runtime with local Postgres storage",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PierrickGT/geo-runtime-postgres.git"
+	},
 	"type": "module",
 	"scripts": {
 		"build": "pnpm -r run build",

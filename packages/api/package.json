@@ -1,6 +1,9 @@
 {
 	"name": "@geo-local/api",
 	"version": "0.1.0",
+	"private": true,
+	"description": "Read-only query API for the materialized knowledge graph",
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"build": "tsup",

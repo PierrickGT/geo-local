@@ -1,6 +1,9 @@
 {
 	"name": "@geo-local/indexer",
 	"version": "0.1.0",
+	"private": true,
+	"description": "Polls pending edits, decodes GRC-20 ops, and materializes the graph",
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"build": "tsup",
