@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { EntityTable } from '~/components/entity-table'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Chip } from '~/components/ui/chip'
 import {
 	Dialog,
 	DialogContent,
@@ -23,6 +23,7 @@ const DEFAULT_ORDER = 'desc'
 
 type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
 type SortOrder = 'asc' | 'desc'
+type FilterType = 'all' | string
 
 // ---------------------------------------------------------------------------
 // Batch Delete Dialog
@@ -102,8 +103,9 @@ function BatchDeleteDialog({
 }
 
 /**
- * Entities page with type filter dropdown, pagination, and batch delete.
- * URL syncs ?type=, ?limit=, ?offset=
+ * Entities page with Graphite design: filter bar with chips,
+ * 6-column grid table, selection, bulk actions, pagination.
+ * URL syncs ?type=, ?limit=, ?offset=, ?sort=, ?order=
  */
 export function EntitiesPage() {
 	const navigate = useNavigate()
@@ -113,6 +115,9 @@ export function EntitiesPage() {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 	const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
 	const lastClickedIndexRef = useRef<number | null>(null)
+
+	// Search query state
+	const [query, setQuery] = useState(searchParams.get('q') ?? '')
 
 	// Parse URL params with defaults
 	const typeFilter = searchParams.get('type') ?? undefined
@@ -144,13 +149,21 @@ export function EntitiesPage() {
 		order,
 	})
 
-	// Fetch available types for dropdown
-	const { types, isLoading: isLoadingTypes } = useTypes()
+	// Fetch available types for chips
+	const { types } = useTypes()
 
 	// Derive entities from current page
 	const aliveEntities = useMemo(() => entities?.entities ?? [], [entities])
+	const total = entities?.total ?? 0
 
-	// Clear selection on page change (track offset via ref for exhaustive-deps)
+	// Compute type counts for chips - approximate based on filter
+	const entityType = types.find((t) => t.name === 'Entity')
+	const propertyType = types.find((t) => t.name === 'Property')
+
+	// Active filter chip
+	const activeFilter: FilterType = typeFilter ?? 'all'
+
+	// Clear selection on page change
 	const prevOffsetRef = useRef(offset)
 	if (prevOffsetRef.current !== offset) {
 		prevOffsetRef.current = offset
@@ -161,15 +174,12 @@ export function EntitiesPage() {
 	// Selection handlers
 	const handleToggleSelection = useCallback(
 		(id: string, shiftKey: boolean, index: number) => {
-			// Capture ref before setState — React 18 batching runs the updater
-			// asynchronously, so the ref would be stale if read inside the updater.
 			const lastClickedIndex = lastClickedIndexRef.current
 
 			setSelectedIds((prev) => {
 				const next = new Set(prev)
 
 				if (shiftKey && lastClickedIndex !== null) {
-					// Range selection: select all entities between last clicked and current
 					const start = Math.min(lastClickedIndex, index)
 					const end = Math.max(lastClickedIndex, index)
 					const allEntities = entities?.entities ?? []
@@ -181,7 +191,6 @@ export function EntitiesPage() {
 						}
 					}
 				} else {
-					// Single toggle
 					if (next.has(id)) {
 						next.delete(id)
 					} else {
@@ -192,7 +201,6 @@ export function EntitiesPage() {
 				return next
 			})
 
-			// Update last clicked index
 			lastClickedIndexRef.current = index
 		},
 		[entities],
@@ -221,7 +229,6 @@ export function EntitiesPage() {
 		}
 	}, [aliveEntities, selectedIds])
 
-	// Batch delete success handler
 	const handleBatchDeleteSuccess = useCallback(() => {
 		setSelectedIds(new Set())
 	}, [])
@@ -233,11 +240,12 @@ export function EntitiesPage() {
 		offset?: number
 		sort?: SortColumn
 		order?: SortOrder
+		q?: string
 	}) => {
 		const newParams = new URLSearchParams(searchParams)
 
 		if (updates.type !== undefined) {
-			if (updates.type === null || updates.type === '') {
+			if (updates.type === null || updates.type === '' || updates.type === 'all') {
 				newParams.delete('type')
 			} else {
 				newParams.set('type', updates.type)
@@ -272,26 +280,32 @@ export function EntitiesPage() {
 			}
 		}
 
+		if (updates.q !== undefined) {
+			if (updates.q === '') {
+				newParams.delete('q')
+			} else {
+				newParams.set('q', updates.q)
+			}
+		}
+
 		setSearchParams(newParams, { replace: true })
 	}
 
-	// Handle type filter change
-	const handleTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		const newType = event.target.value
-		updateParams({ type: newType || null, offset: 0 })
+	const handleFilterTypeChange = (newType: FilterType) => {
+		updateParams({
+			type: newType === 'all' ? null : newType,
+			offset: 0,
+		})
 	}
 
-	// Handle pagination change
 	const handlePageChange = (newOffset: number) => {
 		updateParams({ offset: newOffset })
 	}
 
-	// Handle sort change
 	const handleSortChange = (newSort: SortColumn, newOrder: SortOrder) => {
 		updateParams({ sort: newSort, order: newOrder, offset: 0 })
 	}
 
-	// Handle retry on error
 	const handleRetry = () => {
 		refetch()
 	}
@@ -305,100 +319,184 @@ export function EntitiesPage() {
 		}
 	}, [searchParams, setSearchParams])
 
+	const shownCount = aliveEntities.length
+
 	return (
-		<Card>
-			<CardHeader className="px-4">
-				<div className="flex items-center justify-between">
-					<CardTitle>Entities</CardTitle>
-					<div className="flex items-center gap-2">
-						{selectedIds.size > 0 && (
+		<div className="p-[18px_20px_24px] max-w-[1600px] mx-auto">
+			{/* Toolbar */}
+			<div className="flex items-end gap-3.5 mb-3.5">
+				<div>
+					<h1 className="text-[22px] font-semibold tracking-[-0.5px] leading-[1.1]">Entities</h1>
+					<div data-testid="entities-subtitle" className="text-[12.5px] text-muted-foreground mt-1">
+						<span className="font-mono text-[#3f3f46]">{shownCount.toLocaleString()}</span> shown ·{' '}
+						<span className="font-mono">{total.toLocaleString()}</span> total
+					</div>
+				</div>
+				<div className="flex-1" />
+				<div className="flex items-center gap-2">
+					{selectedIds.size > 0 && (
+						<>
+							<div data-testid="bulk-action-bar" className="text-xs text-[#3f3f46] px-1">
+								<span className="font-mono font-medium">{selectedIds.size}</span> selected
+							</div>
 							<Button
 								variant="destructive"
 								size="sm"
 								onClick={() => setBatchDeleteOpen(true)}
 								data-testid="batch-delete-button"
+								className="text-xs"
 							>
-								Delete ({selectedIds.size})
+								<svg
+									width="12"
+									height="12"
+									viewBox="0 0 14 14"
+									className="mr-1.5"
+									aria-hidden="true"
+								>
+									<title>Delete</title>
+									<path
+										d="M3 4h8M5 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M6 7v3M8 7v3M4 4l.5 7a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1L10 4"
+										stroke="currentColor"
+										strokeWidth="1.2"
+										fill="none"
+										strokeLinecap="round"
+									/>
+								</svg>
+								Delete
 							</Button>
-						)}
-						<Button
-							size="sm"
-							onClick={() => navigate('/entities/new')}
-							data-testid="create-entity-button"
-						>
-							Create Entity
-						</Button>
-					</div>
-				</div>
-				<div className="flex items-center gap-2">
-					<label htmlFor="type-filter" className="text-sm font-medium text-gray-700">
-						Filter by type:
-					</label>
-					<select
-						id="type-filter"
-						value={typeFilter ?? ''}
-						onChange={handleTypeChange}
-						disabled={isLoadingTypes}
-						className="block w-48 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+							<Button variant="outline" size="sm" className="text-xs">
+								<svg
+									width="12"
+									height="12"
+									viewBox="0 0 14 14"
+									className="mr-1.5"
+									aria-hidden="true"
+								>
+									<title>Export</title>
+									<path
+										d="M7 1v6M4 4l3-3 3 3M2 9v3a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9"
+										stroke="currentColor"
+										strokeWidth="1.2"
+										fill="none"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								</svg>
+								Export
+							</Button>
+							<div className="w-px h-5 bg-border mx-0.5" />
+						</>
+					)}
+					<Button
+						size="sm"
+						onClick={() => navigate('/entities/new')}
+						data-testid="create-entity-button"
+						className="bg-foreground text-primary-foreground hover:bg-foreground/90 text-xs"
 					>
-						<option value="">All types</option>
-						{types?.map((type) => (
-							<option key={type.id} value={type.id}>
-								{type.name ?? type.id.slice(0, 12)}
-							</option>
-						))}
-					</select>
+						<svg width="12" height="12" viewBox="0 0 14 14" className="mr-1.5" aria-hidden="true">
+							<title>Create</title>
+							<path
+								d="M7 2v10M2 7h10"
+								stroke="currentColor"
+								strokeWidth="1.4"
+								strokeLinecap="round"
+							/>
+						</svg>
+						Create entity
+					</Button>
 				</div>
-			</CardHeader>
+			</div>
+
+			{/* Filter bar */}
+			<div className="flex items-center gap-2 mb-2.5 p-2 bg-card border border-border rounded-lg">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 14 14"
+					className="text-muted-foreground shrink-0"
+					aria-hidden="true"
+				>
+					<circle cx="6" cy="6" r="3.8" stroke="currentColor" fill="none" strokeWidth="1.2" />
+					<path d="M9.2 9.2l3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+				</svg>
+				<input
+					value={query}
+					onChange={(e) => {
+						setQuery(e.target.value)
+						updateParams({ q: e.target.value })
+					}}
+					placeholder="Search by name, ID, or property…"
+					className="flex-1 border-none outline-none bg-transparent text-[13px] text-foreground"
+				/>
+				<Chip active={activeFilter === 'all'} onClick={() => handleFilterTypeChange('all')}>
+					All <span className="text-[#a1a1aa] ml-1 font-mono">{total.toLocaleString()}</span>
+				</Chip>
+				<Chip
+					active={activeFilter === (entityType?.id ?? 'entity')}
+					onClick={() => handleFilterTypeChange(entityType?.id ?? 'entity')}
+				>
+					Entities
+				</Chip>
+				<Chip
+					active={activeFilter === (propertyType?.id ?? 'property')}
+					onClick={() => handleFilterTypeChange(propertyType?.id ?? 'property')}
+				>
+					Properties
+				</Chip>
+				<div className="w-px h-4 bg-border" />
+				<button
+					type="button"
+					className="border border-dashed border-border bg-transparent text-muted-foreground px-2 py-[3px] rounded-md text-xs cursor-pointer font-inherit flex items-center gap-1"
+				>
+					<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+						<path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.2" />
+					</svg>
+					Filter
+				</button>
+			</div>
 
 			{/* Error state */}
 			{isError && (
-				<Card className="bg-red-50 ring-red-200">
-					<CardContent className="py-4">
-						<div className="flex items-center justify-between">
-							<div>
-								<h3 className="text-sm font-medium text-red-800">Failed to load entities</h3>
-								<p className="text-sm text-red-600 mt-1">
-									{error?.message || 'An unexpected error occurred'}
-								</p>
-							</div>
-							<Button variant="destructive" size="sm" onClick={handleRetry}>
-								Retry
-							</Button>
+				<div className="bg-red-50 ring-1 ring-red-200 rounded-lg py-4 px-4">
+					<div className="flex items-center justify-between">
+						<div>
+							<h3 className="text-sm font-medium text-red-800">Failed to load entities</h3>
+							<p className="text-sm text-red-600 mt-1">
+								{error?.message || 'An unexpected error occurred'}
+							</p>
 						</div>
-					</CardContent>
-				</Card>
+						<Button variant="destructive" size="sm" onClick={handleRetry}>
+							Retry
+						</Button>
+					</div>
+				</div>
 			)}
 
 			{/* Loading state */}
 			{isLoading && !isError && (
-				<CardContent className="py-8">
-					<div className="space-y-3">
-						<Skeleton className="h-10 w-full" />
-						<Skeleton className="h-16 w-full" />
-						<Skeleton className="h-16 w-full" />
-						<Skeleton className="h-16 w-full" />
-					</div>
-				</CardContent>
+				<div className="py-8 space-y-3">
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-12 w-full" />
+					<Skeleton className="h-12 w-full" />
+					<Skeleton className="h-12 w-full" />
+				</div>
 			)}
 
 			{/* Entity table */}
 			{!isLoading && !isError && entities && (
-				<CardContent>
-					<EntityTable
-						entities={entities.entities}
-						total={entities.total}
-						limit={limit}
-						offset={offset}
-						onPageChange={handlePageChange}
-						currentSort={sort}
-						currentOrder={order}
-						onSortChange={handleSortChange}
-						selectedIds={selectedIds}
-						onToggleSelection={handleToggleSelection}
-						onToggleSelectAll={handleToggleSelectAll}
-					/>
-				</CardContent>
+				<EntityTable
+					entities={entities.entities}
+					total={entities.total}
+					limit={limit}
+					offset={offset}
+					onPageChange={handlePageChange}
+					currentSort={sort}
+					currentOrder={order}
+					onSortChange={handleSortChange}
+					selectedIds={selectedIds}
+					onToggleSelection={handleToggleSelection}
+					onToggleSelectAll={handleToggleSelectAll}
+				/>
 			)}
 
 			{/* Batch Delete Dialog */}
@@ -408,6 +506,6 @@ export function EntitiesPage() {
 				onOpenChange={setBatchDeleteOpen}
 				onSuccess={handleBatchDeleteSuccess}
 			/>
-		</Card>
+		</div>
 	)
 }

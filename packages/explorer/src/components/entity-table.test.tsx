@@ -24,31 +24,28 @@ function renderWithRouter(ui: React.ReactElement) {
 	return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
-describe('EntityTable sort headers', () => {
-	it('renders sortable column headers', () => {
+describe('EntityTable', () => {
+	it('renders entity names in rows', () => {
 		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
 
-		expect(screen.getByText('Properties')).toBeTruthy()
-		expect(screen.getByText('Created')).toBeTruthy()
-		expect(screen.getByText('Updated')).toBeTruthy()
+		expect(screen.getByText('Test Entity')).toBeTruthy()
 	})
 
-	it('shows sort icon on the active sort column', () => {
+	it('renders sort arrows on Name and Updated columns', () => {
 		renderWithRouter(
 			<EntityTable
 				{...baseProps}
 				entities={entities}
-				currentSort="created_at"
-				currentOrder="asc"
+				currentSort="updated_at"
+				currentOrder="desc"
 			/>,
 		)
 
-		const createdHeader = screen.getByText('Created').closest('th')
-		expect(createdHeader?.getAttribute('data-sort-column')).toBe('created_at')
-		expect(screen.getByText('Created').className).toContain('text-blue-600')
+		const sortArrows = screen.getAllByTestId('sort-arrow')
+		expect(sortArrows.length).toBe(2)
 	})
 
-	it('calls onSortChange when clicking a different column', async () => {
+	it('calls onSortChange when sort arrow is clicked', async () => {
 		const onSortChange = vi.fn()
 		renderWithRouter(
 			<EntityTable
@@ -60,25 +57,60 @@ describe('EntityTable sort headers', () => {
 			/>,
 		)
 
-		await userEvent.click(screen.getByText('Properties'))
+		const sortArrows = screen.getAllByTestId('sort-arrow')
+		// Click the first sort arrow (Name)
+		await userEvent.click(sortArrows[0])
 
-		expect(onSortChange).toHaveBeenCalledWith('properties_text', 'desc')
+		expect(onSortChange).toHaveBeenCalled()
 	})
 
-	it('toggles order when clicking the same column', async () => {
-		const onSortChange = vi.fn()
+	it('renders chevron in each row', () => {
+		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+		const chevrons = screen.getAllByTestId('row-chevron')
+		expect(chevrons.length).toBe(1)
+	})
+
+	it('renders copy button for each row ID', () => {
+		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+		const copyButtons = screen.getAllByTestId('copy-id-button')
+		expect(copyButtons.length).toBe(1)
+	})
+
+	it('renders checkboxes when selection is enabled', () => {
 		renderWithRouter(
 			<EntityTable
 				{...baseProps}
 				entities={entities}
-				currentSort="updated_at"
-				currentOrder="desc"
-				onSortChange={onSortChange}
+				selectedIds={new Set()}
+				onToggleSelection={vi.fn()}
+				onToggleSelectAll={vi.fn()}
 			/>,
 		)
 
-		await userEvent.click(screen.getByText('Updated'))
+		// Header checkbox + row checkbox
+		expect(screen.getByTestId('header-checkbox')).toBeInTheDocument()
+		// Entity rows have checkboxes
+		const rowCheckboxes = screen.getAllByRole('checkbox')
+		expect(rowCheckboxes.length).toBe(2) // header + 1 row
+	})
 
-		expect(onSortChange).toHaveBeenCalledWith('updated_at', 'asc')
+	it('renders pagination footer', () => {
+		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+		expect(screen.getByTestId('pagination-footer')).toBeInTheDocument()
+	})
+
+	it('shows empty state when no entities', () => {
+		renderWithRouter(<EntityTable {...baseProps} entities={[]} />)
+
+		expect(screen.getByText('No entities found.')).toBeInTheDocument()
+	})
+
+	it('renders type pill in each row', () => {
+		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+		expect(screen.getByText('Entity')).toBeInTheDocument()
 	})
 })

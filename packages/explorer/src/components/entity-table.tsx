@@ -1,9 +1,8 @@
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
-import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import type { Entity } from '~/api/types'
 import { Pagination } from '~/components/pagination'
-import { TruncateId } from '~/components/ui/truncate-id'
+import { CopyIdButton } from '~/components/ui/copy-id-button'
+import { SortArrow } from '~/components/ui/sort-arrow'
 
 type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
 type SortOrder = 'asc' | 'desc'
@@ -24,23 +23,29 @@ interface EntityTableProps {
 	onToggleSelectAll?: () => void
 }
 
-/**
- * Formats an ISO date string to a human-readable format.
- */
-function formatDate(isoString: string): string {
+function formatRelativeTime(isoString: string): string {
+	const now = new Date()
 	const date = new Date(isoString)
-	return date.toLocaleString('en-US', {
-		year: 'numeric',
+	const diffMs = now.getTime() - date.getTime()
+	const diffSec = Math.floor(diffMs / 1000)
+	const diffMin = Math.floor(diffSec / 60)
+	const diffHr = Math.floor(diffMin / 60)
+	const diffDay = Math.floor(diffHr / 24)
+
+	if (diffSec < 60) return 'just now'
+	if (diffMin < 60) return `${diffMin}m ago`
+	if (diffHr < 24) return `${diffHr}h ago`
+	if (diffDay < 30) return `${diffDay}d ago`
+
+	return date.toLocaleDateString('en-US', {
 		month: 'short',
 		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit',
 	})
 }
 
 /**
- * Paginated table of entities with columns: id, properties, timestamps.
- * Rows are clickable and navigate to entity detail page.
+ * 6-column grid entity table with Graphite design:
+ * checkbox(36px) / Name(dot) / ID(mono,copy) / Type(pill) / Updated(mono,tabular-nums) / chevron
  */
 export function EntityTable({
 	entities,
@@ -59,173 +64,275 @@ export function EntityTable({
 }: EntityTableProps) {
 	const navigate = useNavigate()
 	const hasSelection = selectedIds !== undefined
-	const headerCheckboxRef = useRef<HTMLInputElement | null>(null)
 
 	const selectedCount = hasSelection ? entities.filter((e) => selectedIds.has(e.id)).length : 0
 
-	const setHeaderCheckboxRef = useCallback(
-		(node: HTMLInputElement | null) => {
-			headerCheckboxRef.current = node
-			if (node) {
-				node.indeterminate = hasSelection && selectedCount > 0 && selectedCount < entities.length
-			}
-		},
-		[hasSelection, selectedCount, entities.length],
-	)
+	const getSortDirection = (column: SortColumn): 'asc' | 'desc' | 'none' => {
+		if (currentSort !== column) return 'none'
+		return currentOrder
+	}
 
-	const handleSortClick = (column: SortColumn) => {
+	const handleSortDirection = (column: SortColumn, dir: 'asc' | 'desc' | 'none') => {
 		if (!onSortChange) return
-		if (currentSort === column) {
-			onSortChange(column, currentOrder === 'desc' ? 'asc' : 'desc')
+		if (dir === 'none') {
+			onSortChange(column, 'asc')
 		} else {
-			onSortChange(column, 'desc')
-		}
-	}
-
-	function SortIcon({ column }: { column: SortColumn }) {
-		if (currentSort !== column) {
-			return <ArrowUpDown className="inline w-3 h-3 ml-1 text-gray-400" />
-		}
-		return currentOrder === 'desc' ? (
-			<ArrowDown className="inline w-3 h-3 ml-1 text-blue-600" />
-		) : (
-			<ArrowUp className="inline w-3 h-3 ml-1 text-blue-600" />
-		)
-	}
-
-	function SortableHeader({
-		column,
-		label,
-	}: {
-		column: SortColumn
-		label: string
-	}) {
-		return (
-			<th
-				scope="col"
-				className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors"
-				onClick={() => handleSortClick(column)}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault()
-						handleSortClick(column)
-					}
-				}}
-				data-sort-column={column}
-			>
-				<span className={currentSort === column ? 'text-blue-600' : 'text-gray-500'}>{label}</span>
-				<SortIcon column={column} />
-			</th>
-		)
-	}
-
-	const handleRowClick = (entityId: string) => {
-		navigate(`/entities/${encodeURIComponent(entityId)}`)
-	}
-
-	const handleRowKeyDown = (entityId: string, event: React.KeyboardEvent) => {
-		if (event.key === 'Enter' || event.key === ' ') {
-			// Don't hijack keyboard events intended for checkbox inputs
-			if ((event.target as HTMLElement).tagName === 'INPUT') return
-			event.preventDefault()
-			handleRowClick(entityId)
+			onSortChange(column, dir)
 		}
 	}
 
 	if (isLoading) {
 		return (
-			<div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
-				<div className="p-8 text-center text-gray-500">Loading entities...</div>
+			<div className={`bg-card border border-border rounded-lg ${className}`}>
+				<div className="p-8 text-center text-muted-foreground">Loading entities...</div>
 			</div>
 		)
 	}
 
 	if (entities.length === 0) {
 		return (
-			<div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
-				<div className="p-8 text-center text-gray-500">No entities found.</div>
+			<div className={`bg-card border border-border rounded-lg ${className}`}>
+				<div className="p-8 text-center text-muted-foreground">No entities found.</div>
 			</div>
 		)
 	}
 
 	return (
 		<div className={className}>
-			<div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-				<table className="min-w-full divide-y divide-gray-200">
-					<thead className="bg-gray-50">
-						<tr>
-							{hasSelection && (
-								<th scope="col" className="px-4 py-3 w-10">
-									<input
-										ref={setHeaderCheckboxRef}
-										type="checkbox"
-										checked={entities.length > 0 && selectedCount === entities.length}
-										onChange={() => onToggleSelectAll?.()}
-										aria-label="Select all"
-										className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+			<div className="bg-card border border-border rounded-lg overflow-hidden">
+				{/* Header row */}
+				<div
+					className="grid items-center px-3 py-2 border-b border-border bg-[#fcfcfb]"
+					style={{
+						gridTemplateColumns: '36px 1fr 340px 150px 150px 60px',
+						fontSize: 11,
+						color: '#71717a',
+						textTransform: 'uppercase',
+						letterSpacing: 0.6,
+						fontWeight: 600,
+					}}
+				>
+					{/* Checkbox header */}
+					<div className="flex items-center justify-center">
+						<button
+							type="button"
+							onClick={() => onToggleSelectAll?.()}
+							role="checkbox"
+							aria-checked={entities.length > 0 && selectedCount === entities.length}
+							aria-label="Select all"
+							className="cursor-pointer border-none bg-transparent p-0"
+							data-testid="header-checkbox"
+							style={{
+								width: 14,
+								height: 14,
+								borderRadius: 3,
+								border: selectedCount > 0 ? '1px solid var(--color-accent)' : '1px solid #a1a1aa',
+								background: selectedCount > 0 ? 'var(--color-accent)' : 'var(--color-card)',
+								display: 'grid',
+								placeItems: 'center',
+								transition: 'all .12s',
+							}}
+						>
+							{entities.length > 0 && selectedCount === entities.length && (
+								<svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true">
+									<title>Checked</title>
+									<path
+										d="M1.5 4.5l2 2 4-4"
+										stroke="#fff"
+										strokeWidth="1.5"
+										fill="none"
+										strokeLinecap="round"
+										strokeLinejoin="round"
 									/>
-								</th>
+								</svg>
 							)}
-							<th
-								scope="col"
-								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								ID
-							</th>
-							<SortableHeader column="properties_text" label="Properties" />
-							<SortableHeader column="created_at" label="Created" />
-							<SortableHeader column="updated_at" label="Updated" />
-						</tr>
-					</thead>
-					<tbody
-						className="bg-white divide-y divide-gray-200"
-						onMouseDown={(e) => {
-							if (e.shiftKey) e.preventDefault()
-						}}
-					>
-						{entities.map((entity, index) => (
-							<tr
-								key={entity.id}
-								onClick={() => handleRowClick(entity.id)}
-								onKeyDown={(e) => handleRowKeyDown(entity.id, e)}
-								tabIndex={0}
-								className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-							>
-								{hasSelection && (
-									<td className="px-4 py-4 w-10">
-										<input
-											type="checkbox"
-											checked={selectedIds?.has(entity.id) ?? false}
-											onChange={() => {}}
-											onClick={(e) => {
-												e.stopPropagation()
-												onToggleSelection?.(entity.id, e.shiftKey, index)
-											}}
-											aria-label={`Select ${entity.id}`}
-											className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-										/>
-									</td>
-								)}
-								<td className="px-6 py-4 whitespace-nowrap">
-									<TruncateId id={entity.id} />
-								</td>
-								<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-									{entity.propertiesText ?? '-'}
-								</td>
-								<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-									{formatDate(entity.createdAt)}
-								</td>
-								<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-									{formatDate(entity.updatedAt)}
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+							{hasSelection && selectedCount > 0 && selectedCount < entities.length && (
+								<div
+									aria-hidden="true"
+									style={{
+										width: 7,
+										height: 1.5,
+										background: '#fff',
+									}}
+								/>
+							)}
+						</button>
+					</div>
 
-			<div className="mt-4">
-				<Pagination total={total} limit={limit} offset={offset} onPageChange={onPageChange} />
+					{/* Name */}
+					<div className="flex items-center gap-1">
+						<span>Name</span>
+						<SortArrow
+							direction={getSortDirection('properties_text')}
+							onDirectionChange={(dir) => handleSortDirection('properties_text', dir)}
+							data-testid="sort-arrow"
+						/>
+					</div>
+
+					{/* ID */}
+					<div className="font-mono normal-case tracking-normal" style={{ fontSize: 11.5 }}>
+						ID
+					</div>
+
+					{/* Type */}
+					<div>Type</div>
+
+					{/* Updated */}
+					<div className="flex items-center gap-1 text-[#3f3f46]">
+						<span>Updated</span>
+						<SortArrow
+							direction={getSortDirection('updated_at')}
+							onDirectionChange={(dir) => handleSortDirection('updated_at', dir)}
+							data-testid="sort-arrow"
+						/>
+					</div>
+
+					<div />
+				</div>
+
+				{/* Entity rows */}
+				<div
+					onMouseDown={(e) => {
+						if (e.shiftKey) e.preventDefault()
+					}}
+				>
+					{entities.map((entity, index) => {
+						const isSelected = selectedIds?.has(entity.id) ?? false
+						const isLast = index === entities.length - 1
+
+						return (
+							<div
+								key={entity.id}
+								data-entity-row={entity.id}
+								role="row"
+								tabIndex={0}
+								className="grid items-center px-3 py-[9px] cursor-pointer transition-colors group"
+								style={{
+									gridTemplateColumns: '36px 1fr 340px 150px 150px 60px',
+									borderBottom: isLast ? 'none' : '1px solid var(--color-line-soft)',
+									background: isSelected ? 'rgba(238, 242, 255, 0.55)' : 'transparent',
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.background = isSelected
+										? 'rgba(238, 242, 255, 0.55)'
+										: '#f6f6f5'
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.background = isSelected
+										? 'rgba(238, 242, 255, 0.55)'
+										: 'transparent'
+								}}
+								onClick={() => navigate(`/entities/${encodeURIComponent(entity.id)}`)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										if ((e.target as HTMLElement).tagName === 'INPUT') return
+										if ((e.target as HTMLElement).tagName === 'BUTTON') return
+										e.preventDefault()
+										navigate(`/entities/${encodeURIComponent(entity.id)}`)
+									}
+								}}
+							>
+								{/* Checkbox */}
+								<div className="flex items-center justify-center">
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation()
+											onToggleSelection?.(entity.id, e.shiftKey, index)
+										}}
+										role="checkbox"
+										aria-checked={isSelected}
+										aria-label={`Select ${entity.id}`}
+										className="cursor-pointer border-none bg-transparent p-0"
+										style={{
+											width: 14,
+											height: 14,
+											borderRadius: 3,
+											border: isSelected ? '1px solid var(--color-accent)' : '1px solid #a1a1aa',
+											background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
+											display: 'grid',
+											placeItems: 'center',
+											transition: 'all .12s',
+										}}
+									>
+										{isSelected && (
+											<svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true">
+												<title>Checked</title>
+												<path
+													d="M1.5 4.5l2 2 4-4"
+													stroke="#fff"
+													strokeWidth="1.5"
+													fill="none"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												/>
+											</svg>
+										)}
+									</button>
+								</div>
+
+								{/* Name with color dot */}
+								<div className="flex items-center gap-2 min-w-0">
+									<span
+										className="shrink-0 rounded-[3px]"
+										style={{
+											width: 5,
+											height: 5,
+											background: 'var(--color-accent)',
+										}}
+									/>
+									<span className="font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+										{entity.propertiesText ?? '-'}
+									</span>
+								</div>
+
+								{/* ID mono + copy */}
+								<div className="flex items-center gap-1.5 text-muted-foreground font-mono text-[11.5px]">
+									<span className="overflow-hidden text-ellipsis whitespace-nowrap">
+										{entity.id}
+									</span>
+									<span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+										<CopyIdButton value={entity.id} data-testid="copy-id-button" />
+									</span>
+								</div>
+
+								{/* Type pill */}
+								<div>
+									<span className="inline-flex items-center justify-center text-[11.5px] font-medium px-[7px] py-[2px] rounded-[3px] bg-line-soft text-[#3f3f46]">
+										Entity
+									</span>
+								</div>
+
+								{/* Updated mono + tabular-nums */}
+								<div className="text-muted-foreground text-xs font-mono tabular-nums">
+									{formatRelativeTime(entity.updatedAt)}
+								</div>
+
+								{/* Chevron */}
+								<div className="text-right text-[#a1a1aa]" data-testid="row-chevron">
+									<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+										<title>Navigate</title>
+										<path
+											d="M5 3l3 3.5-3 3.5"
+											stroke="currentColor"
+											strokeWidth="1.3"
+											fill="none"
+											strokeLinecap="round"
+										/>
+									</svg>
+								</div>
+							</div>
+						)
+					})}
+				</div>
+
+				{/* Footer with pagination */}
+				<div
+					data-testid="pagination-footer"
+					className="flex items-center px-3 py-2 border-t border-border bg-[#fcfcfb] text-xs text-muted-foreground font-mono"
+				>
+					<Pagination total={total} limit={limit} offset={offset} onPageChange={onPageChange} />
+				</div>
 			</div>
 		</div>
 	)
