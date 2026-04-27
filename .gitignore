@@ -3,6 +3,7 @@ dist/
 .vite/
 .env
 *.tsbuildinfo
+.DS_Store
 
 # AI CLIs
 .claude

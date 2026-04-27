@@ -15,17 +15,17 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@geoprotocol/geo-sdk": "^0.13.0",
-		"@geoprotocol/grc-20": "^0.4.0",
-		"dotenv": "^16.4.0",
-		"pg": "^8.13.0",
-		"pino": "^9.6.0"
+		"@geoprotocol/geo-sdk": "0.13.0",
+		"@geoprotocol/grc-20": "0.4.1",
+		"dotenv": "16.6.1",
+		"pg": "8.20.0",
+		"pino": "9.14.0"
 	},
 	"devDependencies": {
-		"@types/node": "^22.0.0",
-		"@types/pg": "^8.11.0",
-		"tsup": "^8.3.0",
-		"tsx": "^4.19.0",
-		"vitest": "^3.2.4"
+		"@types/node": "22.19.13",
+		"@types/pg": "8.18.0",
+		"tsup": "8.5.1",
+		"tsx": "4.21.0",
+		"vitest": "3.2.4"
 	}
 }

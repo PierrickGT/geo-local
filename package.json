@@ -25,11 +25,11 @@
 		"video:render": "npx remotion render FeatureShowcase media/features-showcase.mp4 --width=1920 --height=1080"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@geoprotocol/geo-sdk": "^0.14.0",
-		"@remotion/cli": "^4.0.448",
-		"remotion": "^4.0.448",
-		"typescript": "^5.7.0"
+		"@biomejs/biome": "1.9.4",
+		"@geoprotocol/geo-sdk": "0.14.0",
+		"@remotion/cli": "4.0.448",
+		"remotion": "4.0.448",
+		"typescript": "5.9.3"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
