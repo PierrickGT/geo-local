@@ -108,9 +108,85 @@ describe('EntityTable', () => {
 		expect(screen.getByText('No entities found.')).toBeInTheDocument()
 	})
 
-	it('renders type pill in each row', () => {
+	it('renders type pill in each row — default is Entity', () => {
 		renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
 
 		expect(screen.getByText('Entity')).toBeInTheDocument()
+	})
+
+	describe('Color dots by entity type (VAL-ENTITIES-005)', () => {
+		it('renders accent blue dot by default', () => {
+			renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+			const dot = screen.getByTestId('entity-dot-0')
+			expect(dot).toBeTruthy()
+			expect(dot.style.background).toBe('var(--color-accent)')
+		})
+
+		it('renders amber dot when activeTypeFilter is Property', () => {
+			renderWithRouter(
+				<EntityTable {...baseProps} entities={entities} activeTypeFilter="Property" />,
+			)
+
+			const dot = screen.getByTestId('entity-dot-0')
+			expect(dot).toBeTruthy()
+			expect(dot.style.background).toBe('var(--color-warning)')
+		})
+
+		it('renders accent blue dot when activeTypeFilter is Entity', () => {
+			renderWithRouter(<EntityTable {...baseProps} entities={entities} activeTypeFilter="Entity" />)
+
+			const dot = screen.getByTestId('entity-dot-0')
+			expect(dot).toBeTruthy()
+			expect(dot.style.background).toBe('var(--color-accent)')
+		})
+
+		it('renders multiple entities with correct dot colors', () => {
+			const multipleEntities = [
+				{
+					id: 'aaaabbbbccccdddd',
+					createdAt: '2025-01-01T00:00:00Z',
+					updatedAt: '2025-01-02T00:00:00Z',
+					propertiesText: 'Entity A',
+				},
+				{
+					id: 'eeeeffff11112222',
+					createdAt: '2025-01-03T00:00:00Z',
+					updatedAt: '2025-01-04T00:00:00Z',
+					propertiesText: 'Entity B',
+				},
+			]
+
+			renderWithRouter(
+				<EntityTable {...baseProps} entities={multipleEntities} activeTypeFilter="Property" />,
+			)
+
+			const dot0 = screen.getByTestId('entity-dot-0')
+			const dot1 = screen.getByTestId('entity-dot-1')
+			expect(dot0.style.background).toBe('var(--color-warning)')
+			expect(dot1.style.background).toBe('var(--color-warning)')
+		})
+	})
+
+	describe('Type pill reflects active type filter context', () => {
+		it('shows "Property" when activeTypeFilter is Property', () => {
+			renderWithRouter(
+				<EntityTable {...baseProps} entities={entities} activeTypeFilter="Property" />,
+			)
+
+			expect(screen.getByText('Property')).toBeInTheDocument()
+		})
+
+		it('shows "Entity" when activeTypeFilter is Entity', () => {
+			renderWithRouter(<EntityTable {...baseProps} entities={entities} activeTypeFilter="Entity" />)
+
+			expect(screen.getByText('Entity')).toBeInTheDocument()
+		})
+
+		it('shows "Entity" when no activeTypeFilter provided', () => {
+			renderWithRouter(<EntityTable {...baseProps} entities={entities} />)
+
+			expect(screen.getByText('Entity')).toBeInTheDocument()
+		})
 	})
 })

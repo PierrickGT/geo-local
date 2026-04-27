@@ -21,6 +21,8 @@ interface EntityTableProps {
 	selectedIds?: Set<string>
 	onToggleSelection?: (id: string, shiftKey: boolean, index: number) => void
 	onToggleSelectAll?: () => void
+	/** Active type filter context — used to determine dot color and type pill label */
+	activeTypeFilter?: string
 }
 
 function formatRelativeTime(isoString: string): string {
@@ -61,6 +63,7 @@ export function EntityTable({
 	selectedIds,
 	onToggleSelection,
 	onToggleSelectAll,
+	activeTypeFilter,
 }: EntityTableProps) {
 	const navigate = useNavigate()
 	const hasSelection = selectedIds !== undefined
@@ -274,11 +277,15 @@ export function EntityTable({
 								{/* Name with color dot */}
 								<div className="flex items-center gap-2 min-w-0">
 									<span
+										data-testid={`entity-dot-${index}`}
 										className="shrink-0 rounded-[3px]"
 										style={{
 											width: 5,
 											height: 5,
-											background: 'var(--color-accent)',
+											background:
+												activeTypeFilter === 'Property'
+													? 'var(--color-warning)'
+													: 'var(--color-accent)',
 										}}
 									/>
 									<span className="font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
@@ -299,7 +306,7 @@ export function EntityTable({
 								{/* Type pill */}
 								<div>
 									<span className="inline-flex items-center justify-center text-[11.5px] font-medium px-[7px] py-[2px] rounded-[3px] bg-line-soft text-[#3f3f46]">
-										Entity
+										{activeTypeFilter ?? 'Entity'}
 									</span>
 								</div>
 

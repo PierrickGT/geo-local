@@ -156,12 +156,36 @@ export function EntitiesPage() {
 	const aliveEntities = useMemo(() => entities?.entities ?? [], [entities])
 	const total = entities?.total ?? 0
 
+	// Read search query from URL for client-side filtering
+	const searchQuery = searchParams.get('q') ?? ''
+
+	// Client-side filter: when q param is present, filter by name/ID
+	const filteredEntities = useMemo(() => {
+		if (!searchQuery) return aliveEntities
+		const q = searchQuery.toLowerCase()
+		return aliveEntities.filter((entity) => {
+			const name = (entity.propertiesText ?? '').toLowerCase()
+			const id = entity.id.toLowerCase()
+			return name.includes(q) || id.includes(q)
+		})
+	}, [aliveEntities, searchQuery])
+
 	// Compute type counts for chips - approximate based on filter
 	const entityType = types.find((t) => t.name === 'Entity')
 	const propertyType = types.find((t) => t.name === 'Property')
 
 	// Active filter chip
 	const activeFilter: FilterType = typeFilter ?? 'all'
+
+	// Derive type label for EntityTable based on active filter context
+	const typeLabel = useMemo(() => {
+		if (!typeFilter) return 'Entity'
+		if (propertyType && typeFilter === propertyType.id) return 'Property'
+		if (entityType && typeFilter === entityType.id) return 'Entity'
+		// Look up type name from types list
+		const matchedType = types.find((t) => t.id === typeFilter)
+		return matchedType?.name ?? 'Entity'
+	}, [typeFilter, entityType, propertyType, types])
 
 	// Clear selection on page change
 	const prevOffsetRef = useRef(offset)
@@ -319,7 +343,7 @@ export function EntitiesPage() {
 		}
 	}, [searchParams, setSearchParams])
 
-	const shownCount = aliveEntities.length
+	const shownCount = filteredEntities.length
 
 	return (
 		<div className="p-[18px_20px_24px] max-w-[1600px] mx-auto">
@@ -485,7 +509,7 @@ export function EntitiesPage() {
 			{/* Entity table */}
 			{!isLoading && !isError && entities && (
 				<EntityTable
-					entities={entities.entities}
+					entities={filteredEntities}
 					total={entities.total}
 					limit={limit}
 					offset={offset}
@@ -496,6 +520,7 @@ export function EntitiesPage() {
 					selectedIds={selectedIds}
 					onToggleSelection={handleToggleSelection}
 					onToggleSelectAll={handleToggleSelectAll}
+					activeTypeFilter={typeLabel}
 				/>
 			)}
 

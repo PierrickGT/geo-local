@@ -298,4 +298,59 @@ describe('EntitiesPage', () => {
 			await user.click(entitiesChip)
 		})
 	})
+
+	describe('Client-side search filtering', () => {
+		it('filters entities by name when q param is present', async () => {
+			renderWithRouter('/entities?q=Action')
+
+			await waitFor(() => {
+				expect(screen.getByText('Action Code')).toBeInTheDocument()
+			})
+
+			// Only "Action Code" should be visible, not "Description" or "Entity C"
+			expect(screen.queryByText('Description')).not.toBeInTheDocument()
+			expect(screen.queryByText('Entity C')).not.toBeInTheDocument()
+		})
+
+		it('filters entities by ID when q param matches', async () => {
+			renderWithRouter('/entities?q=aaaabbbb')
+
+			await waitFor(() => {
+				expect(screen.getByText('Action Code')).toBeInTheDocument()
+			})
+
+			// Only the entity with id starting with "aaaabbbb" should be visible
+			expect(screen.queryByText('Description')).not.toBeInTheDocument()
+			expect(screen.queryByText('Entity C')).not.toBeInTheDocument()
+		})
+
+		it('shows all entities when q param is empty', async () => {
+			renderWithRouter('/entities')
+
+			await waitFor(() => {
+				expect(screen.getByText('Action Code')).toBeInTheDocument()
+			})
+
+			expect(screen.getByText('Description')).toBeInTheDocument()
+			expect(screen.getByText('Entity C')).toBeInTheDocument()
+		})
+
+		it('shows empty state when no entities match search', async () => {
+			renderWithRouter('/entities?q=zzznonexistent')
+
+			await waitFor(() => {
+				expect(screen.getByText('No entities found.')).toBeInTheDocument()
+			})
+		})
+
+		it('performs case-insensitive matching', async () => {
+			renderWithRouter('/entities?q=action')
+
+			await waitFor(() => {
+				expect(screen.getByText('Action Code')).toBeInTheDocument()
+			})
+
+			expect(screen.queryByText('Description')).not.toBeInTheDocument()
+		})
+	})
 })
