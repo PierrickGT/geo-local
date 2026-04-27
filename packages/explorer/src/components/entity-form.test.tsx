@@ -144,10 +144,10 @@ describe('EntityForm', () => {
 		it('renders all form fields', () => {
 			render(<EntityForm {...defaultProps} />)
 
-			expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
-			expect(screen.getByLabelText(/description/i)).toBeInTheDocument()
-			expect(screen.getByLabelText(/types/i)).toBeInTheDocument()
-			expect(screen.getByText(/properties/i)).toBeInTheDocument()
+			expect(screen.getByTestId('entity-name-input')).toBeInTheDocument()
+			expect(screen.getByTestId('entity-description-input')).toBeInTheDocument()
+			expect(screen.getByTestId('entity-types-input')).toBeInTheDocument()
+			expect(screen.getByText('Properties')).toBeInTheDocument()
 			expect(screen.getByTestId('entity-submit')).toBeInTheDocument()
 		})
 
@@ -159,12 +159,12 @@ describe('EntityForm', () => {
 			expect(screen.getByTestId('entity-types-input')).toHaveValue('')
 		})
 
-		it('submit button is enabled and labeled "Create Entity"', () => {
+		it('submit button is enabled and labeled "Create entity"', () => {
 			render(<EntityForm {...defaultProps} />)
 
 			const btn = screen.getByTestId('entity-submit')
 			expect(btn).not.toBeDisabled()
-			expect(btn).toHaveTextContent('Create Entity')
+			expect(btn).toHaveTextContent('Create entity')
 		})
 
 		it('disables submit when isSubmitting is true', () => {
@@ -194,10 +194,10 @@ describe('EntityForm', () => {
 			expect(screen.getByTestId('property-value-0')).toHaveValue('25')
 		})
 
-		it('submit button is labeled "Save Changes"', () => {
+		it('submit button is labeled "Save changes"', () => {
 			render(<EntityForm mode="edit" initialData={initialData} onSubmit={vi.fn()} />)
 
-			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Save Changes')
+			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Save changes')
 		})
 
 		it('shows "No changes to save" when form is untouched', () => {

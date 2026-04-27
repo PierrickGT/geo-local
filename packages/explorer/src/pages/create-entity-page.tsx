@@ -7,10 +7,16 @@ import { useCreateEntity } from '~/hooks/use-mutations'
 /**
  * Create entity page at /entities/new.
  *
- * Uses EntityForm in create mode. On submit:
+ * Graphite-styled form with:
+ * - Breadcrumb (Entities › New) provided by shell layout
+ * - H1 "Create entity" + hint text
+ * - FormSection layout (220px/1fr grid)
+ * - Sticky footer with staging indicator + Cancel + Create entity
+ *
+ * On submit:
  * 1. Calls useCreateEntity which POSTs to ingest and polls until applied
  * 2. Navigates to /entities/:newId
- * 3. On error: displays error message, preserves form data
+ * 3. On error: displays error banner, preserves form data
  */
 export function CreateEntityPage() {
 	const navigate = useNavigate()
@@ -20,7 +26,7 @@ export function CreateEntityPage() {
 		async (data: EntityFormData) => {
 			reset()
 
-			// Build values array from dynamic properties
+			// Build values array from dynamic properties (filter empty rows)
 			const values = data.properties
 				.filter((p) => p.propertyId.trim())
 				.map((p) => ({
@@ -46,7 +52,6 @@ export function CreateEntityPage() {
 				})
 
 				// Navigate to the created entity's detail page
-				// The entity ID is available from the edit result's entityIds
 				const entityId = result.entityIds?.[0]
 				if (entityId) {
 					navigate(`/entities/${entityId}`, { replace: true })
@@ -61,16 +66,24 @@ export function CreateEntityPage() {
 	)
 
 	return (
-		<div className="p-6 max-w-2xl">
-			<h1 className="text-2xl font-semibold text-gray-900 mb-6">Create Entity</h1>
+		<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+			{/* H1 + hint */}
+			<div className="mb-[18px]">
+				<h1 className="text-[22px] font-semibold tracking-[-0.5px] text-foreground">
+					Create entity
+				</h1>
+				<p className="text-[12.5px] text-muted-foreground mt-1" data-testid="create-hint">
+					New entity will be staged as a pending edit
+				</p>
+			</div>
 
 			{error && (
 				<div
-					className="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-200"
+					className="mb-4 rounded-lg bg-red-50 p-4 ring-1 ring-red-200"
 					data-testid="create-error"
 				>
-					<p className="text-sm font-medium text-red-800">Failed to create entity</p>
-					<p className="text-sm text-red-600 mt-1">{error.message}</p>
+					<p className="text-[13px] font-medium text-red-800">Failed to create entity</p>
+					<p className="text-[12.5px] text-red-600 mt-1">{error.message}</p>
 				</div>
 			)}
 

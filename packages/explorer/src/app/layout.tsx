@@ -141,7 +141,7 @@ function getBreadcrumbSegments(pathname: string, _entityId?: string): string[] {
 	if (pathname === '/search') return ['Search']
 	if (pathname === '/graph') return ['Graph']
 	if (pathname === '/edits') return ['Edits']
-	if (pathname === '/entities/new') return ['Entities', 'New entity']
+	if (pathname === '/entities/new') return ['Entities', 'New']
 	if (pathname.match(/^\/entities\/[^/]+\/edit$/)) return ['Entities', 'Edit entity']
 	if (pathname.match(/^\/entities\/[^/]+$/)) return ['Entities', 'Entity']
 	return ['Entities']

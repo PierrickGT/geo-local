@@ -204,10 +204,10 @@ describe('EditEntityPage', () => {
 			expect(propertyIds).not.toContain(TYPES_PROPERTY_ID)
 		})
 
-		it('shows submit button with "Save Changes" label', () => {
+		it('shows submit button with "Save changes" label', () => {
 			render(<EditEntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Save Changes')
+			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Save changes')
 		})
 
 		it('shows loading skeleton while entity is loading', () => {

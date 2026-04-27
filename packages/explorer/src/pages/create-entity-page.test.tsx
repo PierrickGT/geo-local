@@ -44,7 +44,15 @@ describe('CreateEntityPage', () => {
 		it('renders the create entity heading', () => {
 			render(<CreateEntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('heading', { name: 'Create Entity' })).toBeInTheDocument()
+			expect(screen.getByRole('heading', { name: 'Create entity' })).toBeInTheDocument()
+		})
+
+		it('renders hint text about pending edit staging', () => {
+			render(<CreateEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('create-hint')).toHaveTextContent(
+				'New entity will be staged as a pending edit',
+			)
 		})
 
 		it('renders EntityForm in create mode', () => {
@@ -54,13 +62,20 @@ describe('CreateEntityPage', () => {
 			expect(screen.getByTestId('entity-description-input')).toBeInTheDocument()
 			expect(screen.getByTestId('entity-types-input')).toBeInTheDocument()
 			expect(screen.getByTestId('entity-submit')).toBeInTheDocument()
-			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Create Entity')
+			expect(screen.getByTestId('entity-submit')).toHaveTextContent('Create entity')
 		})
 
 		it('renders the Add Property button', () => {
 			render(<CreateEntityPage />, { wrapper: createWrapper() })
 
 			expect(screen.getByTestId('add-property')).toBeInTheDocument()
+		})
+
+		it('renders form footer with staging indicator', () => {
+			render(<CreateEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('form-footer')).toBeInTheDocument()
+			expect(screen.getByTestId('entity-cancel')).toBeInTheDocument()
 		})
 	})
 
