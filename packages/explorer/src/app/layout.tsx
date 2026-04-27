@@ -1,9 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink as RouterNavLink, useLocation, useParams } from 'react-router'
+import { getEdits } from '~/api/edits'
+import { getEntities } from '~/api/entities'
 import { Kbd } from '~/components/ui/kbd'
 import { SyncIndicator } from '~/components/ui/sync-indicator'
-import { editKeys } from '~/hooks/use-edits'
 import { entityKeys } from '~/hooks/use-entities'
 
 // ---------------------------------------------------------------------------
@@ -173,16 +174,24 @@ function useLastSyncTime(): Date {
 export function Layout() {
 	const location = useLocation()
 	const params = useParams()
-	const queryClient = useQueryClient()
 	const lastSync = useLastSyncTime()
 
 	const crumbs = getBreadcrumbSegments(location.pathname, params.id)
 
-	// Read entity/edits counts from query cache for sidebar display
-	const entityCache = queryClient.getQueryData<{ total: number }>(entityKeys.list({ limit: 1 }))
-	const editsCache = queryClient.getQueryData<{ edits: unknown[] }>(editKeys.list())
-	const entityCount = entityCache?.total
-	const editsCount = editsCache?.edits?.length
+	// Fetch entity/edits counts for sidebar display via lightweight queries
+	const { data: entityData } = useQuery({
+		queryKey: entityKeys.list({ limit: 1 }),
+		queryFn: () => getEntities({ limit: 1 }),
+		staleTime: 30_000,
+	})
+	const entityCount = entityData?.total
+
+	const { data: editsData } = useQuery({
+		queryKey: ['edits', 'sidebar'],
+		queryFn: () => getEdits({ limit: 1 }),
+		staleTime: 30_000,
+	})
+	const editsCount = editsData?.edits?.length
 
 	return (
 		<div className="h-screen bg-background flex font-sans text-foreground text-[13px] tracking-[-0.01em]">

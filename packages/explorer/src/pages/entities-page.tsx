@@ -141,8 +141,10 @@ export function EntitiesPage() {
 	}, [searchParams])
 
 	// Fetch entities with current filters
+	// Note: 'entities' is a virtual type filter — don't send it to the API
+	const apiTypeFilter = typeFilter === 'entities' ? undefined : typeFilter
 	const { entities, isLoading, isError, error, refetch } = useEntities({
-		type: typeFilter,
+		type: apiTypeFilter,
 		limit,
 		offset,
 		sort,
@@ -152,6 +154,10 @@ export function EntitiesPage() {
 	// Fetch available types for chips
 	const { types } = useTypes()
 
+	// Compute type entities for chips
+	const entityType = types.find((t) => t.name === 'Entity')
+	const propertyType = types.find((t) => t.name === 'Property')
+
 	// Derive entities from current page
 	const aliveEntities = useMemo(() => entities?.entities ?? [], [entities])
 	const total = entities?.total ?? 0
@@ -159,27 +165,35 @@ export function EntitiesPage() {
 	// Read search query from URL for client-side filtering
 	const searchQuery = searchParams.get('q') ?? ''
 
-	// Client-side filter: when q param is present, filter by name/ID
+	// Client-side filter: when q param or virtual 'entities' type filter is present
 	const filteredEntities = useMemo(() => {
-		if (!searchQuery) return aliveEntities
-		const q = searchQuery.toLowerCase()
-		return aliveEntities.filter((entity) => {
-			const name = (entity.propertiesText ?? '').toLowerCase()
-			const id = entity.id.toLowerCase()
-			return name.includes(q) || id.includes(q)
-		})
-	}, [aliveEntities, searchQuery])
+		let result = aliveEntities
 
-	// Compute type counts for chips - approximate based on filter
-	const entityType = types.find((t) => t.name === 'Entity')
-	const propertyType = types.find((t) => t.name === 'Property')
+		// Search filter
+		if (searchQuery) {
+			const q = searchQuery.toLowerCase()
+			result = result.filter((entity) => {
+				const name = (entity.propertiesText ?? '').toLowerCase()
+				const id = entity.id.toLowerCase()
+				return name.includes(q) || id.includes(q)
+			})
+		}
 
-	// Active filter chip
-	const activeFilter: FilterType = typeFilter ?? 'all'
+		return result
+	}, [aliveEntities, searchQuery, typeFilter])
+
+	// Active filter chip: 'all', 'entities' (virtual), or an actual type ID
+	const activeFilter: FilterType = (() => {
+		if (!typeFilter) return 'all'
+		if (typeFilter === 'entities') return 'entities'
+		if (propertyType && typeFilter === propertyType.id) return propertyType.id
+		return typeFilter
+	})()
 
 	// Derive type label for EntityTable based on active filter context
 	const typeLabel = useMemo(() => {
 		if (!typeFilter) return 'Entity'
+		if (typeFilter === 'entities') return 'Entity'
 		if (propertyType && typeFilter === propertyType.id) return 'Property'
 		if (entityType && typeFilter === entityType.id) return 'Entity'
 		// Look up type name from types list
@@ -456,14 +470,14 @@ export function EntitiesPage() {
 					All <span className="text-[#a1a1aa] ml-1 font-mono">{total.toLocaleString()}</span>
 				</Chip>
 				<Chip
-					active={activeFilter === (entityType?.id ?? 'entity')}
-					onClick={() => handleFilterTypeChange(entityType?.id ?? 'entity')}
+					active={activeFilter === 'entities'}
+					onClick={() => handleFilterTypeChange('entities')}
 				>
 					Entities
 				</Chip>
 				<Chip
-					active={activeFilter === (propertyType?.id ?? 'property')}
-					onClick={() => handleFilterTypeChange(propertyType?.id ?? 'property')}
+					active={activeFilter === (propertyType?.id ?? '')}
+					onClick={() => handleFilterTypeChange(propertyType?.id ?? '')}
 				>
 					Properties
 				</Chip>

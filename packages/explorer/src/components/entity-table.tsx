@@ -1,8 +1,75 @@
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import type { Entity } from '~/api/types'
 import { Pagination } from '~/components/pagination'
 import { CopyIdButton } from '~/components/ui/copy-id-button'
 import { SortArrow } from '~/components/ui/sort-arrow'
+import { TypePill } from '~/components/ui/type-pill'
+
+/**
+ * Header checkbox with indeterminate state support.
+ * Uses the HTML input element's indeterminate property for accessibility.
+ */
+function HeaderCheckbox({
+	checked,
+	indeterminate,
+	onChange,
+}: {
+	checked: boolean
+	indeterminate: boolean
+	onChange: () => void
+}) {
+	const inputRef = useRef<HTMLInputElement>(null)
+
+	useEffect(() => {
+		if (inputRef.current) {
+			inputRef.current.indeterminate = indeterminate
+		}
+	}, [indeterminate])
+
+	return (
+		<div className="flex items-center justify-center">
+			<input
+				ref={inputRef}
+				type="checkbox"
+				checked={checked}
+				onChange={onChange}
+				aria-label="Select all"
+				data-testid="header-checkbox"
+				className="cursor-pointer appearance-none m-0 p-0 grid place-items-center transition-all"
+				style={{
+					width: 14,
+					height: 14,
+					borderRadius: 3,
+					border: `1px solid ${checked || indeterminate ? 'var(--color-accent)' : '#a1a1aa'}`,
+					background: checked || indeterminate ? 'var(--color-accent)' : 'var(--color-card)',
+				}}
+			/>
+			<style>{`
+				input[data-testid="header-checkbox"]::after {
+					content: '';
+					display: block;
+				}
+				input[data-testid="header-checkbox"]:checked::after {
+					content: '';
+					display: block;
+					width: 7px;
+					height: 3.5px;
+					border-left: 1.5px solid #fff;
+					border-bottom: 1.5px solid #fff;
+					transform: rotate(-45deg) translate(0.5px, -0.5px);
+				}
+				input[data-testid="header-checkbox"]:indeterminate::after {
+					content: '';
+					display: block;
+					width: 7px;
+					height: 1.5px;
+					background: #fff;
+				}
+			`}</style>
+		</div>
+	)
+}
 
 type SortColumn = 'updated_at' | 'created_at' | 'properties_text'
 type SortOrder = 'asc' | 'desc'
@@ -116,51 +183,13 @@ export function EntityTable({
 					}}
 				>
 					{/* Checkbox header */}
-					<div className="flex items-center justify-center">
-						<button
-							type="button"
-							onClick={() => onToggleSelectAll?.()}
-							role="checkbox"
-							aria-checked={entities.length > 0 && selectedCount === entities.length}
-							aria-label="Select all"
-							className="cursor-pointer border-none bg-transparent p-0"
-							data-testid="header-checkbox"
-							style={{
-								width: 14,
-								height: 14,
-								borderRadius: 3,
-								border: selectedCount > 0 ? '1px solid var(--color-accent)' : '1px solid #a1a1aa',
-								background: selectedCount > 0 ? 'var(--color-accent)' : 'var(--color-card)',
-								display: 'grid',
-								placeItems: 'center',
-								transition: 'all .12s',
-							}}
-						>
-							{entities.length > 0 && selectedCount === entities.length && (
-								<svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true">
-									<title>Checked</title>
-									<path
-										d="M1.5 4.5l2 2 4-4"
-										stroke="#fff"
-										strokeWidth="1.5"
-										fill="none"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
-							)}
-							{hasSelection && selectedCount > 0 && selectedCount < entities.length && (
-								<div
-									aria-hidden="true"
-									style={{
-										width: 7,
-										height: 1.5,
-										background: '#fff',
-									}}
-								/>
-							)}
-						</button>
-					</div>
+					<HeaderCheckbox
+						checked={entities.length > 0 && selectedCount === entities.length}
+						indeterminate={
+							hasSelection ? selectedCount > 0 && selectedCount < entities.length : false
+						}
+						onChange={() => onToggleSelectAll?.()}
+					/>
 
 					{/* Name */}
 					<div className="flex items-center gap-1">
@@ -305,9 +334,7 @@ export function EntityTable({
 
 								{/* Type pill */}
 								<div>
-									<span className="inline-flex items-center justify-center text-[11.5px] font-medium px-[7px] py-[2px] rounded-[3px] bg-line-soft text-[#3f3f46]">
-										{activeTypeFilter ?? 'Entity'}
-									</span>
+									<TypePill kind={activeTypeFilter ?? 'Entity'} />
 								</div>
 
 								{/* Updated mono + tabular-nums */}

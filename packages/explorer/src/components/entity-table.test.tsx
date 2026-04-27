@@ -91,9 +91,55 @@ describe('EntityTable', () => {
 
 		// Header checkbox + row checkbox
 		expect(screen.getByTestId('header-checkbox')).toBeInTheDocument()
-		// Entity rows have checkboxes
-		const rowCheckboxes = screen.getAllByRole('checkbox')
-		expect(rowCheckboxes.length).toBe(2) // header + 1 row
+		const checkboxes = screen.getAllByRole('checkbox')
+		expect(checkboxes.length).toBe(2) // header + 1 row
+	})
+
+	it('shows indeterminate state when some rows selected (VAL-ENTITIES-010)', () => {
+		const multipleEntities = [
+			{
+				id: 'aaaabbbbccccdddd',
+				createdAt: '2025-01-01T00:00:00Z',
+				updatedAt: '2025-01-02T00:00:00Z',
+				propertiesText: 'Entity A',
+			},
+			{
+				id: 'eeeeffff11112222',
+				createdAt: '2025-01-03T00:00:00Z',
+				updatedAt: '2025-01-04T00:00:00Z',
+				propertiesText: 'Entity B',
+			},
+		]
+
+		renderWithRouter(
+			<EntityTable
+				{...baseProps}
+				entities={multipleEntities}
+				selectedIds={new Set(['aaaabbbbccccdddd'])}
+				onToggleSelection={vi.fn()}
+				onToggleSelectAll={vi.fn()}
+			/>,
+		)
+
+		const headerCheckbox = screen.getByTestId('header-checkbox') as HTMLInputElement
+		expect(headerCheckbox.indeterminate).toBe(true)
+		expect(headerCheckbox.checked).toBe(false)
+	})
+
+	it('shows checked state when all rows selected', () => {
+		renderWithRouter(
+			<EntityTable
+				{...baseProps}
+				entities={entities}
+				selectedIds={new Set(['aaaabbbbccccdddd'])}
+				onToggleSelection={vi.fn()}
+				onToggleSelectAll={vi.fn()}
+			/>,
+		)
+
+		const headerCheckbox = screen.getByTestId('header-checkbox') as HTMLInputElement
+		expect(headerCheckbox.checked).toBe(true)
+		expect(headerCheckbox.indeterminate).toBe(false)
 	})
 
 	it('renders pagination footer', () => {
