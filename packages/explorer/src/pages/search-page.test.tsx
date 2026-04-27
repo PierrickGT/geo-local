@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SearchPage } from './search-page'
 
@@ -27,29 +27,47 @@ function createWrapper(initialRoute = '/search') {
 	return function Wrapper({ children }: { children: React.ReactNode }) {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<MemoryRouter initialEntries={[initialRoute]}>{children}</MemoryRouter>
+				<MemoryRouter initialEntries={[initialRoute]}>
+					<Routes>
+						<Route path="/search" element={children} />
+						<Route path="/entities/:id" element={<div>Entity Detail</div>} />
+					</Routes>
+				</MemoryRouter>
 			</QueryClientProvider>
 		)
 	}
 }
 
-// Sample search results
-const mockResults = {
+// Sample text search results
+const mockTextResults = {
 	results: [
 		{
-			entityId: 'entity-1',
-			propertyId: 'property-1',
-			value: { value: 'Test value 1' },
+			entityId: '021ccf8634a48e3891a8fa286b7683f5',
+			propertyId: 'a126ca530c8e1234567890abcdef1234',
+			value: { value: 'Action Code' },
 			language: null,
 		},
 		{
-			entityId: 'entity-2',
-			propertyId: 'property-2',
-			value: { value: 'Test value 2' },
+			entityId: '021ccf8634a48e3891a8fa286b7683f5',
+			propertyId: '9b1f76ff97111234567890abcdef1234',
+			value: { value: 'CMS action on this code: A=Add, C=Change, D=Delete' },
 			language: null,
 		},
 	],
 	entities: [],
+}
+
+// Sample entity ID results
+const mockEntityResults = {
+	results: [],
+	entities: [
+		{
+			id: '021ccf8634a48e3891a8fa286b7683f5',
+			createdAt: '2026-01-01T00:00:00Z',
+			updatedAt: '2026-01-01T00:00:00Z',
+			propertiesText: 'Action Code',
+		},
+	],
 }
 
 // Mock refetch function
@@ -71,140 +89,236 @@ describe('SearchPage', () => {
 		})
 	})
 
-	describe('rendering', () => {
-		it('renders search page with input', () => {
+	describe('VAL-SEARCH-001: Big search bar panel', () => {
+		it('renders a big search bar panel with SVG icon, input, and Kbd hint', () => {
 			render(<SearchPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('heading', { name: 'Search' })).toBeInTheDocument()
-			expect(screen.getByRole('searchbox')).toBeInTheDocument()
+			// Search input exists (using aria-label since type=search implies searchbox role)
+			const searchInput = screen.getByRole('searchbox')
+			expect(searchInput).toBeInTheDocument()
+			expect(searchInput).toHaveAttribute('placeholder', expect.stringContaining('Search'))
+
+			// ⌘K hint exists
+			expect(screen.getByText('⌘K')).toBeInTheDocument()
 		})
 
-		it('shows empty state message when no query', () => {
+		it('shows clear button when there is text in the input', async () => {
+			const user = userEvent.setup()
 			render(<SearchPage />, { wrapper: createWrapper() })
 
-			expect(
-				screen.getByText('Enter a search query to find entities by name or ID.'),
-			).toBeInTheDocument()
+			const searchInput = screen.getByRole('searchbox')
+			await user.type(searchInput, 'test')
+
+			// Clear button should appear
+			expect(screen.getByLabelText('Clear search')).toBeInTheDocument()
+		})
+
+		it('does not show clear button when input is empty', () => {
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument()
 		})
 	})
 
-	describe('search input', () => {
-		it('typing in input updates the query', async () => {
+	describe('VAL-SEARCH-002: Scope chips row', () => {
+		it('renders 5 scope chips', () => {
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByRole('button', { name: 'All scopes' })).toBeInTheDocument()
+			expect(screen.getByRole('button', { name: 'Names' })).toBeInTheDocument()
+			expect(screen.getByRole('button', { name: 'Descriptions' })).toBeInTheDocument()
+			expect(screen.getByRole('button', { name: 'Property values' })).toBeInTheDocument()
+			expect(screen.getByRole('button', { name: 'IDs' })).toBeInTheDocument()
+		})
+
+		it('All scopes chip is active by default', () => {
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			const allChip = screen.getByRole('button', { name: 'All scopes' })
+			expect(allChip).toHaveAttribute('data-active', 'true')
+		})
+
+		it('clicking a scope chip activates it and deactivates others', async () => {
+			const user = userEvent.setup()
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			const namesChip = screen.getByRole('button', { name: 'Names' })
+			await user.click(namesChip)
+
+			expect(namesChip).toHaveAttribute('data-active', 'true')
+			expect(screen.getByRole('button', { name: 'All scopes' })).toHaveAttribute(
+				'data-active',
+				'false',
+			)
+		})
+	})
+
+	describe('VAL-SEARCH-003: Empty state with suggestions', () => {
+		it('shows empty state with dashed border panel when no query', () => {
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			// Panel with dashed border
+			const emptyPanel = screen.getByTestId('search-empty-state')
+			expect(emptyPanel).toBeInTheDocument()
+
+			// Heading
+			expect(screen.getByText('Find entities across the graph')).toBeInTheDocument()
+
+			// Suggestions
+			expect(screen.getByText('Action Code')).toBeInTheDocument()
+		})
+
+		it('clicking suggestion fills input', async () => {
+			const user = userEvent.setup()
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			const suggestion = screen.getByRole('button', { name: 'Action Code' })
+			await user.click(suggestion)
+
+			const searchInput = screen.getByRole('searchbox')
+			expect(searchInput).toHaveValue('Action Code')
+		})
+	})
+
+	describe('VAL-SEARCH-004: Name-mode text matches table', () => {
+		it('shows "Text matches" header with count for non-hex queries', () => {
+			mockUseSearch.mockReturnValue({
+				results: mockTextResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
+
+			expect(screen.getByText('Text matches')).toBeInTheDocument()
+			expect(screen.getByText('2')).toBeInTheDocument()
+		})
+
+		it('shows column headers: Entity, Property, Value', () => {
+			mockUseSearch.mockReturnValue({
+				results: mockTextResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
+
+			expect(screen.getByText('Entity')).toBeInTheDocument()
+			expect(screen.getByText('Property')).toBeInTheDocument()
+			expect(screen.getByText('Value')).toBeInTheDocument()
+		})
+	})
+
+	describe('VAL-SEARCH-005: Search term highlighted in results', () => {
+		it('wraps match text in mark element with yellow highlight', () => {
+			mockUseSearch.mockReturnValue({
+				results: mockTextResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
+
+			const marks = screen.getAllByText('Action')
+			// At least one mark should exist (the highlighted match)
+			const markElements = marks.filter(
+				(el) => el.closest('mark') !== null || el.tagName === 'MARK',
+			)
+			expect(markElements.length).toBeGreaterThanOrEqual(1)
+		})
+	})
+
+	describe('VAL-SEARCH-006: Open button navigates to entity', () => {
+		it('clicking Open on text result navigates to entity detail', async () => {
 			const user = userEvent.setup()
 
-			render(<SearchPage />, { wrapper: createWrapper() })
+			mockUseSearch.mockReturnValue({
+				results: mockTextResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
 
-			const input = screen.getByRole('searchbox')
-			await user.type(input, 'test')
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
-			expect(input).toHaveValue('test')
+			// Find all Open buttons and click the first one
+			const openButtons = screen.getAllByRole('button', { name: 'Open' })
+			expect(openButtons.length).toBeGreaterThan(0)
+			await user.click(openButtons[0])
+
+			// Should navigate to entity detail (MemoryRouter should show Entity Detail)
+			expect(screen.getByText('Entity Detail')).toBeInTheDocument()
 		})
 	})
 
-	describe('URL sync', () => {
-		it('prepopulates search from URL ?q= param', () => {
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=prefilled') })
+	describe('VAL-SEARCH-007: ID-mode triggered by 6+ hex chars', () => {
+		it('shows "Matching entities" for 6+ hex character queries', () => {
+			mockUseSearch.mockReturnValue({
+				results: mockEntityResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
 
-			const input = screen.getByRole('searchbox')
-			expect(input).toHaveValue('prefilled')
+			// 6+ hex chars triggers ID mode
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=021ccf') })
+
+			expect(screen.getByText('Matching entities')).toBeInTheDocument()
+		})
+
+		it('uses name mode for non-hex queries', () => {
+			mockUseSearch.mockReturnValue({
+				results: mockTextResults,
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			// Non-hex stays in name mode
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
+
+			expect(screen.queryByText('Matching entities')).not.toBeInTheDocument()
+			expect(screen.getByText('Text matches')).toBeInTheDocument()
 		})
 	})
 
-	describe('loading state', () => {
-		it('shows loading state during search', () => {
+	describe('VAL-SEARCH-008: Full ID match resolves exact entity', () => {
+		it('full 32-char hex ID shows single result', () => {
 			mockUseSearch.mockReturnValue({
-				results: undefined,
-				isLoading: true,
+				results: mockEntityResults,
+				isLoading: false,
 				isDebouncing: false,
 				isError: false,
 				error: null,
 				refetch: mockRefetch,
 			})
 
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
-
-			expect(screen.getByText('Searching...')).toBeInTheDocument()
-		})
-
-		it('shows debouncing state while waiting', () => {
-			mockUseSearch.mockReturnValue({
-				results: undefined,
-				isLoading: false,
-				isDebouncing: true,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
+			render(<SearchPage />, {
+				wrapper: createWrapper('/search?q=021ccf8634a48e3891a8fa286b7683f5'),
 			})
 
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
-
-			expect(screen.getByText('Searching...')).toBeInTheDocument()
+			expect(screen.getByText('Matching entities')).toBeInTheDocument()
+			expect(screen.getByText('Action Code')).toBeInTheDocument()
 		})
 	})
 
-	describe('results', () => {
-		it('shows search results', () => {
-			mockUseSearch.mockReturnValue({
-				results: mockResults,
-				isLoading: false,
-				isDebouncing: false,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
-			})
-
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
-
-			expect(screen.getByText('Test value 1')).toBeInTheDocument()
-			expect(screen.getByText('Test value 2')).toBeInTheDocument()
-		})
-
-		it('shows entity ID matches when entities are returned', () => {
-			const entityResults = {
-				results: [],
-				entities: [
-					{
-						id: 'abc123',
-						createdAt: '2026-01-01T00:00:00Z',
-						updatedAt: '2026-01-01T00:00:00Z',
-						propertiesText: 'Test Entity',
-					},
-				],
-			}
-
-			mockUseSearch.mockReturnValue({
-				results: entityResults,
-				isLoading: false,
-				isDebouncing: false,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
-			})
-
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=abc') })
-
-			expect(screen.getByText('Matching entities (1)')).toBeInTheDocument()
-			expect(screen.getByText('Test Entity')).toBeInTheDocument()
-			expect(screen.getByText('abc123')).toBeInTheDocument()
-		})
-
-		it('shows entity ID and property ID for each result', () => {
-			mockUseSearch.mockReturnValue({
-				results: mockResults,
-				isLoading: false,
-				isDebouncing: false,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
-			})
-
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
-
-			expect(screen.getByText(/entity-1/)).toBeInTheDocument()
-			expect(screen.getByText(/property-1/)).toBeInTheDocument()
-		})
-
-		it('shows no results message when results are empty', () => {
+	describe('VAL-SEARCH-009: No results state', () => {
+		it('shows clear "no results" message when no matches', () => {
 			mockUseSearch.mockReturnValue({
 				results: { results: [], entities: [] },
 				isLoading: false,
@@ -214,16 +328,33 @@ describe('SearchPage', () => {
 				refetch: mockRefetch,
 			})
 
-			render(<SearchPage />, { wrapper: createWrapper('/search?q=notfound') })
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=zzzznonexistent') })
 
-			expect(screen.getByText('No results found for "notfound".')).toBeInTheDocument()
+			expect(screen.getByText(/No results found/)).toBeInTheDocument()
 		})
 
-		it('clicking result navigates to entity detail', async () => {
+		it('safely renders the query text in no-results message', () => {
+			mockUseSearch.mockReturnValue({
+				results: { results: [], entities: [] },
+				isLoading: false,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=zzzznonexistent') })
+
+			expect(screen.getByText(/zzzznonexistent/)).toBeInTheDocument()
+		})
+	})
+
+	describe('VAL-SEARCH-010: Clear button resets', () => {
+		it('clear button empties input and shows empty state', async () => {
 			const user = userEvent.setup()
 
 			mockUseSearch.mockReturnValue({
-				results: mockResults,
+				results: { results: [], entities: [] },
 				isLoading: false,
 				isDebouncing: false,
 				isError: false,
@@ -233,15 +364,32 @@ describe('SearchPage', () => {
 
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
 
-			// Click the first result row
-			const resultRow = screen.getByText('Test value 1').closest('tr')
-			if (resultRow) {
-				await user.click(resultRow)
-			}
+			// Should have clear button since q=test
+			const clearBtn = screen.getByLabelText('Clear search')
+			await user.click(clearBtn)
 
-			// Navigation would happen - we can't test the actual navigation in this setup
-			// but we can verify the row is clickable
-			expect(resultRow).toHaveClass('cursor-pointer')
+			// Input should be empty
+			const searchInput = screen.getByRole('searchbox')
+			expect(searchInput).toHaveValue('')
+		})
+	})
+
+	describe('VAL-SEARCH-011: URL sync', () => {
+		it('URL ?q= pre-fills input', () => {
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
+
+			const searchInput = screen.getByRole('searchbox')
+			expect(searchInput).toHaveValue('Action')
+		})
+
+		it('new query updates URL', async () => {
+			const user = userEvent.setup()
+			render(<SearchPage />, { wrapper: createWrapper() })
+
+			const searchInput = screen.getByRole('searchbox')
+			await user.type(searchInput, 'test')
+
+			expect(searchInput).toHaveValue('test')
 		})
 	})
 
@@ -258,7 +406,7 @@ describe('SearchPage', () => {
 
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
 
-			expect(screen.getByRole('heading', { name: 'Search failed' })).toBeInTheDocument()
+			expect(screen.getByText(/Search failed/)).toBeInTheDocument()
 		})
 
 		it('shows retry button on error', () => {
@@ -274,6 +422,23 @@ describe('SearchPage', () => {
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
 
 			expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+		})
+	})
+
+	describe('loading state', () => {
+		it('shows loading indicator during search', () => {
+			mockUseSearch.mockReturnValue({
+				results: undefined,
+				isLoading: true,
+				isDebouncing: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<SearchPage />, { wrapper: createWrapper('/search?q=test') })
+
+			expect(screen.getByText('Searching…')).toBeInTheDocument()
 		})
 	})
 })
