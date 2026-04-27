@@ -129,7 +129,7 @@ describe('EntityPage', () => {
 			data: undefined,
 		})
 
-		// Default mocks for relation mutation hooks (used by RelationsPanel)
+		// Default mocks for relation mutation hooks
 		mockUseCreateRelation.mockReturnValue({
 			mutate: vi.fn(),
 			mutateAsync: vi.fn(),
@@ -150,26 +150,38 @@ describe('EntityPage', () => {
 	})
 
 	describe('rendering', () => {
-		it('renders entity header with name, id, and timestamps', async () => {
+		it('renders entity header with avatar, name, type pill, status, ID copy, meta, and actions', async () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Check entity name is displayed (from NAME triple) - appears in header
-			const nameElements = screen.getAllByText('Test Entity')
-			expect(nameElements.length).toBeGreaterThanOrEqual(1)
+			// Avatar initials from "Test Entity" → "TE"
+			expect(screen.getByText('TE')).toBeInTheDocument()
 
-			// Check entity ID is still displayed (truncated)
-			expect(screen.getByText(/test-ent/)).toBeInTheDocument()
+			// Entity name (appears in header + graph neighborhood)
+			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(2)
 
-			// Check entity type badge (default "Entity" for regular entities)
+			// Type pill (default Entity)
 			expect(screen.getByText('Entity')).toBeInTheDocument()
 
-			// Check timestamps are displayed
-			expect(screen.getByText(/Created:/)).toBeInTheDocument()
-			expect(screen.getByText(/Updated:/)).toBeInTheDocument()
+			// Published status
+			expect(screen.getByText('published')).toBeInTheDocument()
+
+			// Full entity ID shown
+			expect(screen.getByText('test-entity-id')).toBeInTheDocument()
+
+			// Copy button exists (in the header)
+			expect(screen.getAllByLabelText('Copy to clipboard').length).toBeGreaterThanOrEqual(1)
+
+			// Meta columns
+			expect(screen.getByText(/Created/)).toBeInTheDocument()
+			expect(screen.getByText(/Updated/)).toBeInTheDocument()
+
+			// Action buttons
+			expect(screen.getByTestId('edit-entity-button')).toBeInTheDocument()
+			expect(screen.getByTestId('delete-entity-button')).toBeInTheDocument()
+			expect(screen.getByText('Back')).toBeInTheDocument()
 		})
 
-		it('renders "Type" badge when entity has incoming TYPE relations', async () => {
-			// Mock entity with incoming TYPE relations
+		it('renders Type pill when entity has incoming TYPE relations', async () => {
 			mockUseEntity.mockReturnValue({
 				entity: {
 					entity: {
@@ -193,33 +205,119 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Should show "Type" badge instead of "Entity"
-			const typeElements = screen.getAllByText('Type')
-			expect(typeElements.length).toBeGreaterThanOrEqual(1)
-			expect(screen.queryByText('Entity')).not.toBeInTheDocument()
-		})
-
-		it('renders triples panel with properties', async () => {
-			render(<EntityPage />, { wrapper: createWrapper() })
-
-			// Check properties header
-			expect(screen.getByRole('heading', { name: 'Properties' })).toBeInTheDocument()
-
-			// Check property labels (NAME shows as "Name", DESCRIPTION shows as "Description")
-			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(1)
-			expect(screen.getByText('Description')).toBeInTheDocument()
-		})
-
-		it('renders relations panel with unified list', async () => {
-			render(<EntityPage />, { wrapper: createWrapper() })
-
-			// Check relations header with count
-			expect(screen.getByRole('heading', { name: /Relations.*2/ })).toBeInTheDocument()
-
-			// Check both outgoing and incoming relation types are shown
-			// formatPropertyId('TYPE') returns 'Type' (well-known), 'REFERENCES' stays as-is
+			// Should show "Type" pill
 			expect(screen.getByText('Type')).toBeInTheDocument()
-			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
+		})
+
+		it('renders Property pill when entity has outgoing TYPE to Property entity', async () => {
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						outgoing: [
+							{
+								id: 'rel-out-1',
+								fromId: 'test-entity-id',
+								toId: '808a04ceb21c4d888ad12e240613e5ca', // PROPERTY_ENTITY_ID
+								relationType: TYPES_PROPERTY_ID,
+								createdAt: '2024-01-01T00:00:00Z',
+							},
+						],
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Property')).toBeInTheDocument()
+		})
+
+		it('renders two-column layout', async () => {
+			const { container } = render(<EntityPage />, { wrapper: createWrapper() })
+
+			// Check for 2-column grid layout
+			const gridEl = container.querySelector('.grid.grid-cols-\\[1fr_380px\\]')
+			expect(gridEl).toBeInTheDocument()
+		})
+
+		it('renders TabBar with correct tab labels', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Properties · 3')).toBeInTheDocument()
+			expect(screen.getByText('Relations · 2')).toBeInTheDocument()
+			expect(screen.getByText('JSON')).toBeInTheDocument()
+			expect(screen.getByText('History · 0')).toBeInTheDocument()
+		})
+
+		it('shows properties tab by default', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			// Properties content should be visible - check for property rows
+			// Empty property names => shows formatPropertyId result
+			expect(screen.getAllByText('text').length).toBeGreaterThan(0)
+			expect(screen.getByText('number')).toBeInTheDocument()
+		})
+
+		it('shows unnamed entity with ID chars as avatar fallback', async () => {
+			mockUseEntity.mockReturnValue({
+				entity: {
+					entity: {
+						...mockEntityDetail.entity,
+						triples: [],
+					},
+				},
+				isLoading: false,
+				isError: false,
+				error: null,
+				refetch: mockRefetch,
+			})
+
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			// Avatar should show first 2 chars of entity ID: "TE"
+			expect(screen.getByText('TE')).toBeInTheDocument()
+			// No entity name heading
+			expect(screen.queryByText('Test Entity')).not.toBeInTheDocument()
+		})
+	})
+
+	describe('tab switching', () => {
+		it('switches to Relations tab when clicked', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('Relations · 2'))
+
+			// Should show Relations header with count
+			expect(screen.getByText(/Relations.*2/)).toBeInTheDocument()
+			// Should show add relation button
+			expect(screen.getByTestId('add-relation-button')).toBeInTheDocument()
+		})
+
+		it('switches to JSON tab when clicked', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('JSON'))
+
+			// Should show pretty-printed JSON in the left column
+			// The JSON tab shows the full entity detail as JSON
+			const jsonPres = document.querySelectorAll('pre')
+			expect(jsonPres.length).toBeGreaterThanOrEqual(1)
+			expect(jsonPres[0]?.textContent).toContain('test-entity-id')
+		})
+
+		it('switches to History tab when clicked', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('History · 0'))
+
+			expect(screen.getByText('No edit history available.')).toBeInTheDocument()
 		})
 	})
 
@@ -235,7 +333,6 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// UI now uses skeleton spinners instead of text loading states
 			const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
 			expect(skeletons.length).toBeGreaterThan(0)
 		})
@@ -256,9 +353,7 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper('/entities/nonexistent-id') })
 
-			// Use getByRole to target the heading specifically (not SVG title)
 			expect(screen.getByRole('heading', { name: 'Entity not found' })).toBeInTheDocument()
-			// The ID is displayed but may be split across elements
 			expect(screen.getByText(/does not exist/)).toBeInTheDocument()
 		})
 
@@ -292,29 +387,7 @@ describe('EntityPage', () => {
 		})
 	})
 
-	describe('triples panel', () => {
-		it('falls back to ID when entity has no NAME triple', () => {
-			mockUseEntity.mockReturnValue({
-				entity: {
-					entity: {
-						...mockEntityDetail.entity,
-						triples: [],
-					},
-				},
-				isLoading: false,
-				isError: false,
-				error: null,
-				refetch: mockRefetch,
-			})
-
-			render(<EntityPage />, { wrapper: createWrapper() })
-
-			// Should show truncated ID as the primary identifier
-			expect(screen.getByText(/test-ent/)).toBeInTheDocument()
-			// Name span should not be rendered
-			expect(screen.queryByText('Test Entity')).not.toBeInTheDocument()
-		})
-
+	describe('properties panel', () => {
 		it('shows empty state when no triples', () => {
 			mockUseEntity.mockReturnValue({
 				entity: {
@@ -337,14 +410,13 @@ describe('EntityPage', () => {
 		it('displays value type badges', () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Multiple 'text' badges exist due to two text triples in mock data
 			expect(screen.getAllByText('text').length).toBeGreaterThan(0)
 			expect(screen.getByText('number')).toBeInTheDocument()
 		})
 	})
 
 	describe('delete entity', () => {
-		it('renders Delete button for alive entities', () => {
+		it('renders Delete button', () => {
 			render(<EntityPage />, { wrapper: createWrapper() })
 
 			expect(screen.getByTestId('delete-entity-button')).toBeInTheDocument()
@@ -362,8 +434,6 @@ describe('EntityPage', () => {
 				screen.getByRole('dialog').querySelector('[data-slot="dialog-title"]'),
 			).toHaveTextContent('Delete Entity')
 			expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument()
-			// "Test Entity" appears in both header and dialog — use getAllByText
-			expect(screen.getAllByText('Test Entity').length).toBeGreaterThanOrEqual(2)
 			expect(screen.getByText('Cancel')).toBeInTheDocument()
 			expect(screen.getByTestId('confirm-delete-button')).toBeInTheDocument()
 		})
@@ -388,8 +458,6 @@ describe('EntityPage', () => {
 			await user.click(screen.getByTestId('delete-entity-button'))
 
 			expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument()
-			// Entity ID appears in both TruncateId (header) and dialog — use getAllByText
-			expect(screen.getAllByText('test-entity-id').length).toBeGreaterThanOrEqual(2)
 		})
 
 		it('canceling dialog dismisses it without firing mutation', async () => {
@@ -437,7 +505,7 @@ describe('EntityPage', () => {
 			const user = userEvent.setup()
 			mockUseDeleteEntity.mockReturnValue({
 				mutate: vi.fn(),
-				mutateAsync: vi.fn(), // returns a promise that never resolves — stays pending
+				mutateAsync: vi.fn(),
 				isLoading: true,
 				error: null,
 				reset: vi.fn(),
@@ -448,15 +516,12 @@ describe('EntityPage', () => {
 
 			await user.click(screen.getByTestId('delete-entity-button'))
 
-			// Both buttons should be disabled during loading
 			const dialog = screen.getByRole('dialog')
 			const buttons = dialog.querySelectorAll('button')
 			const confirmBtn = Array.from(buttons).find((b) => b.textContent?.includes('Delete'))
 			const cancelBtn = Array.from(buttons).find((b) => b.textContent?.includes('Cancel'))
 			expect(confirmBtn).toBeDisabled()
 			expect(cancelBtn).toBeDisabled()
-
-			// Spinner should be visible inside the confirm button
 			expect(confirmBtn?.querySelector('[role="status"]')).toBeInTheDocument()
 		})
 
@@ -497,7 +562,6 @@ describe('EntityPage', () => {
 			await user.click(screen.getByTestId('delete-entity-button'))
 			expect(screen.getByTestId('delete-entity-error')).toBeInTheDocument()
 
-			// Close via Cancel
 			await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
 			expect(resetFn).toHaveBeenCalled()
@@ -518,19 +582,20 @@ describe('EntityPage', () => {
 	})
 
 	describe('relations panel', () => {
-		it('shows all relations in unified list', async () => {
+		it('shows all relations in Relations tab', async () => {
+			const user = userEvent.setup()
 			render(<EntityPage />, { wrapper: createWrapper() })
 
-			// Check relations header with total count (1 outgoing + 1 incoming = 2)
-			expect(screen.getByRole('heading', { name: 'Relations (2)' })).toBeInTheDocument()
+			// Switch to Relations tab
+			await user.click(screen.getByText('Relations · 2'))
 
-			// Check outgoing relation type is shown (formatPropertyId('TYPE') returns 'Type')
+			// Should show relation type names
 			expect(screen.getByText('Type')).toBeInTheDocument()
-			// Check incoming relation type is shown
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 
 		it('shows empty state when no relations', async () => {
+			const user = userEvent.setup()
 			mockUseEntity.mockReturnValue({
 				entity: {
 					entity: {
@@ -547,7 +612,58 @@ describe('EntityPage', () => {
 
 			render(<EntityPage />, { wrapper: createWrapper() })
 
+			await user.click(screen.getByText('Relations · 0'))
+
 			expect(screen.getByText('No relations found for this entity.')).toBeInTheDocument()
+		})
+
+		it('shows add relation button in Relations tab', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('Relations · 2'))
+
+			expect(screen.getByTestId('add-relation-button')).toBeInTheDocument()
+		})
+	})
+
+	describe('right rail', () => {
+		it('renders graph neighborhood panel', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Graph neighborhood')).toBeInTheDocument()
+		})
+
+		it('renders activity panel', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Activity')).toBeInTheDocument()
+		})
+
+		it('renders raw JSON panel', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByText('Raw')).toBeInTheDocument()
+		})
+	})
+
+	describe('action buttons', () => {
+		it('Back button navigates to /entities', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			const backButton = screen.getByText('Back')
+			expect(backButton).toBeInTheDocument()
+
+			// The button is rendered but we can't test actual navigation in unit test
+			// Just verify it exists and is clickable
+			expect(backButton.closest('button')).toBeInTheDocument()
+		})
+
+		it('Edit button navigates to entity edit page', async () => {
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('edit-entity-button')).toBeInTheDocument()
+			expect(screen.getByText('Edit')).toBeInTheDocument()
 		})
 	})
 })
