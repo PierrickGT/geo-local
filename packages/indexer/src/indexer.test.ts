@@ -156,27 +156,30 @@ describe('applyEdit', () => {
 		const updateRelationSpy = vi.spyOn(updateRelationModule, 'updateRelation').mockResolvedValue()
 		const createValueRefSpy = vi.spyOn(createValueRefModule, 'createValueRef').mockResolvedValue()
 
+		const { randomId } = await import('@geoprotocol/grc-20')
+		const fakeId = randomId()
+
 		const { applyEdit } = await import('./applier.js')
 		const mockEdit = {
-			id: {} as never,
+			id: fakeId,
 			name: 'test',
 			authors: [],
 			ops: [
-				{ type: 'createEntity', id: {} as never, values: [] },
+				{ type: 'createEntity', id: fakeId, values: [] },
 				{
 					type: 'createRelation',
-					id: {} as never,
-					from: {} as never,
-					to: {} as never,
-					relationType: {} as never,
+					id: fakeId,
+					from: fakeId,
+					to: fakeId,
+					relationType: fakeId,
 				},
-				{ type: 'updateEntity', id: {} as never, set: [], unset: [] },
-				{ type: 'deleteEntity', id: {} as never },
-				{ type: 'deleteRelation', id: {} as never },
-				{ type: 'updateRelation', id: {} as never, unset: [] },
-				{ type: 'createValueRef', id: {} as never, entity: {} as never, property: {} as never },
-				{ type: 'restoreEntity', id: {} as never },
-				{ type: 'restoreRelation', id: {} as never },
+				{ type: 'updateEntity', id: fakeId, set: [], unset: [] },
+				{ type: 'deleteEntity', id: fakeId },
+				{ type: 'deleteRelation', id: fakeId },
+				{ type: 'updateRelation', id: fakeId, unset: [] },
+				{ type: 'createValueRef', id: fakeId, entity: fakeId, property: fakeId },
+				{ type: 'restoreEntity', id: fakeId },
+				{ type: 'restoreRelation', id: fakeId },
 			],
 		}
 

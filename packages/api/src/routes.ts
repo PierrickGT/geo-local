@@ -258,7 +258,7 @@ export function createRouter(): Router {
 
 			const params: string[] = []
 			let query =
-				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg FROM edits'
+				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg, decoded_ops FROM edits'
 
 			if (status) {
 				params.push(status)
@@ -284,7 +284,7 @@ export function createRouter(): Router {
 			const { id } = req.params
 
 			const result = await pool.query(
-				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg FROM edits WHERE id = $1',
+				'SELECT id, space_id, author, name, status, op_count, created_at, applied_at, error_msg, decoded_ops FROM edits WHERE id = $1',
 				[id],
 			)
 

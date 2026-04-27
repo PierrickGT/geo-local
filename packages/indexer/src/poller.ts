@@ -39,11 +39,12 @@ export async function pollOnce(pool: pg.Pool, batchSize: number): Promise<number
 			await client.query(`UPDATE edits SET status = 'processing' WHERE id = $1`, [editId])
 
 			const edit = decodeEdit(new Uint8Array(row.blob))
-			await applyEdit(client, edit, row.spaceId)
+			const decodedOps = await applyEdit(client, edit, row.spaceId)
 
-			await client.query(`UPDATE edits SET status = 'applied', applied_at = now() WHERE id = $1`, [
-				editId,
-			])
+			await client.query(
+				`UPDATE edits SET status = 'applied', applied_at = now(), decoded_ops = $2 WHERE id = $1`,
+				[editId, JSON.stringify(decodedOps)],
+			)
 
 			await client.query('COMMIT')
 			log.info({ editId }, 'Edit applied')

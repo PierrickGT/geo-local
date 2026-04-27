@@ -214,7 +214,7 @@ describe('GET /api/edits', () => {
 
 	it('returns edits list', async () => {
 		mockQuery = vi.fn().mockResolvedValue({
-			rows: [{ id: 'edit1 ', status: 'applied ', created_at: new Date() }],
+			rows: [{ id: 'edit1 ', status: 'applied ', created_at: new Date(), decoded_ops: null }],
 		})
 
 		const app = await createApp()
@@ -235,6 +235,60 @@ describe('GET /api/edits', () => {
 		const query = mockQuery.mock.calls[0][0] as string
 		expect(query).toContain('WHERE status =')
 	})
+
+	it('includes decodedOps field (null for pending edits)', async () => {
+		mockQuery = vi.fn().mockResolvedValue({
+			rows: [
+				{
+					id: 'edit1 ',
+					status: 'pending ',
+					created_at: new Date(),
+					decoded_ops: null,
+				},
+			],
+		})
+
+		const app = await createApp()
+		const res = await (await import('supertest')).default(app).get('/api/edits')
+
+		expect(res.status).toBe(200)
+		expect(res.body.edits[0].decodedOps).toBeNull()
+	})
+
+	it('includes decodedOps field (array for applied edits)', async () => {
+		const decodedOps = [
+			{
+				kind: 'createEntity',
+				entityId: 'abc123',
+			},
+		]
+		mockQuery = vi.fn().mockResolvedValue({
+			rows: [
+				{
+					id: 'edit2 ',
+					status: 'applied ',
+					created_at: new Date(),
+					decoded_ops: decodedOps,
+				},
+			],
+		})
+
+		const app = await createApp()
+		const res = await (await import('supertest')).default(app).get('/api/edits?status=applied')
+
+		expect(res.status).toBe(200)
+		expect(res.body.edits[0].decodedOps).toEqual(decodedOps)
+	})
+
+	it('selects decoded_ops column', async () => {
+		mockQuery = vi.fn().mockResolvedValue({ rows: [] })
+
+		const app = await createApp()
+		await (await import('supertest')).default(app).get('/api/edits')
+
+		const query = mockQuery.mock.calls[0][0] as string
+		expect(query).toContain('decoded_ops')
+	})
 })
 
 describe('GET /api/edits/:id', () => {
@@ -244,7 +298,15 @@ describe('GET /api/edits/:id', () => {
 
 	it('returns single edit', async () => {
 		mockQuery = vi.fn().mockResolvedValue({
-			rows: [{ id: 'edit1 ', status: 'applied ', op_count: 3, created_at: new Date() }],
+			rows: [
+				{
+					id: 'edit1 ',
+					status: 'applied ',
+					op_count: 3,
+					created_at: new Date(),
+					decoded_ops: null,
+				},
+			],
 		})
 
 		const app = await createApp()
@@ -261,6 +323,75 @@ describe('GET /api/edits/:id', () => {
 		const res = await (await import('supertest')).default(app).get('/api/edits/nonexistent')
 
 		expect(res.status).toBe(404)
+	})
+
+	it('includes decodedOps (null for pending edit)', async () => {
+		mockQuery = vi.fn().mockResolvedValue({
+			rows: [
+				{
+					id: 'edit1 ',
+					status: 'pending ',
+					op_count: 1,
+					created_at: new Date(),
+					decoded_ops: null,
+				},
+			],
+		})
+
+		const app = await createApp()
+		const res = await (await import('supertest')).default(app).get('/api/edits/edit1')
+
+		expect(res.status).toBe(200)
+		expect(res.body.decodedOps).toBeNull()
+	})
+
+	it('includes decodedOps (array for applied edit)', async () => {
+		const decodedOps = [
+			{
+				kind: 'updateEntity',
+				entityId: 'abc123',
+				propertyId: 'prop1',
+				before: null,
+				after: { propertyId: 'prop1', value: { type: 'text', payload: 'Hello' } },
+			},
+		]
+		mockQuery = vi.fn().mockResolvedValue({
+			rows: [
+				{
+					id: 'edit2 ',
+					status: 'applied ',
+					op_count: 2,
+					created_at: new Date(),
+					decoded_ops: decodedOps,
+				},
+			],
+		})
+
+		const app = await createApp()
+		const res = await (await import('supertest')).default(app).get('/api/edits/edit2')
+
+		expect(res.status).toBe(200)
+		expect(res.body.decodedOps).toEqual(decodedOps)
+	})
+
+	it('selects decoded_ops column', async () => {
+		mockQuery = vi.fn().mockResolvedValue({
+			rows: [
+				{
+					id: 'edit1 ',
+					status: 'applied ',
+					op_count: 3,
+					created_at: new Date(),
+					decoded_ops: null,
+				},
+			],
+		})
+
+		const app = await createApp()
+		await (await import('supertest')).default(app).get('/api/edits/edit1')
+
+		const query = mockQuery.mock.calls[0][0] as string
+		expect(query).toContain('decoded_ops')
 	})
 })
 
