@@ -217,7 +217,8 @@ describe('EntityPage', () => {
 			expect(screen.getByRole('heading', { name: /Relations.*2/ })).toBeInTheDocument()
 
 			// Check both outgoing and incoming relation types are shown
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			// formatPropertyId('TYPE') returns 'Type' (well-known), 'REFERENCES' stays as-is
+			expect(screen.getByText('Type')).toBeInTheDocument()
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 	})
@@ -523,8 +524,8 @@ describe('EntityPage', () => {
 			// Check relations header with total count (1 outgoing + 1 incoming = 2)
 			expect(screen.getByRole('heading', { name: 'Relations (2)' })).toBeInTheDocument()
 
-			// Check outgoing relation type is shown
-			expect(screen.getByText('TYPE')).toBeInTheDocument()
+			// Check outgoing relation type is shown (formatPropertyId('TYPE') returns 'Type')
+			expect(screen.getByText('Type')).toBeInTheDocument()
 			// Check incoming relation type is shown
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})

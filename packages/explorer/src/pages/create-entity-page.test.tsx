@@ -255,7 +255,7 @@ describe('CreateEntityPage', () => {
 			const user = userEvent.setup()
 
 			// Create a controlled promise
-			let resolveSubmit: () => void
+			let resolveSubmit!: () => void
 			const pendingPromise = new Promise<{
 				id: string
 				name: string

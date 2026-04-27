@@ -77,10 +77,10 @@ describe('TriplesPanel', () => {
 			render(<TriplesPanel triples={mockTriples} />)
 
 			expect(screen.getByTitle('NAME')).toHaveTextContent('Name')
-			expect(screen.getByTitle('COUNT')).toHaveTextContent('Count')
-			expect(screen.getByTitle('ACTIVE')).toHaveTextContent('Active')
-			expect(screen.getByTitle('REF')).toHaveTextContent('Ref')
-			expect(screen.getByTitle('DATA')).toHaveTextContent('Data')
+			expect(screen.getByTitle('COUNT')).toHaveTextContent('COUNT')
+			expect(screen.getByTitle('ACTIVE')).toHaveTextContent('ACTIVE')
+			expect(screen.getByTitle('REF')).toHaveTextContent('REF')
+			expect(screen.getByTitle('DATA')).toHaveTextContent('DATA')
 		})
 
 		it('displays value type badges', () => {

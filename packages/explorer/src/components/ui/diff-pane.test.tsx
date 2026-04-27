@@ -4,12 +4,7 @@ import { DiffPane } from './diff-pane'
 
 describe('DiffPane', () => {
 	it('renders before and after content side-by-side', () => {
-		render(
-			<DiffPane
-				before="old value"
-				after="new value"
-			/>,
-		)
+		render(<DiffPane before="old value" after="new value" />)
 		expect(screen.getByText('Before')).toBeInTheDocument()
 		expect(screen.getByText('After')).toBeInTheDocument()
 	})
