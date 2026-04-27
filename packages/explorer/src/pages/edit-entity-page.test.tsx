@@ -168,7 +168,7 @@ describe('EditEntityPage', () => {
 		it('renders the edit entity heading', () => {
 			render(<EditEntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByRole('heading', { name: 'Edit Entity' })).toBeInTheDocument()
+			expect(screen.getByRole('heading', { name: 'Edit entity' })).toBeInTheDocument()
 		})
 
 		it('prefills form with existing entity data', () => {
@@ -237,6 +237,23 @@ describe('EditEntityPage', () => {
 			render(<EditEntityPage />, { wrapper: createWrapper() })
 
 			expect(screen.getByTestId('entity-submit')).toBeDisabled()
+		})
+
+		it('shows entity ID in disabled field with "generated · immutable" hint', () => {
+			render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			const idDisplay = screen.getByTestId('entity-id-display')
+			expect(idDisplay).toBeInTheDocument()
+			expect(idDisplay).toHaveTextContent(ENTITY_ID)
+			expect(idDisplay).toHaveTextContent('generated · immutable')
+		})
+
+		it('shows edit hint text', () => {
+			render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			expect(screen.getByTestId('edit-hint')).toHaveTextContent(
+				'Changes will be staged as edits until published',
+			)
 		})
 	})
 
@@ -592,6 +609,48 @@ describe('EditEntityPage', () => {
 		})
 	})
 
+	describe('add-then-remove = no diff', () => {
+		it('does not send added-then-removed property in diff', async () => {
+			const user = userEvent.setup()
+
+			render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			// Add a new property
+			await user.click(screen.getByTestId('add-property'))
+			await user.type(screen.getByTestId('property-id-2'), 'tempProp')
+			await user.type(screen.getByTestId('property-value-2'), 'tempVal')
+
+			// Verify submit is enabled (form is dirty)
+			await waitFor(() => {
+				expect(screen.getByTestId('entity-submit')).toBeEnabled()
+			})
+
+			// Remove the just-added property (last row = index 2)
+			await user.click(screen.getByTestId('remove-property-2'))
+
+			// Now form should be back to pristine — submit disabled again
+			await waitFor(() => {
+				expect(screen.getByTestId('entity-submit')).toBeDisabled()
+			})
+
+			// No mutation should have been called
+			expect(mockSubmitMutations).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('cancel navigation', () => {
+		it('cancel button navigates to entity detail page', async () => {
+			const user = userEvent.setup()
+			render(<EditEntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByTestId('entity-cancel'))
+
+			await waitFor(() => {
+				expect(screen.getByText('Entity detail')).toBeInTheDocument()
+			})
+		})
+	})
+
 	describe('hooks ordering (no conditional hook calls)', () => {
 		it('renders without React hooks crash when entity transitions from loading to loaded', () => {
 			// Start with loading state
@@ -611,7 +670,7 @@ describe('EditEntityPage', () => {
 			})
 
 			expect(screen.getByTestId('entity-name-input')).toHaveValue('Original Name')
-			expect(screen.getByRole('heading', { name: 'Edit Entity' })).toBeInTheDocument()
+			expect(screen.getByRole('heading', { name: 'Edit entity' })).toBeInTheDocument()
 		})
 
 		it('renders without React hooks crash when entity transitions from loading to error', () => {

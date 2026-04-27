@@ -6,6 +6,7 @@ import { getEntities } from '~/api/entities'
 import { Kbd } from '~/components/ui/kbd'
 import { SyncIndicator } from '~/components/ui/sync-indicator'
 import { entityKeys } from '~/hooks/use-entities'
+import { BreadcrumbProvider, useBreadcrumbExtra } from './breadcrumb-context'
 
 // ---------------------------------------------------------------------------
 // SVG icon components for nav items
@@ -136,7 +137,12 @@ const savedViews = ['Properties only', 'Recent edits', 'Labs ≥ 5']
 // Breadcrumb helpers
 // ---------------------------------------------------------------------------
 
-function getBreadcrumbSegments(pathname: string, _entityId?: string): string[] {
+function getBreadcrumbSegments(
+	pathname: string,
+	_entityId?: string,
+	extra?: string[] | null,
+): string[] {
+	if (extra) return extra
 	if (pathname === '/entities') return ['Entities']
 	if (pathname === '/search') return ['Search']
 	if (pathname === '/graph') return ['Graph']
@@ -172,11 +178,20 @@ function useLastSyncTime(): Date {
 // ---------------------------------------------------------------------------
 
 export function Layout() {
+	return (
+		<BreadcrumbProvider>
+			<LayoutInner />
+		</BreadcrumbProvider>
+	)
+}
+
+function LayoutInner() {
 	const location = useLocation()
 	const params = useParams()
 	const lastSync = useLastSyncTime()
+	const extraCrumbs = useBreadcrumbExtra()
 
-	const crumbs = getBreadcrumbSegments(location.pathname, params.id)
+	const crumbs = getBreadcrumbSegments(location.pathname, params.id, extraCrumbs)
 
 	// Fetch entity/edits counts for sidebar display via lightweight queries
 	const { data: entityData } = useQuery({

@@ -24,7 +24,11 @@ export interface EntityFormData {
 export interface EntityFormProps {
 	mode: 'create' | 'edit'
 	initialData?: EntityFormData
+	/** Entity ID for edit mode — displayed in the disabled ID field */
+	entityId?: string
 	onSubmit: (data: EntityFormData) => void
+	/** Custom cancel handler — defaults to window.history.back() */
+	onCancel?: () => void
 	isSubmitting?: boolean
 	submitLabel?: string
 	className?: string
@@ -146,7 +150,9 @@ function Field({
 export function EntityForm({
 	mode,
 	initialData,
+	entityId,
 	onSubmit,
+	onCancel,
 	isSubmitting = false,
 	submitLabel,
 	className,
@@ -263,9 +269,12 @@ export function EntityForm({
 
 					{mode === 'edit' && initialData && (
 						<Field label="ID">
-							<div className="flex items-center gap-2 px-[10px] py-[6px] bg-background border border-border rounded-[6px]">
+							<div
+								className="flex items-center gap-2 px-[10px] py-[6px] bg-background border border-border rounded-[6px]"
+								data-testid="entity-id-display"
+							>
 								<span className="font-mono text-[12px] text-muted-foreground flex-1 overflow-hidden text-ellipsis">
-									{initialData.properties.length > 0 ? '' : ''}
+									{entityId ?? ''}
 								</span>
 								<span className="text-[11px] text-[#a1a1aa]">generated · immutable</span>
 							</div>
@@ -445,7 +454,7 @@ export function EntityForm({
 				<button
 					type="button"
 					className="border border-border bg-card text-[#3f3f46] px-[14px] py-[6px] rounded-[6px] text-[12.5px] cursor-pointer hover:bg-hover transition-colors"
-					onClick={() => window.history.back()}
+					onClick={onCancel ?? (() => window.history.back())}
 					data-testid="entity-cancel"
 				>
 					Cancel

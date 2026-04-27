@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import type { PropertyValueParam, UnsetPropertyParam } from '~/api/mutations'
+import { useSetBreadcrumb } from '~/app/breadcrumb-context'
 import type { EntityFormData, PropertyRow } from '~/components/entity-form'
 import { EntityForm, triplesToFormData } from '~/components/entity-form'
 import { Button } from '~/components/ui/button'
@@ -97,6 +98,14 @@ function computeDiff(initial: EntityFormData, current: EntityFormData): DiffResu
 	return { values, unset }
 }
 
+/**
+ * Extract the entity name from triples.
+ */
+function getEntityName(triples: { propertyId: string; value: { value: unknown } }[]): string {
+	const nameTriple = triples.find((t) => t.propertyId === NAME_PROPERTY_ID)
+	return nameTriple ? String(nameTriple.value.value ?? '') : ''
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -104,24 +113,49 @@ function computeDiff(initial: EntityFormData, current: EntityFormData): DiffResu
 /**
  * Edit entity page at /entities/:id/edit.
  *
- * Loads the existing entity via useEntity, maps triples to form fields
- * using triplesToFormData, and prefills EntityForm in edit mode.
+ * Graphite-styled form with:
+ * - Breadcrumb (Entities › {Name} › Edit) set via breadcrumb context
+ * - H1 "Edit entity" + hint
+ * - EntityForm in edit mode with pre-populated data
+ * - Disabled ID field with "generated · immutable" hint
+ * - Dirty tracking (submit disabled when pristine)
+ * - Minimal diff computation (only changed fields sent)
+ * - Cancel navigates to /entities/:id
  *
- * On submit: computes diff (changed values → values array, removed
- * properties → unset array), calls useUpdateEntity, and navigates back
- * to /entities/:id on success.
+ * Hooks are safe across loading/error/loaded transitions — all hook calls
+ * are unconditional (before any early returns).
  */
 export function EditEntityPage() {
 	const { id } = useParams<{ id: string }>()
 	const navigate = useNavigate()
 	const { entity, isLoading, isError, error } = useEntity(id ?? '')
 	const { mutateAsync, isLoading: isSubmitting, error: mutationError, reset } = useUpdateEntity()
+	const setBreadcrumb = useSetBreadcrumb()
 
 	// All hook calls must come before conditional returns (React rules of hooks)
 	const initialData = useMemo(() => {
 		if (!entity?.entity) return undefined
 		return triplesToFormData(entity.entity.triples)
 	}, [entity])
+
+	const entityName = useMemo(() => {
+		if (!entity?.entity) return ''
+		return getEntityName(entity.entity.triples)
+	}, [entity])
+
+	// Update breadcrumb with entity name
+	useEffect(() => {
+		if (entityName) {
+			setBreadcrumb(['Entities', entityName, 'Edit'])
+		} else {
+			setBreadcrumb(null)
+		}
+		return () => setBreadcrumb(null)
+	}, [entityName, setBreadcrumb])
+
+	const handleCancel = useCallback(() => {
+		navigate(`/entities/${id}`)
+	}, [id, navigate])
 
 	const handleSubmit = useCallback(
 		async (data: EntityFormData) => {
@@ -159,14 +193,14 @@ export function EditEntityPage() {
 		const isNotFound = error && 'status' in error && (error as { status: number }).status === 404
 
 		return (
-			<div className="p-6 max-w-2xl">
+			<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
 				<Card>
 					<CardContent className="py-8">
 						<div className="text-center">
 							{isNotFound ? (
 								<>
-									<h3 className="text-sm font-medium text-gray-900">Entity not found</h3>
-									<p className="mt-1 text-sm text-gray-500">
+									<h3 className="text-[13px] font-medium text-foreground">Entity not found</h3>
+									<p className="mt-1 text-[12.5px] text-muted-foreground">
 										The entity with ID &quot;{id}&quot; does not exist.
 									</p>
 									<Button variant="default" onClick={() => navigate('/entities')} className="mt-4">
@@ -175,8 +209,8 @@ export function EditEntityPage() {
 								</>
 							) : (
 								<>
-									<h3 className="text-sm font-medium text-gray-900">Failed to load entity</h3>
-									<p className="mt-1 text-sm text-gray-500">
+									<h3 className="text-[13px] font-medium text-foreground">Failed to load entity</h3>
+									<p className="mt-1 text-[12.5px] text-muted-foreground">
 										{error?.message || 'An unexpected error occurred'}
 									</p>
 									<Button
@@ -198,37 +232,41 @@ export function EditEntityPage() {
 	// Loading state
 	if (isLoading || !initialData) {
 		return (
-			<div className="p-6 max-w-2xl">
-				<Card>
-					<CardContent className="py-8">
-						<div className="space-y-4">
-							<Skeleton className="h-8 w-48" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-24 w-full" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-10 w-full" />
-						</div>
-					</CardContent>
-				</Card>
+			<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+				<div className="space-y-4">
+					<Skeleton className="h-8 w-48" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-10 w-full" />
+				</div>
 			</div>
 		)
 	}
 
 	return (
-		<div className="p-6 max-w-2xl">
-			<h1 className="text-2xl font-semibold text-gray-900 mb-6">Edit Entity</h1>
+		<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+			{/* H1 + hint */}
+			<div className="mb-[18px]">
+				<h1 className="text-[22px] font-semibold tracking-[-0.5px] text-foreground">Edit entity</h1>
+				<p className="text-[12.5px] text-muted-foreground mt-1" data-testid="edit-hint">
+					Changes will be staged as edits until published
+				</p>
+			</div>
 
 			{mutationError && (
-				<div className="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-200" data-testid="edit-error">
-					<p className="text-sm font-medium text-red-800">Failed to update entity</p>
-					<p className="text-sm text-red-600 mt-1">{mutationError.message}</p>
+				<div className="mb-4 rounded-lg bg-red-50 p-4 ring-1 ring-red-200" data-testid="edit-error">
+					<p className="text-[13px] font-medium text-red-800">Failed to update entity</p>
+					<p className="text-[12.5px] text-red-600 mt-1">{mutationError.message}</p>
 				</div>
 			)}
 
 			<EntityForm
 				mode="edit"
 				initialData={initialData}
+				entityId={id}
 				onSubmit={handleSubmit}
+				onCancel={handleCancel}
 				isSubmitting={isSubmitting}
 			/>
 		</div>
