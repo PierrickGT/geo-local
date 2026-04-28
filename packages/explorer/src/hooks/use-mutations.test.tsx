@@ -83,6 +83,7 @@ const APPLIED_EDIT = {
 	createdAt: '2024-01-01T00:00:00Z',
 	appliedAt: '2024-01-01T00:00:01Z',
 	errorMsg: null,
+	decodedOps: null as import('~/api/types').DecodedOp[] | null,
 }
 
 const FAILED_EDIT = {

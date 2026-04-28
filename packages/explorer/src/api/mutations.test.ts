@@ -320,6 +320,7 @@ describe('mutations API', () => {
 				createdAt: '2024-01-01T00:00:00Z',
 				appliedAt: '2024-01-01T00:00:01Z',
 				errorMsg: null,
+				decodedOps: null,
 			}
 			mockGet.mockResolvedValueOnce(mockEdit)
 
@@ -341,6 +342,7 @@ describe('mutations API', () => {
 				createdAt: '2024-01-01T00:00:00Z',
 				appliedAt: null,
 				errorMsg: null,
+				decodedOps: null,
 			}
 			mockGet.mockResolvedValueOnce(mockEdit)
 
@@ -361,6 +363,7 @@ describe('mutations API', () => {
 				createdAt: '2024-01-01T00:00:00Z',
 				appliedAt: null,
 				errorMsg: 'Entity not found on chain',
+				decodedOps: null,
 			}
 			mockGet.mockResolvedValueOnce(mockEdit)
 

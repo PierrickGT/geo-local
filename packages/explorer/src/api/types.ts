@@ -100,6 +100,17 @@ export interface SearchResponse {
 
 export type EditStatus = 'pending' | 'processing' | 'applied' | 'failed'
 
+export interface DecodedOp {
+	kind: string
+	entityId: string
+	propertyId?: string
+	before?: unknown
+	after?: unknown
+	relationType?: string
+	toId?: string
+	fromId?: string
+}
+
 export interface Edit {
 	id: string
 	spaceId: string
@@ -110,6 +121,7 @@ export interface Edit {
 	createdAt: string
 	appliedAt: string | null
 	errorMsg: string | null
+	decodedOps: DecodedOp[] | null
 }
 
 export interface EditsResponse {
