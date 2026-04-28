@@ -21,7 +21,7 @@ Self-hosted knowledge graph runtime that replaces IPFS/blockchain with local Pos
 - **ingest** — HTTP server accepting GRC-20 encoded edits (binary or JSON mutations)
 - **indexer** — Polls pending edits, decodes ops, materializes entities/relations/triples
 - **api** — Read-only query API for the materialized graph
-- **explorer** — React SPA for browsing and managing the knowledge graph with entity CRUD, search, and graph visualization
+- **explorer** — React SPA with Graphite design system for browsing and managing the knowledge graph
 - **shared** — Config, DB pool, migrations, ID/value utilities
 
 ## Prerequisites
@@ -104,18 +104,25 @@ Supported mutation types: `createEntity`, `updateEntity`, `deleteEntity`, `creat
 
 ## Explorer
 
-The explorer SPA (`:3003`) provides a full UI for managing knowledge graph entities:
+The explorer SPA (`:3003`) uses the **Graphite** design system — Inter + IBM Plex Mono fonts, electric-blue accent (`#2f5cff`), near-black ink on off-white palette. Built with Tailwind CSS v4, shadcn/ui (CVA), React 19, and ReactFlow.
 
-- **Entity List** — Browse, filter by type, paginate, create new entities
-- **Entity Detail** — View properties (triples), outgoing/incoming relations
-- **Create Entity** — Form with name, description, types, and dynamic properties
-- **Edit Entity** — Modify name, description, types, add/remove properties
-- **Relations** — Add and remove relations between entities via dialogs
-- **Delete Entity** — Soft-delete entities with confirmation dialog
-- **Search** — Full-text search across entity properties
-- **Graph** — Force-directed graph visualization with ReactFlow
+### Pages
 
-Mutation flow: submit to ingest → poll edit status → navigate on success. All mutations are reflected in real-time via TanStack Query cache invalidation.
+- **Shell** — Fixed sidebar with SVG nav icons, brand block, entity/edits counts; top bar with breadcrumb, sync indicator, and ⌘K search hint
+- **Entity List** — Filter bar with type chips, 6-column grid table (checkboxes, color dots, type pills, copy buttons), pagination with mono digits
+- **Entity Detail** — Header card with avatar, type pill, and status; two-column layout with tabbed content (Properties / Relations / JSON / History); right rail with graph neighborhood
+- **Search** — Big search bar panel, scope chips, empty state with suggestions; auto-detects name vs ID mode, highlighted matches
+- **Graph** — Overlay header with node/edge counts, layout chips, legend panel, zoom controls; node selection with accent styling; inspector panel (Open / Expand / Pin / Neighbors / Degree)
+- **Edits Queue** — Status tabs (Pending / History / Conflicts); color-coded EditCards (CREATE=green, UPDATE=blue, RELATION=purple) with before/after diff panels showing decoded ops
+- **Create/Edit Forms** — FormSection layout, dynamic property rows, sticky action bar
+
+### Backend support
+
+The query API now exposes `decodedOps` on edit responses, providing structured operation data from the indexer for the diff panels in the Edits Queue.
+
+### Mutation flow
+
+Submit to ingest → poll edit status → navigate on success. All mutations are reflected in real-time via TanStack Query cache invalidation.
 
 ```bash
 # Create an entity via binary edit
