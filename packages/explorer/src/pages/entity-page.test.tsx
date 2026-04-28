@@ -594,6 +594,46 @@ describe('EntityPage', () => {
 			expect(screen.getByText('REFERENCES')).toBeInTheDocument()
 		})
 
+		it('shows outgoing direction arrow for outgoing relations', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('Relations · 2'))
+
+			// The outgoing relation (TYPE) should have an SVG with aria-label "outgoing →"
+			const outgoingArrows = screen.getAllByLabelText('outgoing →')
+			expect(outgoingArrows.length).toBeGreaterThanOrEqual(1)
+		})
+
+		it('shows incoming direction arrow for incoming relations', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('Relations · 2'))
+
+			// The incoming relation (REFERENCES) should have an SVG with aria-label "← incoming"
+			const incomingArrows = screen.getAllByLabelText('← incoming')
+			expect(incomingArrows.length).toBeGreaterThanOrEqual(1)
+		})
+
+		it('renders direction arrows as SVG elements with data-testid and correct dimensions', async () => {
+			const user = userEvent.setup()
+			render(<EntityPage />, { wrapper: createWrapper() })
+
+			await user.click(screen.getByText('Relations · 2'))
+
+			// Check outgoing arrow SVG
+			const outgoingArrows = screen.getAllByTestId('direction-arrow-outgoing')
+			const svgEl = outgoingArrows[0]
+			expect(svgEl.tagName.toLowerCase()).toBe('svg')
+			expect(svgEl.getAttribute('width')).toBe('18')
+			expect(svgEl.getAttribute('height')).toBe('10')
+
+			// Check incoming arrow SVG
+			const incomingArrows = screen.getAllByTestId('direction-arrow-incoming')
+			expect(incomingArrows.length).toBeGreaterThanOrEqual(1)
+		})
+
 		it('shows empty state when no relations', async () => {
 			const user = userEvent.setup()
 			mockUseEntity.mockReturnValue({

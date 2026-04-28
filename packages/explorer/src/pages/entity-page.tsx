@@ -935,10 +935,12 @@ function RelationsTab({
 							width="18"
 							height="10"
 							viewBox="0 0 18 10"
-							className="text-muted-foreground flex-shrink-0"
+							className="text-[#71717a] flex-shrink-0"
 							role="img"
-							aria-label={relation.direction === 'outgoing' ? 'points to' : 'pointed from'}
+							aria-label={relation.direction === 'outgoing' ? 'outgoing →' : '← incoming'}
+							data-testid={`direction-arrow-${relation.direction}`}
 						>
+							<title>{relation.direction === 'outgoing' ? 'outgoing →' : '← incoming'}</title>
 							{relation.direction === 'outgoing' ? (
 								<>
 									<path d="M1 5h14" stroke="currentColor" strokeWidth="1.2" />
