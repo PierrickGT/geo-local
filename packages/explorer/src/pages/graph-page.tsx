@@ -328,12 +328,6 @@ export function GraphPage() {
 	// Track expanded node IDs to prevent re-expanding
 	const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
 
-	// Click delay state for distinguishing click vs double-click
-	const [pendingClick, setPendingClick] = useState<{
-		nodeId: string
-		timer: ReturnType<typeof setTimeout>
-	} | null>(null)
-
 	// Selected node for inspector
 	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
@@ -420,7 +414,7 @@ export function GraphPage() {
 	useEffect(() => {
 		if (graphNodes.length === 0) return
 
-		// Update nodes: set dimmed state
+		// Update nodes: set dimmed + isSelected state
 		setNodes((prev) => {
 			let changed = false
 			const next = prev.map((node) => {
@@ -428,9 +422,11 @@ export function GraphPage() {
 					? node.data.entityId !== selectedNodeId && !selectedRelatedIds.has(node.data.entityId)
 					: false
 				const kind = entityKinds.get(node.data.entityId) ?? 'Entity'
-				if (node.data.dimmed === dimmed && node.data.kind === kind) return node
+				const isSelected = node.data.entityId === selectedNodeId
+				if (node.data.dimmed === dimmed && node.data.kind === kind && node.data.isSelected === isSelected)
+					return node
 				changed = true
-				return { ...node, data: { ...node.data, dimmed, kind } }
+				return { ...node, data: { ...node.data, dimmed, kind, isSelected } }
 			})
 			return changed ? next : prev
 		})
@@ -568,6 +564,51 @@ export function GraphPage() {
 		}
 	}, [seedGraphData, graphNodes.length, setNodes, setEdges])
 
+	// When TYPE relations arrive after initial seed nodes, add edges + type nodes
+	useEffect(() => {
+		if (!seedTypeRelations || graphNodes.length === 0) return
+		if (focusId) return
+
+		// Check if these edges are already in the graph
+		const existingEdgeIds = new Set(graphEdges.map((e) => e.id))
+		const newEdges = seedTypeRelations.edges.filter((e) => !existingEdgeIds.has(e.id))
+		if (newEdges.length === 0) return
+
+		// Check for new nodes (TYPE targets not yet in graph)
+		const existingNodeIds = new Set(graphNodes.map((n) => n.id))
+		const newNodes = seedTypeRelations.nodes.filter((n) => !existingNodeIds.has(n.id))
+
+		if (newNodes.length === 0 && newEdges.length === 0) return
+
+		// Place new nodes near center with random offset
+		const placedNewNodes = newNodes.map((n) => ({
+			...n,
+			x: (Math.random() - 0.5) * 100,
+			y: (Math.random() - 0.5) * 100,
+		}))
+
+		const allNodes = [...graphNodes, ...placedNewNodes]
+		const allEdges = [...graphEdges, ...newEdges]
+
+		// Re-run simulation with updated data
+		const simNodes = allNodes.map((n) => ({ ...n }))
+		const simEdges = allEdges.map((e) => ({ ...e }))
+		const simulation = createSimulation(simNodes, simEdges)
+		simulation.tick(SIMULATION_TICKS)
+		simulation.stop()
+
+		const rfNodes = simNodes.map((n, i) => toReactFlowNode(n, i))
+		const rfEdges = simEdges.map((e) => ({
+			...toReactFlowEdge(e, propertyDisplayNamesRef.current),
+			markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
+		}))
+
+		setGraphNodes(simNodes)
+		setGraphEdges(simEdges)
+		setNodes(rfNodes)
+		setEdges(rfEdges)
+	}, [seedTypeRelations, graphNodes, graphEdges, focusId, setNodes, setEdges])
+
 	// Fetch entity names + types and inject into ReactFlow nodes
 	useEffect(() => {
 		if (graphNodes.length === 0) return
@@ -670,40 +711,22 @@ export function GraphPage() {
 		})
 	}, [focusId, seedQuery.entities, seedTypeRelations])
 
-	// Click handler: select node (with delay for navigation on single-click)
+	// Click handler: select node and show inspector (no navigation)
 	const handleNodeClick = useCallback(
 		(_event: React.MouseEvent, node: EntityNodeType) => {
 			const entityId = node.data.entityId
-
-			// Select the node for inspector
 			setSelectedNodeId(entityId)
-
-			// Clear any existing pending click
-			if (pendingClick) {
-				clearTimeout(pendingClick.timer)
-			}
-
-			// Start a timer - if no double-click occurs within 250ms, navigate
-			const timer = setTimeout(() => {
-				navigate(`/entities/${entityId}`)
-				setPendingClick(null)
-			}, 250)
-
-			setPendingClick({ nodeId: node.id, timer })
 		},
-		[navigate, pendingClick],
+		[],
 	)
 
-	// Double-click handler: expand neighbors (cancels nav timer)
+	// Double-click handler: navigate to entity detail
 	const handleNodeDoubleClick = useCallback(
 		async (_event: React.MouseEvent, node: EntityNodeType) => {
 			const entityId = node.data.entityId
 
-			// Cancel any pending click navigation
-			if (pendingClick) {
-				clearTimeout(pendingClick.timer)
-				setPendingClick(null)
-			}
+			// Navigate to entity detail page
+			navigate(`/entities/${entityId}`)
 
 			// Skip if already expanded
 			if (expandedNodes.has(entityId)) return
@@ -774,17 +797,8 @@ export function GraphPage() {
 				// Silently ignore expansion errors
 			}
 		},
-		[graphNodes, graphEdges, setNodes, setEdges, expandedNodes, pendingClick],
+		[graphNodes, graphEdges, setNodes, setEdges, expandedNodes, navigate],
 	)
-
-	// Cleanup pending click timer on unmount
-	useEffect(() => {
-		return () => {
-			if (pendingClick) {
-				clearTimeout(pendingClick.timer)
-			}
-		}
-	}, [pendingClick])
 
 	// Drag handler: pin node position
 	const handleNodeDragStop = useCallback(

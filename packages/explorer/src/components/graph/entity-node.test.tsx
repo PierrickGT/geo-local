@@ -78,16 +78,64 @@ describe('EntityNode', () => {
 		expect(screen.getByTitle('abc123def456ghi789')).toBeInTheDocument()
 	})
 
-	it('shows selected state styling', () => {
+	it('shows selected state styling via data.isSelected', () => {
 		render(
 			<TestWrapper>
-				<EntityNode {...defaultProps} data={{ entityId: 'entity-123' }} selected={true} />
+				<EntityNode
+					{...defaultProps}
+					data={{ entityId: 'entity-123', isSelected: true }}
+				/>
 			</TestWrapper>,
 		)
 
 		const node = screen.getByRole('button', { name: /Entity entity-123/ })
 		expect(node).toHaveClass('bg-accent')
 		expect(node).toHaveClass('text-accent-foreground')
+	})
+
+	it('does not show accent styling when not selected', () => {
+		render(
+			<TestWrapper>
+				<EntityNode {...defaultProps} data={{ entityId: 'entity-123', isSelected: false }} />
+			</TestWrapper>,
+		)
+
+		const node = screen.getByRole('button', { name: /Entity entity-123/ })
+		expect(node).not.toHaveClass('bg-accent')
+		expect(node).toHaveClass('bg-card')
+	})
+
+	it('shows kind dot when not selected', () => {
+		render(
+			<TestWrapper>
+				<EntityNode
+					{...defaultProps}
+					data={{ entityId: 'test-id', kind: 'Property', isSelected: false }}
+				/>
+			</TestWrapper>,
+		)
+
+		const node = screen.getByRole('button', { name: /Entity test-id/ })
+		const dot = node.querySelector('.rounded-full')
+		expect(dot).toBeInTheDocument()
+		expect(dot).toHaveClass('bg-warning')
+	})
+
+	it('hides kind dot when selected', () => {
+		render(
+			<TestWrapper>
+				<EntityNode
+					{...defaultProps}
+					data={{ entityId: 'test-id', kind: 'Property', isSelected: true }}
+				/>
+			</TestWrapper>,
+		)
+
+		const node = screen.getByRole('button', { name: /Entity test-id/ })
+		// The dot should not be present when selected
+		const innerDiv = node.querySelector('.flex.items-center.gap-1\\.5')
+		const dot = innerDiv?.querySelector('.rounded-full')
+		expect(dot).toBeNull()
 	})
 
 	it('has correct aria-label with label', () => {

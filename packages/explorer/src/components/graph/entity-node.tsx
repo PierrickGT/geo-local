@@ -25,6 +25,8 @@ export type EntityNodeData = {
 	kind?: EntityKind
 	/** Whether this node is dimmed (not related to selected node) */
 	dimmed?: boolean
+	/** Whether this node is selected (managed by graph page, not ReactFlow selection) */
+	isSelected?: boolean
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
@@ -34,20 +36,21 @@ export type EntityNode = Node<EntityNodeData, 'entity'>
  * - Non-selected: small dot indicator (colored by kind), white bg, subtle border
  * - Selected: solid accent bg, white text, accent shadow, no dot, bold
  */
-function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
+function EntityNodeBase({ data }: NodeProps<EntityNode>) {
 	const entityId = data.entityId
 	const displayText = data.label ?? entityId
 	const kind = data.kind ?? 'unknown'
 	const dimmed = data.dimmed ?? false
+	const isSelected = data.isSelected ?? false
 
 	return (
 		<div
 			className={cn(
 				'px-2.5 py-1 rounded-xl text-[11.5px] whitespace-nowrap cursor-pointer transition-all',
-				selected
+				isSelected
 					? 'bg-accent text-accent-foreground border-none font-semibold shadow-[0_4px_14px_rgba(47,92,255,.35)]'
 					: 'bg-card text-[#3f3f46] border border-[#e4e4e7] font-medium shadow-[0_1px_2px_rgba(0,0,0,.04)]',
-				dimmed && !selected && 'opacity-35',
+				dimmed && !isSelected && 'opacity-35',
 			)}
 			tabIndex={0}
 			role="button"
@@ -63,7 +66,7 @@ function EntityNodeBase({ data, selected }: NodeProps<EntityNode>) {
 				className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-48"
 				title={entityId}
 			>
-				{!selected && (
+				{!isSelected && (
 					<span className={cn('w-[5px] h-[5px] rounded-full flex-shrink-0', kindDotColors[kind])} />
 				)}
 				{displayText}
