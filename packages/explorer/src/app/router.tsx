@@ -4,7 +4,7 @@ import { EditEntityPage } from '~/pages/edit-entity-page'
 import { EditsPage } from '~/pages/edits-page'
 import { EntitiesPage } from '~/pages/entities-page'
 import { EntityPage } from '~/pages/entity-page'
-import { GraphPage } from '~/pages/graph-page'
+import { GraphPageWithProvider as GraphPage } from '~/pages/graph-page'
 import { SearchPage } from '~/pages/search-page'
 import { Layout } from './layout'
 

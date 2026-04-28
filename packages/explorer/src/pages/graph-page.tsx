@@ -1,34 +1,40 @@
 /**
  * Graph Page - Force-directed graph visualization using ReactFlow
+ * Styled per Graphite design with overlay controls, legend, zoom, and inspector.
  *
  * Features:
- * - Seed: first 50 entities + relations, or focused entity from ?focus=:id
- * - Click node: navigate to /entities/:id
- * - Double-click: fetch neighbors and add to graph
- * - Drag: pins node position
- * - Pan/zoom: native ReactFlow support
+ * - Overlay header with node/edge count
+ * - Layout chips (2D / Force / Hierarchy — only Force active)
+ * - Focus search box (top-right)
+ * - Legend panel (left)
+ * - Zoom controls (bottom-left: +/-/Fit/Focus)
+ * - Node styling: dot indicator non-selected, solid accent bg + shadow selected
+ * - Edge styling: gray default, accent on incident to selected
+ * - Inspector panel on node select (right column)
+ * - Preserved: click→navigate (250ms delay), double-click→expand, drag→pin, focus mode
  */
 
 import {
 	Background,
 	type Connection,
-	Controls,
 	type EdgeChange,
 	MarkerType,
 	type NodeChange,
-	Panel,
 	ReactFlow,
+	ReactFlowProvider,
 	addEdge,
 	applyEdgeChanges,
 	applyNodeChanges,
 	useEdgesState,
 	useNodesState,
+	useReactFlow,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { getEntity, getEntityRelations } from '~/api/entities'
 import {
+	type EntityKind,
 	EntityNode,
 	type EntityNode as EntityNodeType,
 	toReactFlowNode,
@@ -45,10 +51,16 @@ import {
 	toReactFlowEdge,
 } from '~/components/graph/relation-edge'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
+import { Chip } from '~/components/ui/chip'
 import { Skeleton } from '~/components/ui/skeleton'
 import { useEntities, useEntity, useEntityRelations, usePropertyNames } from '~/hooks/use-entities'
-import { NAME_PROPERTY_ID } from '~/lib/constants'
+import {
+	NAME_PROPERTY_ID,
+	PROPERTY_ENTITY_ID,
+	RELATION_ENTITY_ID,
+	TYPE_ENTITY_ID,
+} from '~/lib/constants'
+import { cn } from '~/lib/utils'
 
 // Custom node and edge types
 const nodeTypes = { entity: EntityNode }
@@ -58,11 +70,255 @@ const edgeTypes = { relation: RelationEdge }
 const SEED_LIMIT = 50
 const SIMULATION_TICKS = 300
 
-/**
- * Graph Page component with ReactFlow canvas
- */
+// ---------------------------------------------------------------------------
+// Zoom controls sub-component
+// ---------------------------------------------------------------------------
+
+function ZoomControls() {
+	const { zoomIn, zoomOut, fitView } = useReactFlow()
+
+	return (
+		<div className="flex flex-col gap-1 z-10">
+			<button
+				type="button"
+				onClick={() => zoomIn({ duration: 200 })}
+				className="w-[26px] h-[26px] border border-border bg-card text-[#3f3f46] rounded-[5px] cursor-pointer grid place-items-center text-sm font-mono"
+				aria-label="Zoom in"
+			>
+				+
+			</button>
+			<button
+				type="button"
+				onClick={() => zoomOut({ duration: 200 })}
+				className="w-[26px] h-[26px] border border-border bg-card text-[#3f3f46] rounded-[5px] cursor-pointer grid place-items-center text-sm font-mono"
+				aria-label="Zoom out"
+			>
+				−
+			</button>
+			<button
+				type="button"
+				onClick={() => fitView({ duration: 200, padding: 0.2 })}
+				className="w-[26px] h-[26px] border border-border bg-card text-[#3f3f46] rounded-[5px] cursor-pointer grid place-items-center"
+				aria-label="Fit view"
+			>
+				<svg width="11" height="11" viewBox="0 0 12 12" role="img" aria-label="Fit view">
+					<path
+						d="M2 4V2h2M8 2h2v2M10 8v2H8M4 10H2V8"
+						stroke="currentColor"
+						strokeWidth="1.3"
+						fill="none"
+						strokeLinecap="round"
+					/>
+				</svg>
+			</button>
+			<button
+				type="button"
+				onClick={() => {
+					const input = document.querySelector<HTMLInputElement>('[data-testid="focus-search"]')
+					input?.focus()
+				}}
+				className="w-[26px] h-[26px] border border-border bg-card text-[#3f3f46] rounded-[5px] cursor-pointer grid place-items-center"
+				aria-label="Focus node"
+			>
+				<svg width="11" height="11" viewBox="0 0 12 12" role="img" aria-label="Focus node">
+					<path
+						d="M4 6V3a2 2 0 0 1 4 0v3M3 6h6v4H3z"
+						stroke="currentColor"
+						strokeWidth="1.3"
+						fill="none"
+						strokeLinejoin="round"
+					/>
+				</svg>
+			</button>
+		</div>
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Inspector panel sub-component
+// ---------------------------------------------------------------------------
+
+interface InspectorProps {
+	entityId: string
+	label: string | undefined
+	kind: EntityKind
+	relatedNodeIds: string[]
+	nodeLabels: Map<string, string | undefined>
+	nodeKinds: Map<string, EntityKind>
+	inDegree: number
+	outDegree: number
+	isPinned: boolean
+	onClose: () => void
+	onOpen: () => void
+	onExpand: () => void
+	onTogglePin: () => void
+	onSelectNeighbor: (id: string) => void
+}
+
+function InspectorPanel({
+	entityId,
+	label,
+	kind,
+	relatedNodeIds,
+	nodeLabels,
+	nodeKinds,
+	inDegree,
+	outDegree,
+	isPinned,
+	onClose,
+	onOpen,
+	onExpand,
+	onTogglePin,
+	onSelectNeighbor,
+}: InspectorProps) {
+	const truncatedId =
+		entityId.length > 16 ? `${entityId.slice(0, 8)}…${entityId.slice(-6)}` : entityId
+
+	const kindDotColor =
+		kind === 'Property' ? 'bg-warning' : kind === 'Type' ? 'bg-purple' : 'bg-accent'
+
+	return (
+		<div className="bg-card border border-border rounded-lg overflow-auto flex flex-col">
+			{/* Header */}
+			<div className="px-4 py-3.5 border-b border-border">
+				<div className="flex items-center gap-2 mb-1.5">
+					<span className={cn('w-[7px] h-[7px] rounded-full', kindDotColor)} />
+					<span className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold">
+						{kind}
+					</span>
+					<div className="flex-1" />
+					<button
+						type="button"
+						onClick={onClose}
+						className="border-none bg-transparent text-muted-foreground/60 cursor-pointer w-[18px] h-[18px] rounded-full grid place-items-center"
+						aria-label="Close inspector"
+					>
+						<svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="Close">
+							<path
+								d="M1 1l8 8M9 1l-8 8"
+								stroke="currentColor"
+								strokeWidth="1.3"
+								strokeLinecap="round"
+							/>
+						</svg>
+					</button>
+				</div>
+				<div className="text-[17px] font-semibold tracking-tight">{label ?? truncatedId}</div>
+				<div className="font-mono text-[11px] text-muted-foreground mt-0.5">{truncatedId}</div>
+				<div className="flex gap-1.5 mt-3">
+					<InspectorButton
+						onClick={onOpen}
+						icon={
+							<svg width="12" height="12" viewBox="0 0 14 14" role="img" aria-label="Open">
+								<path
+									d="M7 3l4 4-4 4M3 7h8"
+									stroke="currentColor"
+									strokeWidth="1.3"
+									fill="none"
+									strokeLinecap="round"
+								/>
+							</svg>
+						}
+					>
+						Open
+					</InspectorButton>
+					<InspectorButton
+						onClick={onExpand}
+						icon={
+							<svg width="12" height="12" viewBox="0 0 14 14" role="img" aria-label="Expand">
+								<circle cx="4" cy="4" r="1.4" stroke="currentColor" fill="none" strokeWidth="1.2" />
+								<circle
+									cx="10"
+									cy="10"
+									r="1.4"
+									stroke="currentColor"
+									fill="none"
+									strokeWidth="1.2"
+								/>
+								<path d="M5 5l4 4" stroke="currentColor" strokeWidth="1.2" />
+							</svg>
+						}
+					>
+						Expand
+					</InspectorButton>
+					<InspectorButton onClick={onTogglePin}>{isPinned ? 'Unpin' : 'Pin'}</InspectorButton>
+				</div>
+			</div>
+
+			{/* Neighbors */}
+			<div className="px-4 py-3 border-b border-border">
+				<div className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+					Neighbors · {relatedNodeIds.length}
+				</div>
+				{relatedNodeIds.slice(0, 6).map((nid) => {
+					const nLabel = nodeLabels.get(nid)
+					const nKind = nodeKinds.get(nid) ?? 'Entity'
+					const nDotColor =
+						nKind === 'Property' ? 'bg-warning' : nKind === 'Type' ? 'bg-purple' : 'bg-accent'
+					return (
+						<button
+							key={nid}
+							type="button"
+							onClick={() => onSelectNeighbor(nid)}
+							className="flex items-center gap-2 py-[5px] w-full text-left cursor-pointer bg-transparent border-none"
+						>
+							<span className={cn('w-[5px] h-[5px] rounded-full flex-shrink-0', nDotColor)} />
+							<span className="text-[12.5px] text-[#3f3f46] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
+								{nLabel ?? nid}
+							</span>
+							<span className="text-[10.5px] text-muted-foreground/60">{nKind.toLowerCase()}</span>
+						</button>
+					)
+				})}
+			</div>
+
+			{/* Degree */}
+			<div className="px-4 py-3">
+				<div className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+					Degree
+				</div>
+				<div className="flex gap-3.5 text-[12.5px]">
+					<div>
+						<span className="text-muted-foreground">In </span>
+						<span className="font-mono font-medium">{inDegree}</span>
+					</div>
+					<div>
+						<span className="text-muted-foreground">Out </span>
+						<span className="font-mono font-medium">{outDegree}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+function InspectorButton({
+	children,
+	onClick,
+	icon,
+}: {
+	children: React.ReactNode
+	onClick: () => void
+	icon?: React.ReactNode
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className="flex items-center gap-1.5 px-2 py-[3px] border border-border bg-card text-[#18181b] rounded-md text-[12.5px] cursor-pointer font-medium"
+		>
+			{icon && <span className="w-3 h-3 flex items-center justify-center">{icon}</span>}
+			{children}
+		</button>
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Main GraphPage component
+// ---------------------------------------------------------------------------
+
 export function GraphPage() {
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const navigate = useNavigate()
 	const focusId = searchParams.get('focus')
 
@@ -77,6 +333,18 @@ export function GraphPage() {
 		nodeId: string
 		timer: ReturnType<typeof setTimeout>
 	} | null>(null)
+
+	// Selected node for inspector
+	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+
+	// Focus search input
+	const [focusInput, setFocusInput] = useState('')
+
+	// Entity kind map (entityId → EntityKind)
+	const [entityKinds, setEntityKinds] = useState<Map<string, EntityKind>>(new Map())
+
+	// Node labels map
+	const [nodeLabels, setNodeLabels] = useState<Map<string, string | undefined>>(new Map())
 
 	// ReactFlow state
 	const [nodes, setNodes] = useNodesState<EntityNodeType>([])
@@ -110,25 +378,86 @@ export function GraphPage() {
 	const propertyDisplayNamesRef = useRef(propertyDisplayNames)
 	propertyDisplayNamesRef.current = propertyDisplayNames
 
+	// Selected node related IDs (for highlighting)
+	const selectedRelatedIds = useMemo(() => {
+		if (!selectedNodeId) return new Set<string>()
+		const related = new Set<string>()
+		for (const e of graphEdges) {
+			const src = typeof e.source === 'string' ? e.source : (e.source as GraphNode).id
+			const tgt = typeof e.target === 'string' ? e.target : (e.target as GraphNode).id
+			if (src === selectedNodeId) related.add(tgt)
+			if (tgt === selectedNodeId) related.add(src)
+		}
+		return related
+	}, [selectedNodeId, graphEdges])
+
 	// Update edge labels when property names resolve
 	useEffect(() => {
 		if (propertyDisplayNames.size === 0) return
 
 		setEdges((prev) => {
 			let changed = false
-			const next = prev.map((edge) => {
+			const next = prev.map((edge): RelationEdgeType => {
 				const relationType = edge.data?.relationType ?? ''
 				const resolvedName = propertyDisplayNames.get(relationType)
 				if (resolvedName === edge.data?.propertyDisplayName) return edge
 				changed = true
 				return {
 					...edge,
-					data: { relationType, propertyDisplayName: resolvedName },
+					data: {
+						relationType: edge.data?.relationType ?? '',
+						propertyDisplayName: resolvedName,
+						incident: edge.data?.incident,
+						dimmed: edge.data?.dimmed,
+					},
 				}
 			})
 			return changed ? next : prev
 		})
 	}, [propertyDisplayNames, setEdges])
+
+	// Update node/edge styling when selection changes
+	useEffect(() => {
+		if (graphNodes.length === 0) return
+
+		// Update nodes: set dimmed state
+		setNodes((prev) => {
+			let changed = false
+			const next = prev.map((node) => {
+				const dimmed = selectedNodeId
+					? node.data.entityId !== selectedNodeId && !selectedRelatedIds.has(node.data.entityId)
+					: false
+				const kind = entityKinds.get(node.data.entityId) ?? 'Entity'
+				if (node.data.dimmed === dimmed && node.data.kind === kind) return node
+				changed = true
+				return { ...node, data: { ...node.data, dimmed, kind } }
+			})
+			return changed ? next : prev
+		})
+
+		// Update edges: set incident/dimmed state
+		setEdges((prev) => {
+			let changed = false
+			const next = prev.map((edge): RelationEdgeType => {
+				const incident = selectedNodeId
+					? edge.source === selectedNodeId || edge.target === selectedNodeId
+					: false
+				const dimmed = selectedNodeId ? !incident : false
+				if (edge.data?.incident === incident && edge.data?.dimmed === dimmed) return edge
+				changed = true
+				return {
+					...edge,
+					data: {
+						relationType: edge.data?.relationType ?? '',
+						propertyDisplayName: edge.data?.propertyDisplayName,
+						incident,
+						dimmed,
+					},
+				}
+			})
+			return changed ? next : prev
+		})
+	}, [selectedNodeId, selectedRelatedIds, graphNodes.length, entityKinds, setNodes, setEdges])
 
 	// Convert seed data to graph format
 	const seedGraphData = useMemo(() => {
@@ -182,10 +511,8 @@ export function GraphPage() {
 
 		const entities = seedQuery.entities.entities
 		const count = entities.length
-		const radius = 200 // Circular layout radius
+		const radius = 200
 
-		// Initialize nodes in a circular layout to prevent force simulation
-		// from pushing them to extreme positions (±20,000 pixels)
 		const nodes: GraphNode[] = entities.map((e, i) => {
 			const angle = (2 * Math.PI * i) / count
 			return {
@@ -196,12 +523,10 @@ export function GraphPage() {
 			}
 		})
 
-		// Add TYPE entity nodes (positioned later by force simulation)
 		if (seedTypeRelations) {
 			nodes.push(...seedTypeRelations.nodes)
 		}
 
-		// Use TYPE relations edges if available
 		const edges = seedTypeRelations?.edges ?? []
 
 		return { nodes, edges }
@@ -222,7 +547,6 @@ export function GraphPage() {
 		// Skip if we already have data loaded (prevent re-initialization)
 		if (graphNodes.length > 0) return
 
-		// Run force simulation to get initial positions
 		const simNodes = seedNodes.map((n) => ({ ...n }))
 		const simEdges = seedEdges.map((e) => ({ ...e }))
 
@@ -231,11 +555,10 @@ export function GraphPage() {
 			simulation.tick(SIMULATION_TICKS)
 			simulation.stop()
 
-			// Convert to ReactFlow format
 			const rfNodes = simNodes.map((n, i) => toReactFlowNode(n, i))
 			const rfEdges = simEdges.map((e) => ({
 				...toReactFlowEdge(e, propertyDisplayNamesRef.current),
-				markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+				markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
 			}))
 
 			setGraphNodes(simNodes)
@@ -245,7 +568,7 @@ export function GraphPage() {
 		}
 	}, [seedGraphData, graphNodes.length, setNodes, setEdges])
 
-	// Fetch entity names once and inject labels into ReactFlow nodes
+	// Fetch entity names + types and inject into ReactFlow nodes
 	useEffect(() => {
 		if (graphNodes.length === 0) return
 
@@ -260,18 +583,35 @@ export function GraphPage() {
 						const nameTriple = entity?.triples.find(
 							(t) => t.propertyId === NAME_PROPERTY_ID && t.valueType === 'text',
 						)
-						return { id, label: (nameTriple?.value.value as string | undefined) ?? undefined }
+						// Determine kind from TYPE relations
+						const outRels = entity?.outgoing ?? []
+						const typeTargets = outRels.filter((r) => r.relationType === 'TYPE').map((r) => r.toId)
+						const kind: EntityKind = typeTargets.includes(PROPERTY_ENTITY_ID)
+							? 'Property'
+							: typeTargets.includes(TYPE_ENTITY_ID) || typeTargets.includes(RELATION_ENTITY_ID)
+								? 'Type'
+								: 'Entity'
+						return {
+							id,
+							label: (nameTriple?.value.value as string | undefined) ?? undefined,
+							kind,
+						}
 					})
-					.catch(() => ({ id, label: undefined })),
+					.catch(() => ({ id, label: undefined, kind: 'Entity' as EntityKind })),
 			),
 		).then((results) => {
 			if (cancelled) return
 			const labelMap = new Map(results.map((r) => [r.id, r.label]))
+			const kindMap = new Map(results.map((r) => [r.id, r.kind]))
+			setNodeLabels(labelMap)
+			setEntityKinds(kindMap)
 			setNodes((prev) =>
 				prev.map((node) => {
 					const label = labelMap.get(node.data.entityId)
-					if (label === undefined || node.data.label === label) return node
-					return { ...node, data: { ...node.data, label } }
+					const kind = kindMap.get(node.data.entityId) ?? 'Entity'
+					if (label === undefined || (node.data.label === label && node.data.kind === kind))
+						return node
+					return { ...node, data: { ...node.data, label, kind } }
 				}),
 			)
 		})
@@ -293,13 +633,11 @@ export function GraphPage() {
 
 	// Fetch TYPE relations for seed entities
 	useEffect(() => {
-		// Skip in focus mode or if already fetched
 		if (focusId || seedTypeRelations || !seedQuery.entities?.entities) return
 
 		const entities = seedQuery.entities.entities
 		if (entities.length === 0) return
 
-		// Batch fetch TYPE relations for all seed entities
 		Promise.all(
 			entities.map((entity) =>
 				getEntityRelations(entity.id, { type: 'TYPE' })
@@ -313,7 +651,6 @@ export function GraphPage() {
 
 			for (const { entityId, relations } of results) {
 				for (const rel of relations) {
-					// Add edge
 					newEdges.push({
 						id: `${rel.fromId}-${rel.toId}`,
 						source: rel.fromId,
@@ -321,16 +658,10 @@ export function GraphPage() {
 						type: rel.relationType,
 					})
 
-					// Add TYPE entity node if not exists
 					const otherId = rel.fromId === entityId ? rel.toId : rel.fromId
 					if (!seenIds.has(otherId)) {
 						seenIds.add(otherId)
-						newNodes.push({
-							id: otherId,
-							x: 0,
-							y: 0,
-							fixed: false,
-						})
+						newNodes.push({ id: otherId, x: 0, y: 0, fixed: false })
 					}
 				}
 			}
@@ -339,10 +670,13 @@ export function GraphPage() {
 		})
 	}, [focusId, seedQuery.entities, seedTypeRelations])
 
-	// Click handler: navigate to entity detail (with delay to distinguish from double-click)
+	// Click handler: select node (with delay for navigation on single-click)
 	const handleNodeClick = useCallback(
 		(_event: React.MouseEvent, node: EntityNodeType) => {
 			const entityId = node.data.entityId
+
+			// Select the node for inspector
+			setSelectedNodeId(entityId)
 
 			// Clear any existing pending click
 			if (pendingClick) {
@@ -360,7 +694,7 @@ export function GraphPage() {
 		[navigate, pendingClick],
 	)
 
-	// Double-click handler: expand neighbors
+	// Double-click handler: expand neighbors (cancels nav timer)
 	const handleNodeDoubleClick = useCallback(
 		async (_event: React.MouseEvent, node: EntityNodeType) => {
 			const entityId = node.data.entityId
@@ -374,14 +708,11 @@ export function GraphPage() {
 			// Skip if already expanded
 			if (expandedNodes.has(entityId)) return
 
-			// Fetch relations for this entity
 			try {
 				const data = await getEntityRelations(entityId)
 				const relations = data.relations ?? []
-
 				if (relations.length === 0) return
 
-				// Find new nodes to add
 				const existingIds = new Set(graphNodes.map((n) => n.id))
 				const newNodes: GraphNode[] = []
 				const newEdges: GraphEdge[] = []
@@ -389,7 +720,6 @@ export function GraphPage() {
 				for (const rel of relations) {
 					const otherId = rel.fromId === entityId ? rel.toId : rel.fromId
 
-					// Add edge
 					newEdges.push({
 						id: `${rel.fromId}-${rel.toId}`,
 						source: rel.fromId,
@@ -397,10 +727,8 @@ export function GraphPage() {
 						type: rel.relationType,
 					})
 
-					// Add node if not exists
 					if (!existingIds.has(otherId)) {
 						existingIds.add(otherId)
-						// Position near the clicked node
 						const sourceNode = graphNodes.find((n) => n.id === entityId)
 						newNodes.push({
 							id: otherId,
@@ -412,17 +740,15 @@ export function GraphPage() {
 				}
 
 				if (newNodes.length === 0 && newEdges.length > 0) {
-					// Only new edges, just add them
 					const allGraphEdges = [...graphEdges, ...newEdges]
 					setGraphEdges(allGraphEdges)
 
 					const rfEdges = allGraphEdges.map((e) => ({
 						...toReactFlowEdge(e, propertyDisplayNamesRef.current),
-						markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+						markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
 					}))
 					setEdges(rfEdges)
 				} else if (newNodes.length > 0) {
-					// Run simulation with all nodes
 					const allNodes = [...graphNodes, ...newNodes]
 					const allEdges = [...graphEdges, ...newEdges]
 
@@ -430,21 +756,19 @@ export function GraphPage() {
 					simulation.tick(SIMULATION_TICKS)
 					simulation.stop()
 
-					// Update state
 					setGraphNodes(allNodes)
 					setGraphEdges(allEdges)
 
 					const rfNodes = allNodes.map((n, i) => toReactFlowNode(n, i))
 					const rfEdges = allEdges.map((e) => ({
 						...toReactFlowEdge(e, propertyDisplayNamesRef.current),
-						markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+						markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
 					}))
 
 					setNodes(rfNodes)
 					setEdges(rfEdges)
 				}
 
-				// Mark as expanded
 				setExpandedNodes((prev) => new Set(prev).add(entityId))
 			} catch {
 				// Silently ignore expansion errors
@@ -469,14 +793,11 @@ export function GraphPage() {
 			const graphNode = graphNodes.find((n) => n.id === entityId)
 
 			if (graphNode) {
-				// Update position and pin
 				setNodePosition(graphNode, node.position.x, node.position.y)
-
-				// Update graph state
 				setGraphNodes((prev) => prev.map((n) => (n.id === entityId ? graphNode : n)))
 			}
 		},
-		[graphNodes, graphEdges],
+		[graphNodes],
 	)
 
 	// Handle node changes (for dragging)
@@ -495,13 +816,21 @@ export function GraphPage() {
 		[setEdges],
 	)
 
-	// Handle new connections (not used but required by types)
+	// Handle new connections
 	const onConnect = useCallback(
 		(connection: Connection) => {
 			setEdges((eds) => addEdge(connection, eds))
 		},
 		[setEdges],
 	)
+
+	// Focus search submit
+	const handleFocusSearch = useCallback(() => {
+		const id = focusInput.trim()
+		if (id) {
+			setSearchParams({ focus: id })
+		}
+	}, [focusInput, setSearchParams])
 
 	// Retry handler
 	const handleRetry = useCallback(() => {
@@ -513,18 +842,140 @@ export function GraphPage() {
 		}
 	}, [focusId, focusQuery, focusRelationsQuery, seedQuery])
 
+	// Inspector handlers
+	const handleInspectorClose = useCallback(() => {
+		setSelectedNodeId(null)
+	}, [])
+
+	const handleInspectorOpen = useCallback(() => {
+		if (selectedNodeId) {
+			navigate(`/entities/${selectedNodeId}`)
+		}
+	}, [selectedNodeId, navigate])
+
+	const handleInspectorExpand = useCallback(async () => {
+		if (!selectedNodeId || expandedNodes.has(selectedNodeId)) return
+
+		try {
+			const data = await getEntityRelations(selectedNodeId)
+			const relations = data.relations ?? []
+			if (relations.length === 0) return
+
+			const existingIds = new Set(graphNodes.map((n) => n.id))
+			const newNodes: GraphNode[] = []
+			const newEdges: GraphEdge[] = []
+
+			for (const rel of relations) {
+				const otherId = rel.fromId === selectedNodeId ? rel.toId : rel.fromId
+
+				newEdges.push({
+					id: `${rel.fromId}-${rel.toId}`,
+					source: rel.fromId,
+					target: rel.toId,
+					type: rel.relationType,
+				})
+
+				if (!existingIds.has(otherId)) {
+					existingIds.add(otherId)
+					const sourceNode = graphNodes.find((n) => n.id === selectedNodeId)
+					newNodes.push({
+						id: otherId,
+						x: (sourceNode?.x ?? 0) + (Math.random() - 0.5) * 100,
+						y: (sourceNode?.y ?? 0) + (Math.random() - 0.5) * 100,
+						fixed: false,
+					})
+				}
+			}
+
+			if (newNodes.length > 0) {
+				const allNodes = [...graphNodes, ...newNodes]
+				const allEdges = [...graphEdges, ...newEdges]
+
+				const simulation = createSimulation(allNodes, allEdges)
+				simulation.tick(SIMULATION_TICKS)
+				simulation.stop()
+
+				setGraphNodes(allNodes)
+				setGraphEdges(allEdges)
+
+				const rfNodes = allNodes.map((n, i) => toReactFlowNode(n, i))
+				const rfEdges = allEdges.map((e) => ({
+					...toReactFlowEdge(e, propertyDisplayNamesRef.current),
+					markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
+				}))
+
+				setNodes(rfNodes)
+				setEdges(rfEdges)
+			} else if (newEdges.length > 0) {
+				const allGraphEdges = [...graphEdges, ...newEdges]
+				setGraphEdges(allGraphEdges)
+				const rfEdges = allGraphEdges.map((e) => ({
+					...toReactFlowEdge(e, propertyDisplayNamesRef.current),
+					markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' },
+				}))
+				setEdges(rfEdges)
+			}
+
+			setExpandedNodes((prev) => new Set(prev).add(selectedNodeId))
+		} catch {
+			// Ignore
+		}
+	}, [selectedNodeId, expandedNodes, graphNodes, graphEdges, setNodes, setEdges])
+
+	const handleInspectorTogglePin = useCallback(() => {
+		if (!selectedNodeId) return
+		const graphNode = graphNodes.find((n) => n.id === selectedNodeId)
+		if (graphNode) {
+			if (graphNode.fixed) {
+				graphNode.fx = null
+				graphNode.fy = null
+				graphNode.fixed = false
+			} else {
+				graphNode.fx = graphNode.x
+				graphNode.fy = graphNode.y
+				graphNode.fixed = true
+			}
+			setGraphNodes((prev) => prev.map((n) => (n.id === selectedNodeId ? graphNode : n)))
+			// Update draggable
+			setNodes((prev) =>
+				prev.map((n) =>
+					n.data.entityId === selectedNodeId ? { ...n, draggable: !graphNode.fixed } : n,
+				),
+			)
+		}
+	}, [selectedNodeId, graphNodes, setNodes])
+
+	const handleSelectNeighbor = useCallback((id: string) => {
+		setSelectedNodeId(id)
+	}, [])
+
+	// Selected node data for inspector
+	const selectedNode = selectedNodeId
+		? {
+				entityId: selectedNodeId,
+				label: nodeLabels.get(selectedNodeId),
+				kind: entityKinds.get(selectedNodeId) ?? ('Entity' as EntityKind),
+				relatedIds: [...selectedRelatedIds],
+				inDegree: graphEdges.filter((e) => {
+					const tgt = typeof e.target === 'string' ? e.target : (e.target as GraphNode).id
+					return tgt === selectedNodeId
+				}).length,
+				outDegree: graphEdges.filter((e) => {
+					const src = typeof e.source === 'string' ? e.source : (e.source as GraphNode).id
+					return src === selectedNodeId
+				}).length,
+				isPinned: graphNodes.find((n) => n.id === selectedNodeId)?.fixed ?? false,
+			}
+		: null
+
 	// Loading state
 	if (isLoading) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<Card className="w-full max-w-md">
-					<CardContent className="py-8">
-						<div className="space-y-4">
-							<Skeleton className="h-8 w-48 mx-auto" />
-							<Skeleton className="h-64 w-full" />
-						</div>
-					</CardContent>
-				</Card>
+				<div className="w-full max-w-md space-y-4">
+					<Skeleton className="h-8 w-48 mx-auto" />
+					<Skeleton className="h-64 w-full" />
+				</div>
 			</div>
 		)
 	}
@@ -533,16 +984,12 @@ export function GraphPage() {
 	if (isError || focusError) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<Card className="w-full max-w-md bg-red-50 ring-red-200">
-					<CardContent className="py-8">
-						<div className="text-center">
-							<div className="text-red-600 mb-4">{focusError ?? 'Failed to load graph data'}</div>
-							<Button variant="default" onClick={handleRetry}>
-								Retry
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
+				<div className="bg-card border border-destructive/30 rounded-lg p-8 text-center max-w-md">
+					<div className="text-destructive mb-4">{focusError ?? 'Failed to load graph data'}</div>
+					<Button variant="default" onClick={handleRetry}>
+						Retry
+					</Button>
+				</div>
 			</div>
 		)
 	}
@@ -551,48 +998,169 @@ export function GraphPage() {
 	if (graphNodes.length === 0) {
 		return (
 			<div className="p-6 h-full flex items-center justify-center">
-				<Card className="w-full max-w-md">
-					<CardContent className="py-8">
-						<p className="text-center text-gray-500">
-							No entities to display. Add some entities to see the graph.
-						</p>
-					</CardContent>
-				</Card>
+				<div className="bg-card border border-border rounded-lg p-8 text-center max-w-md">
+					<p className="text-muted-foreground">No entities to display</p>
+				</div>
 			</div>
 		)
 	}
 
 	return (
-		<div className="h-full w-full relative">
-			<ReactFlow
-				nodes={nodes}
-				edges={edges}
-				onNodesChange={onNodesChange}
-				onEdgesChange={onEdgesChange}
-				onConnect={onConnect}
-				onNodeClick={handleNodeClick}
-				onNodeDoubleClick={handleNodeDoubleClick}
-				onNodeDragStop={handleNodeDragStop}
-				nodeTypes={nodeTypes}
-				edgeTypes={edgeTypes}
-				preventScrolling={false}
-				fitView
-				fitViewOptions={{ padding: 0.2 }}
-				minZoom={0.1}
-				maxZoom={4}
-				defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+		<div
+			className="h-full w-full p-3.5 pl-4 pr-4 pb-4"
+			style={{ maxWidth: 1600, margin: '0 auto' }}
+		>
+			<div
+				className="grid gap-3 h-full"
+				style={{
+					gridTemplateColumns: selectedNode ? '1fr 340px' : '1fr',
+				}}
 			>
-				<Background />
-				<Controls />
-				<Panel position="top-left" className="bg-white/80 p-2 rounded shadow-sm">
-					<div className="text-sm text-gray-600">
-						<div className="font-medium mb-1">Graph ({graphNodes.length} nodes)</div>
-						<div className="text-xs text-gray-400">
-							Click: view entity | Double-click: expand | Drag: pin | Ctrl+Scroll: zoom
+				{/* Main canvas */}
+				<div className="relative bg-card border border-border rounded-lg overflow-hidden">
+					{/* Dot grid background */}
+					<div
+						className="absolute inset-0 pointer-events-none z-0"
+						style={{
+							backgroundImage:
+								'radial-gradient(circle at center, var(--line-soft) 1px, transparent 1px)',
+							backgroundSize: '16px 16px',
+						}}
+					/>
+
+					<ReactFlow
+						nodes={nodes}
+						edges={edges}
+						onNodesChange={onNodesChange}
+						onEdgesChange={onEdgesChange}
+						onConnect={onConnect}
+						onNodeClick={handleNodeClick}
+						onNodeDoubleClick={handleNodeDoubleClick}
+						onNodeDragStop={handleNodeDragStop}
+						nodeTypes={nodeTypes}
+						edgeTypes={edgeTypes}
+						preventScrolling={false}
+						fitView
+						fitViewOptions={{ padding: 0.2 }}
+						minZoom={0.1}
+						maxZoom={4}
+						defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+						proOptions={{ hideAttribution: true }}
+					>
+						<Background color="transparent" />
+					</ReactFlow>
+
+					{/* Overlay header */}
+					<div className="absolute top-3 left-3 right-3 flex items-center gap-2.5 z-10">
+						<div className="bg-card border border-border rounded-lg px-3 py-2 flex items-center gap-2.5">
+							<div className="text-[13px] font-semibold">Graph</div>
+							<span className="font-mono text-[11px] text-muted-foreground">
+								{graphNodes.length} nodes · {graphEdges.length} edges
+							</span>
+						</div>
+
+						{/* Layout chips */}
+						<div className="bg-card border border-border rounded-lg p-1 flex gap-0.5">
+							<Chip active={false} disabled>
+								2D
+							</Chip>
+							<Chip active>Force</Chip>
+							<Chip active={false} disabled>
+								Hierarchy
+							</Chip>
+						</div>
+
+						<div className="flex-1" />
+
+						{/* Focus search */}
+						<div className="bg-card border border-border rounded-lg px-2 py-1 flex items-center gap-1.5">
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 14 14"
+								className="text-muted-foreground"
+								role="img"
+								aria-label="Search"
+							>
+								<circle cx="6" cy="6" r="3.8" stroke="currentColor" fill="none" strokeWidth="1.2" />
+								<path
+									d="M9.2 9.2l3 3"
+									stroke="currentColor"
+									strokeWidth="1.2"
+									strokeLinecap="round"
+								/>
+							</svg>
+							<input
+								data-testid="focus-search"
+								placeholder="Focus node…"
+								value={focusInput}
+								onChange={(e) => setFocusInput(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') handleFocusSearch()
+									if (e.key === 'Escape') setFocusInput('')
+								}}
+								className="border-none outline-none bg-transparent text-[12px] w-[120px]"
+							/>
 						</div>
 					</div>
-				</Panel>
-			</ReactFlow>
+
+					{/* Legend */}
+					<div className="absolute top-[62px] left-3 bg-card border border-border rounded-lg px-2.5 py-2 z-10 text-[11.5px]">
+						<div className="text-muted-foreground text-[10px] uppercase tracking-wider font-semibold mb-1.5">
+							Legend
+						</div>
+						<div className="flex items-center gap-1.5 py-0.5">
+							<span className="w-[6px] h-[6px] rounded-full bg-accent" />
+							<span className="text-[#3f3f46]">Entity</span>
+						</div>
+						<div className="flex items-center gap-1.5 py-0.5">
+							<span className="w-[6px] h-[6px] rounded-full bg-warning" />
+							<span className="text-[#3f3f46]">Property</span>
+						</div>
+						<div className="flex items-center gap-1.5 py-0.5">
+							<span className="w-[6px] h-[6px] rounded-full bg-purple" />
+							<span className="text-[#3f3f46]">Type</span>
+						</div>
+					</div>
+
+					{/* Zoom controls */}
+					<div className="absolute bottom-3.5 left-3.5 z-10">
+						<ZoomControls />
+					</div>
+				</div>
+
+				{/* Inspector panel */}
+				{selectedNode && (
+					<InspectorPanel
+						entityId={selectedNode.entityId}
+						label={selectedNode.label}
+						kind={selectedNode.kind}
+						relatedNodeIds={selectedNode.relatedIds}
+						nodeLabels={nodeLabels}
+						nodeKinds={entityKinds}
+						inDegree={selectedNode.inDegree}
+						outDegree={selectedNode.outDegree}
+						isPinned={selectedNode.isPinned}
+						onClose={handleInspectorClose}
+						onOpen={handleInspectorOpen}
+						onExpand={handleInspectorExpand}
+						onTogglePin={handleInspectorTogglePin}
+						onSelectNeighbor={handleSelectNeighbor}
+					/>
+				)}
+			</div>
 		</div>
+	)
+}
+
+/**
+ * Wrapped export with ReactFlowProvider for proper hook context.
+ * Required because ZoomControls uses useReactFlow() which needs the provider.
+ */
+export function GraphPageWithProvider() {
+	return (
+		<ReactFlowProvider>
+			<GraphPage />
+		</ReactFlowProvider>
 	)
 }

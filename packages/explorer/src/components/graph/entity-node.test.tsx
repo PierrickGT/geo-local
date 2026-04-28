@@ -86,7 +86,8 @@ describe('EntityNode', () => {
 		)
 
 		const node = screen.getByRole('button', { name: /Entity entity-123/ })
-		expect(node).toHaveClass('border-blue-600')
+		expect(node).toHaveClass('bg-accent')
+		expect(node).toHaveClass('text-accent-foreground')
 	})
 
 	it('has correct aria-label with label', () => {

@@ -6,7 +6,8 @@ import {
 	getBezierPath,
 } from '@xyflow/react'
 import { memo } from 'react'
-import { formatPropertyId } from '~/lib/constants'
+import { TYPES_PROPERTY_ID, formatPropertyId } from '~/lib/constants'
+import { cn } from '~/lib/utils'
 import type { GraphEdge } from './force-layout'
 
 /**
@@ -16,6 +17,10 @@ export type RelationEdgeData = {
 	relationType: string
 	/** Resolved property name (from usePropertyNames), used as display label */
 	propertyDisplayName?: string
+	/** Whether this edge is incident to the selected node (accent highlight) */
+	incident?: boolean
+	/** Whether this edge is dimmed (unrelated to selected) */
+	dimmed?: boolean
 }
 
 export type RelationEdge = Edge<RelationEdgeData>
@@ -27,6 +32,10 @@ interface RelationEdgeProps extends EdgeProps<RelationEdge> {
 
 /**
  * Custom ReactFlow edge that displays the relation type as a label.
+ * Styled per Graphite design:
+ * - Default: subtle gray (#e4e4e7), stroke-width 1
+ * - Incident to selected: accent (#2f5cff), stroke-width 1.6
+ * - Dimmed (unrelated to selected): very light (#f1f1ef), stroke-width 1
  */
 function RelationEdgeBase({
 	id,
@@ -51,7 +60,13 @@ function RelationEdgeBase({
 	})
 
 	const relationType = data?.relationType ?? ''
+	const isTypeRelation = relationType === TYPES_PROPERTY_ID
 	const displayName = data?.propertyDisplayName ?? formatPropertyId(relationType)
+	const incident = data?.incident ?? false
+	const dimmed = data?.dimmed ?? false
+
+	const strokeColor = incident ? 'var(--accent)' : dimmed ? 'var(--line-soft)' : 'var(--border)'
+	const strokeWidth = incident ? 1.6 : 1
 
 	const handleClick = (event: React.MouseEvent) => {
 		event.stopPropagation()
@@ -71,25 +86,32 @@ function RelationEdgeBase({
 				id={id}
 				path={edgePath}
 				markerEnd={markerEnd}
-				style={{ ...style, stroke: '#94a3b8', strokeWidth: 2 }}
+				style={{ ...style, stroke: strokeColor, strokeWidth }}
 			/>
-			<EdgeLabelRenderer>
-				<div
-					className="absolute bg-slate-100 px-1.5 py-0.5 rounded text-xs font-medium text-slate-600 cursor-pointer hover:bg-slate-200 transition-colors"
-					style={{
-						transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-						pointerEvents: 'all',
-					}}
-					onClick={handleClick}
-					onKeyDown={handleKeyDown}
-					tabIndex={0}
-					role="button"
-					aria-label={`Relation ${relationType}`}
-					title={relationType}
-				>
-					{displayName}
-				</div>
-			</EdgeLabelRenderer>
+			{!isTypeRelation && (
+				<EdgeLabelRenderer>
+					<div
+						className={cn(
+							'absolute px-1.5 py-0.5 rounded text-[11px] font-medium cursor-pointer transition-colors',
+							incident
+								? 'bg-accent/10 text-accent'
+								: 'bg-muted text-muted-foreground hover:bg-border',
+						)}
+						style={{
+							transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+							pointerEvents: 'all',
+						}}
+						onClick={handleClick}
+						onKeyDown={handleKeyDown}
+						tabIndex={0}
+						role="button"
+						aria-label={`Relation ${relationType}`}
+						title={relationType}
+					>
+						{displayName}
+					</div>
+				</EdgeLabelRenderer>
+			)}
 		</>
 	)
 }
@@ -102,13 +124,19 @@ export const RelationEdge = memo(RelationEdgeBase)
 export function toReactFlowEdge(
 	edge: GraphEdge,
 	displayNames?: Map<string, string | undefined>,
+	options?: { incident?: boolean; dimmed?: boolean },
 ): RelationEdge {
 	return {
 		id: edge.id,
 		source: edge.source,
 		target: edge.target,
 		type: 'relation',
-		data: { relationType: edge.type, propertyDisplayName: displayNames?.get(edge.type) },
+		data: {
+			relationType: edge.type,
+			propertyDisplayName: displayNames?.get(edge.type),
+			incident: options?.incident,
+			dimmed: options?.dimmed,
+		},
 	}
 }
 

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { GraphPage } from './graph-page'
+import { GraphPageWithProvider as GraphPage } from './graph-page'
 
 // Mock the hooks
 vi.mock('~/hooks/use-entities', () => ({
@@ -271,13 +271,13 @@ describe('GraphPage', () => {
 		it('renders graph with seed entities', async () => {
 			render(<GraphPage />, { wrapper: createWrapper() })
 
-			// Should show the graph panel with node count
+			// Should show the Graph title
 			await waitFor(() => {
-				expect(screen.getByText(/Graph \(/)).toBeInTheDocument()
+				expect(screen.getByText('Graph')).toBeInTheDocument()
 			})
 
-			// Should show help text
-			expect(screen.getByText(/Click: view entity/)).toBeInTheDocument()
+			// Should show node/edge count
+			expect(screen.getByText(/nodes ·/)).toBeInTheDocument()
 		})
 	})
 
@@ -302,27 +302,28 @@ describe('GraphPage', () => {
 			// Pass URL with focus param to MemoryRouter
 			render(<GraphPage />, { wrapper: createWrapper('/graph?focus=focus-entity') })
 
-			// Should show the graph panel
+			// Should show the Graph title
 			await waitFor(() => {
-				expect(screen.getByText(/Graph \(/)).toBeInTheDocument()
+				expect(screen.getByText('Graph')).toBeInTheDocument()
 			})
 		})
 	})
 
 	describe('node interactions', () => {
-		it('graph panel shows interaction hints', async () => {
+		it('shows layout chips', async () => {
 			render(<GraphPage />, { wrapper: createWrapper() })
 
 			await waitFor(() => {
-				expect(
-					screen.getByText(/Click: view entity \| Double-click: expand \| Drag: pin/),
-				).toBeInTheDocument()
+				expect(screen.getByText('Force')).toBeInTheDocument()
 			})
+
+			expect(screen.getByText('2D')).toBeInTheDocument()
+			expect(screen.getByText('Hierarchy')).toBeInTheDocument()
 		})
 	})
 
 	describe('focus parameter handling', () => {
-		it('handles focus parameter in URL', async () => {
+		it('handles focus parameter in URL', () => {
 			mockUseEntity.mockReturnValue({
 				entity: {
 					entity: {
