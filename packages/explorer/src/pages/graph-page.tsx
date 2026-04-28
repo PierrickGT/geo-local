@@ -423,7 +423,11 @@ export function GraphPage() {
 					: false
 				const kind = entityKinds.get(node.data.entityId) ?? 'Entity'
 				const isSelected = node.data.entityId === selectedNodeId
-				if (node.data.dimmed === dimmed && node.data.kind === kind && node.data.isSelected === isSelected)
+				if (
+					node.data.dimmed === dimmed &&
+					node.data.kind === kind &&
+					node.data.isSelected === isSelected
+				)
 					return node
 				changed = true
 				return { ...node, data: { ...node.data, dimmed, kind, isSelected } }
@@ -712,13 +716,10 @@ export function GraphPage() {
 	}, [focusId, seedQuery.entities, seedTypeRelations])
 
 	// Click handler: select node and show inspector (no navigation)
-	const handleNodeClick = useCallback(
-		(_event: React.MouseEvent, node: EntityNodeType) => {
-			const entityId = node.data.entityId
-			setSelectedNodeId(entityId)
-		},
-		[],
-	)
+	const handleNodeClick = useCallback((_event: React.MouseEvent, node: EntityNodeType) => {
+		const entityId = node.data.entityId
+		setSelectedNodeId(entityId)
+	}, [])
 
 	// Double-click handler: navigate to entity detail
 	const handleNodeDoubleClick = useCallback(

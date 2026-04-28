@@ -81,10 +81,7 @@ describe('EntityNode', () => {
 	it('shows selected state styling via data.isSelected', () => {
 		render(
 			<TestWrapper>
-				<EntityNode
-					{...defaultProps}
-					data={{ entityId: 'entity-123', isSelected: true }}
-				/>
+				<EntityNode {...defaultProps} data={{ entityId: 'entity-123', isSelected: true }} />
 			</TestWrapper>,
 		)
 
