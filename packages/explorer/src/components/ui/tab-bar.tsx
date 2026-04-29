@@ -32,7 +32,7 @@ function TabBar({
 						type="button"
 						data-active={isActive}
 						className={cn(
-							'px-3 py-2.5 text-[13px] cursor-pointer transition-colors -mb-px',
+							'px-3 py-2.5 text-sm cursor-pointer transition-colors -mb-px',
 							'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 							isActive
 								? 'text-foreground font-medium border-b-2 border-accent'

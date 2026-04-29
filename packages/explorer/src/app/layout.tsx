@@ -209,7 +209,7 @@ function LayoutInner() {
 	const editsCount = editsData?.edits?.length
 
 	return (
-		<div className="h-screen bg-background flex font-sans text-foreground text-[13px] tracking-[-0.01em]">
+		<div className="h-screen bg-background flex font-sans text-foreground text-sm tracking-[-0.01em]">
 			{/* Sidebar */}
 			<aside
 				data-testid="sidebar"
@@ -220,15 +220,15 @@ function LayoutInner() {
 					<div className="flex items-center gap-2">
 						<LogoIcon />
 						<div>
-							<div className="font-semibold text-[13.5px] tracking-[-0.2px]">Lattice</div>
-							<div className="text-[11px] text-muted-foreground font-mono">geo · mainnet</div>
+							<div className="font-semibold text-sm tracking-[-0.2px]">Lattice</div>
+							<div className="text-xs text-muted-foreground font-mono">geo · mainnet</div>
 						</div>
 					</div>
 				</div>
 
 				{/* Explore group */}
 				<div className="px-2.5 pt-2.5 pb-1">
-					<div className="text-[10.5px] text-[var(--color-muted-foreground)]/[0.6] uppercase tracking-[1px] px-2 py-1.5 font-semibold">
+					<div className="text-xs text-[var(--color-muted-foreground)]/[0.6] uppercase tracking-[1px] px-2 py-1.5 font-semibold">
 						Explore
 					</div>
 					{navItems.map((item) => {
@@ -247,7 +247,7 @@ function LayoutInner() {
 								data-testid={item.id}
 								className={({ isActive }) => {
 									const base =
-										'w-full flex items-center gap-2.5 px-2 py-[7px] rounded-md border-none cursor-pointer font-inherit text-[13px] text-left no-underline'
+										'w-full flex items-center gap-2.5 px-2 py-[7px] rounded-md border-none cursor-pointer font-inherit text-sm text-left no-underline'
 									const active = isActive
 										? 'bg-hover text-foreground font-medium'
 										: 'bg-transparent text-[#3f3f46] font-normal'
@@ -261,7 +261,7 @@ function LayoutInner() {
 										/>
 										<span className="flex-1">{item.label}</span>
 										{count !== undefined && (
-											<span className="text-[11px] text-[#a1a1aa] font-mono tabular-nums">
+											<span className="text-xs text-[#a1a1aa] font-mono tabular-nums">
 												{count.toLocaleString()}
 											</span>
 										)}
@@ -274,14 +274,14 @@ function LayoutInner() {
 
 				{/* Saved views group */}
 				<div className="px-2.5 pt-3.5 pb-1">
-					<div className="text-[10.5px] text-[var(--color-muted-foreground)]/[0.6] uppercase tracking-[1px] px-2 py-1.5 font-semibold">
+					<div className="text-xs text-[var(--color-muted-foreground)]/[0.6] uppercase tracking-[1px] px-2 py-1.5 font-semibold">
 						Saved views
 					</div>
 					{savedViews.map((view) => (
 						<button
 							key={view}
 							type="button"
-							className="w-full flex items-center gap-2.5 px-2 py-1.5 border-none bg-transparent text-[#3f3f46] rounded-md cursor-default font-inherit text-[12.5px] text-left"
+							className="w-full flex items-center gap-2.5 px-2 py-1.5 border-none bg-transparent text-[#3f3f46] rounded-md cursor-default font-inherit text-xs text-left"
 						>
 							<span className="w-1.5 h-1.5 rounded-[1px] bg-[#a1a1aa]" />
 							{view}
@@ -293,7 +293,7 @@ function LayoutInner() {
 
 				{/* Footer */}
 				<div className="px-3.5 py-2.5 border-t border-line-soft">
-					<span className="text-[11px] text-muted-foreground font-mono">local · 0.1</span>
+					<span className="text-xs text-muted-foreground font-mono">local · 0.1</span>
 				</div>
 			</aside>
 
@@ -307,7 +307,7 @@ function LayoutInner() {
 					{/* Breadcrumb */}
 					<div
 						data-testid="breadcrumb"
-						className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground"
+						className="flex items-center gap-1.5 text-xs text-muted-foreground"
 					>
 						{crumbs.map((crumb, i) => (
 							<span key={crumb} className="contents">
@@ -334,7 +334,7 @@ function LayoutInner() {
 					<div className="w-px h-[18px] bg-border" />
 
 					{/* Command-K hint */}
-					<div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+					<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
 						<span>Command</span>
 						<Kbd>⌘K</Kbd>
 					</div>

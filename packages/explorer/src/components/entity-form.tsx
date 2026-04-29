@@ -87,7 +87,7 @@ export function triplesToFormData(triples: Triple[]): EntityFormData {
 // ---------------------------------------------------------------------------
 
 const formInputClass =
-	'w-full px-[10px] py-[6px] border border-border rounded-[6px] text-[13px] bg-card text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-accent/20'
+	'w-full px-[10px] py-[6px] border border-border rounded-[6px] text-sm bg-card text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-accent/20'
 
 function FormSection({
 	title,
@@ -106,9 +106,9 @@ function FormSection({
 			style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-line-soft)' }}
 		>
 			<div>
-				<div className="text-[13.5px] font-medium text-foreground">{title}</div>
+				<div className="text-base font-medium text-foreground">{title}</div>
 				{subtitle && (
-					<div className="text-[12px] text-muted-foreground mt-[3px] leading-snug">{subtitle}</div>
+					<div className="text-xs text-muted-foreground mt-[3px] leading-snug">{subtitle}</div>
 				)}
 			</div>
 			<div>{children}</div>
@@ -132,11 +132,11 @@ function Field({
 	return (
 		<div className="mb-[14px] last:mb-0">
 			<div className="flex items-baseline gap-[6px] mb-[6px]">
-				<label htmlFor={htmlFor} className="text-[12px] font-medium text-[#3f3f46]">
+				<label htmlFor={htmlFor} className="text-xs font-medium text-[#3f3f46]">
 					{label}
 					{required && <span className="text-destructive ml-[2px]">*</span>}
 				</label>
-				{hint && <span className="text-[11px] text-[#a1a1aa]">· {hint}</span>}
+				{hint && <span className="text-xs text-[#a1a1aa]">· {hint}</span>}
 			</div>
 			{children}
 		</div>
@@ -245,7 +245,7 @@ export function EntityForm({
 							className={formInputClass}
 						/>
 						{nameError && (
-							<p className="text-[12px] text-destructive mt-1" data-testid="name-error">
+							<p className="text-xs text-destructive mt-1" data-testid="name-error">
 								{nameError}
 							</p>
 						)}
@@ -273,10 +273,10 @@ export function EntityForm({
 								className="flex items-center gap-2 px-[10px] py-[6px] bg-background border border-border rounded-[6px]"
 								data-testid="entity-id-display"
 							>
-								<span className="font-mono text-[12px] text-muted-foreground flex-1 overflow-hidden text-ellipsis">
+								<span className="font-mono text-xs text-muted-foreground flex-1 overflow-hidden text-ellipsis">
 									{entityId ?? ''}
 								</span>
-								<span className="text-[11px] text-[#a1a1aa]">generated · immutable</span>
+								<span className="text-xs text-[#a1a1aa]">generated · immutable</span>
 							</div>
 						</Field>
 					)}
@@ -298,7 +298,7 @@ export function EntityForm({
 								{typeChips.map((t) => (
 									<span
 										key={t}
-										className="inline-flex items-center gap-[6px] px-[9px] py-[3px] bg-[#eef2ff] text-accent text-[11.5px] rounded-[4px] font-medium"
+										className="inline-flex items-center gap-[6px] px-[9px] py-[3px] bg-[#eef2ff] text-accent text-xs rounded-[4px] font-medium"
 									>
 										{t}
 										<button
@@ -315,7 +315,7 @@ export function EntityForm({
 								))}
 								<button
 									type="button"
-									className="border border-dashed border-border bg-transparent text-muted-foreground px-2 py-[2px] rounded-[4px] text-[11.5px] cursor-pointer"
+									className="border border-dashed border-border bg-transparent text-muted-foreground px-2 py-[2px] rounded-[4px] text-xs cursor-pointer"
 									data-testid="suggest-types"
 								>
 									+ Suggest
@@ -326,7 +326,7 @@ export function EntityForm({
 							<div className="flex gap-[6px] mt-2">
 								<button
 									type="button"
-									className="border border-dashed border-border bg-transparent text-muted-foreground px-2 py-[2px] rounded-[4px] text-[11.5px] cursor-pointer"
+									className="border border-dashed border-border bg-transparent text-muted-foreground px-2 py-[2px] rounded-[4px] text-xs cursor-pointer"
 									data-testid="suggest-types"
 								>
 									+ Suggest
@@ -344,7 +344,7 @@ export function EntityForm({
 				>
 					{properties.length === 0 && (
 						<div
-							className="py-[14px] px-4 border border-dashed border-border rounded-[6px] text-[12.5px] text-muted-foreground text-center"
+							className="py-[14px] px-4 border border-dashed border-border rounded-[6px] text-xs text-muted-foreground text-center"
 							data-testid="no-properties-message"
 						>
 							No properties yet. Add one to define data on this entity.
@@ -360,7 +360,7 @@ export function EntityForm({
 								value={row.propertyId}
 								onChange={(e) => updateProperty(index, 'propertyId', e.target.value)}
 								placeholder="Property ID or name"
-								className={`${formInputClass} font-mono text-[12px]`}
+								className={`${formInputClass} font-mono text-xs`}
 								data-testid={`property-id-${index}`}
 							/>
 							<select
@@ -399,7 +399,7 @@ export function EntityForm({
 						type="button"
 						onClick={addProperty}
 						data-testid="add-property"
-						className="border border-dashed border-border bg-transparent text-[#3f3f46] px-3 py-[6px] rounded-[6px] text-[12.5px] cursor-pointer inline-flex items-center gap-[6px] mt-1"
+						className="border border-dashed border-border bg-transparent text-[#3f3f46] px-3 py-[6px] rounded-[6px] text-xs cursor-pointer inline-flex items-center gap-[6px] mt-1"
 					>
 						<svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="Plus">
 							<path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.3" />
@@ -431,7 +431,7 @@ export function EntityForm({
 						strokeLinecap="round"
 					/>
 				</svg>
-				<span className="text-[12.5px] text-[#3f3f46]" data-testid="staging-text">
+				<span className="text-xs text-[#3f3f46]" data-testid="staging-text">
 					{mode === 'edit' && !isDirty ? (
 						'No changes to save.'
 					) : name.trim() ? (
@@ -445,7 +445,7 @@ export function EntityForm({
 
 				{/* No-op message for edit mode */}
 				{mode === 'edit' && !isDirty && (
-					<span className="text-[12px] text-muted-foreground" data-testid="no-changes-message">
+					<span className="text-xs text-muted-foreground" data-testid="no-changes-message">
 						No changes to save.
 					</span>
 				)}
@@ -453,7 +453,7 @@ export function EntityForm({
 				<div className="flex-1" />
 				<button
 					type="button"
-					className="border border-border bg-card text-[#3f3f46] px-[14px] py-[6px] rounded-[6px] text-[12.5px] cursor-pointer hover:bg-hover transition-colors"
+					className="border border-border bg-card text-[#3f3f46] px-[14px] py-[6px] rounded-[6px] text-xs cursor-pointer hover:bg-hover transition-colors"
 					onClick={onCancel ?? (() => window.history.back())}
 					data-testid="entity-cancel"
 				>
@@ -463,7 +463,7 @@ export function EntityForm({
 					type="submit"
 					disabled={isSubmitting || !canSubmit}
 					data-testid="entity-submit"
-					className="px-[14px] py-[6px] rounded-[6px] text-[12.5px] cursor-pointer font-medium border-none disabled:cursor-not-allowed disabled:bg-line-soft disabled:text-[#a1a1aa] bg-foreground text-background"
+					className="px-[14px] py-[6px] rounded-[6px] text-xs cursor-pointer font-medium border-none disabled:cursor-not-allowed disabled:bg-line-soft disabled:text-[#a1a1aa] bg-foreground text-background"
 				>
 					{isSubmitting ? 'Saving...' : (submitLabel ?? defaultSubmitLabel)}
 				</button>

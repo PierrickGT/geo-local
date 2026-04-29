@@ -22,7 +22,7 @@ function TypePill({
 			data-slot="type-pill"
 			data-kind={kindStyles[kind] ? kind : 'unknown'}
 			className={cn(
-				'inline-flex items-center justify-center text-[11.5px] font-medium px-2 py-0.5 rounded-full',
+				'inline-flex items-center justify-center text-xs font-medium px-2 py-0.5 rounded-full',
 				style,
 				className,
 			)}

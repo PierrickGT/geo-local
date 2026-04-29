@@ -24,7 +24,7 @@ function DiffPane({
 						: 'bg-destructive/5 text-destructive border border-destructive/20',
 				)}
 			>
-				<div className="text-[10px] uppercase tracking-wide font-medium mb-1.5 text-muted-foreground">
+				<div className="text-xs uppercase tracking-wide font-medium mb-1.5 text-muted-foreground">
 					Before
 				</div>
 				<div className="whitespace-pre-wrap break-all">{before}</div>
@@ -38,7 +38,7 @@ function DiffPane({
 						: 'bg-success/5 text-success border border-success/20',
 				)}
 			>
-				<div className="text-[10px] uppercase tracking-wide font-medium mb-1.5 text-muted-foreground">
+				<div className="text-xs uppercase tracking-wide font-medium mb-1.5 text-muted-foreground">
 					After
 				</div>
 				<div className="whitespace-pre-wrap break-all">{after}</div>

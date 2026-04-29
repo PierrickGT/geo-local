@@ -364,8 +364,8 @@ export function EntitiesPage() {
 			{/* Toolbar */}
 			<div className="flex items-end gap-3.5 mb-3.5">
 				<div>
-					<h1 className="text-[22px] font-semibold tracking-[-0.5px] leading-[1.1]">Entities</h1>
-					<div data-testid="entities-subtitle" className="text-[12.5px] text-muted-foreground mt-1">
+					<h1 className="text-[24px] font-semibold tracking-[-0.5px] leading-[1.1]">Entities</h1>
+					<div data-testid="entities-subtitle" className="text-xs text-muted-foreground mt-1">
 						<span className="font-mono text-[#3f3f46]">{shownCount.toLocaleString()}</span> shown ·{' '}
 						<span className="font-mono">{total.toLocaleString()}</span> total
 					</div>
@@ -464,7 +464,7 @@ export function EntitiesPage() {
 						updateParams({ q: e.target.value })
 					}}
 					placeholder="Search by name, ID, or property…"
-					className="flex-1 border-none outline-none bg-transparent text-[13px] text-foreground"
+					className="flex-1 border-none outline-none bg-transparent text-sm text-foreground"
 				/>
 				<Chip active={activeFilter === 'all'} onClick={() => handleFilterTypeChange('all')}>
 					All <span className="text-[#a1a1aa] ml-1 font-mono">{total.toLocaleString()}</span>

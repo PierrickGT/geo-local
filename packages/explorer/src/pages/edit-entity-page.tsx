@@ -199,8 +199,8 @@ export function EditEntityPage() {
 						<div className="text-center">
 							{isNotFound ? (
 								<>
-									<h3 className="text-[13px] font-medium text-foreground">Entity not found</h3>
-									<p className="mt-1 text-[12.5px] text-muted-foreground">
+									<h3 className="text-sm font-medium text-foreground">Entity not found</h3>
+									<p className="mt-1 text-xs text-muted-foreground">
 										The entity with ID &quot;{id}&quot; does not exist.
 									</p>
 									<Button variant="default" onClick={() => navigate('/entities')} className="mt-4">
@@ -209,8 +209,8 @@ export function EditEntityPage() {
 								</>
 							) : (
 								<>
-									<h3 className="text-[13px] font-medium text-foreground">Failed to load entity</h3>
-									<p className="mt-1 text-[12.5px] text-muted-foreground">
+									<h3 className="text-sm font-medium text-foreground">Failed to load entity</h3>
+									<p className="mt-1 text-xs text-muted-foreground">
 										{error?.message || 'An unexpected error occurred'}
 									</p>
 									<Button
@@ -248,16 +248,16 @@ export function EditEntityPage() {
 		<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
 			{/* H1 + hint */}
 			<div className="mb-[18px]">
-				<h1 className="text-[22px] font-semibold tracking-[-0.5px] text-foreground">Edit entity</h1>
-				<p className="text-[12.5px] text-muted-foreground mt-1" data-testid="edit-hint">
+				<h1 className="text-[24px] font-semibold tracking-[-0.5px] text-foreground">Edit entity</h1>
+				<p className="text-xs text-muted-foreground mt-1" data-testid="edit-hint">
 					Changes will be staged as edits until published
 				</p>
 			</div>
 
 			{mutationError && (
 				<div className="mb-4 rounded-lg bg-red-50 p-4 ring-1 ring-red-200" data-testid="edit-error">
-					<p className="text-[13px] font-medium text-red-800">Failed to update entity</p>
-					<p className="text-[12.5px] text-red-600 mt-1">{mutationError.message}</p>
+					<p className="text-sm font-medium text-red-800">Failed to update entity</p>
+					<p className="text-xs text-red-600 mt-1">{mutationError.message}</p>
 				</div>
 			)}
 

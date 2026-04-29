@@ -46,7 +46,7 @@ function EntityNodeBase({ data }: NodeProps<EntityNode>) {
 	return (
 		<div
 			className={cn(
-				'px-2.5 py-1 rounded-xl text-[11.5px] whitespace-nowrap cursor-pointer transition-all',
+				'px-2.5 py-1 rounded-xl text-xs whitespace-nowrap cursor-pointer transition-all',
 				isSelected
 					? 'bg-accent text-accent-foreground border-none font-semibold shadow-[0_4px_14px_rgba(47,92,255,.35)]'
 					: 'bg-card text-[#3f3f46] border border-[#e4e4e7] font-medium shadow-[0_1px_2px_rgba(0,0,0,.04)]',

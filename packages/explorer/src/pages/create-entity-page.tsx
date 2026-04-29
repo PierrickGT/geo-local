@@ -69,10 +69,10 @@ export function CreateEntityPage() {
 		<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
 			{/* H1 + hint */}
 			<div className="mb-[18px]">
-				<h1 className="text-[22px] font-semibold tracking-[-0.5px] text-foreground">
+				<h1 className="text-[24px] font-semibold tracking-[-0.5px] text-foreground">
 					Create entity
 				</h1>
-				<p className="text-[12.5px] text-muted-foreground mt-1" data-testid="create-hint">
+				<p className="text-xs text-muted-foreground mt-1" data-testid="create-hint">
 					New entity will be staged as a pending edit
 				</p>
 			</div>
@@ -82,8 +82,8 @@ export function CreateEntityPage() {
 					className="mb-4 rounded-lg bg-red-50 p-4 ring-1 ring-red-200"
 					data-testid="create-error"
 				>
-					<p className="text-[13px] font-medium text-red-800">Failed to create entity</p>
-					<p className="text-[12.5px] text-red-600 mt-1">{error.message}</p>
+					<p className="text-sm font-medium text-red-800">Failed to create entity</p>
+					<p className="text-xs text-red-600 mt-1">{error.message}</p>
 				</div>
 			)}
 

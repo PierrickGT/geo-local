@@ -92,7 +92,7 @@ function RelationEdgeBase({
 				<EdgeLabelRenderer>
 					<div
 						className={cn(
-							'absolute px-1.5 py-0.5 rounded text-[11px] font-medium cursor-pointer transition-colors',
+							'absolute px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors',
 							incident
 								? 'bg-accent/10 text-accent'
 								: 'bg-muted text-muted-foreground hover:bg-border',

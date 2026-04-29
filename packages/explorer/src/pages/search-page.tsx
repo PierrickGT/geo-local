@@ -124,8 +124,8 @@ export function SearchPage() {
 		<div className="p-[18px_20px_24px] max-w-[1200px] mx-auto">
 			{/* Header */}
 			<div className="mb-3.5">
-				<div className="text-[22px] font-semibold tracking-[-0.5px]">Search</div>
-				<div className="text-[12.5px] text-muted-foreground mt-1">
+				<div className="text-[24px] font-semibold tracking-[-0.5px]">Search</div>
+				<div className="text-xs text-muted-foreground mt-1">
 					Query across names, IDs, and property values
 				</div>
 			</div>
@@ -237,7 +237,7 @@ export function SearchPage() {
 						</svg>
 					</div>
 					<div className="text-sm font-medium">Find entities across the graph</div>
-					<div className="text-[12.5px] text-muted-foreground mt-1 mb-[18px]">
+					<div className="text-xs text-muted-foreground mt-1 mb-[18px]">
 						Enter a name, a property value, or paste a full 32-character id.
 					</div>
 					<div className="flex gap-2 justify-center flex-wrap">
@@ -259,7 +259,7 @@ export function SearchPage() {
 			{hasNoResults && !isSearching && !isError && (
 				<div className="bg-card border border-border rounded-lg p-6 text-center">
 					<div className="text-sm font-medium mb-1">No results found</div>
-					<div className="text-[12.5px] text-muted-foreground">No entities matching "{query}"</div>
+					<div className="text-xs text-muted-foreground">No entities matching "{query}"</div>
 				</div>
 			)}
 
@@ -268,10 +268,8 @@ export function SearchPage() {
 				<div className="bg-card border border-border rounded-lg overflow-hidden">
 					{/* Header */}
 					<div className="px-3.5 py-2.5 border-b border-border bg-[#fcfcfb] flex items-center gap-2">
-						<span className="text-[12.5px] font-medium">Matching entities</span>
-						<span className="font-mono text-[11.5px] text-muted-foreground">
-							{entityResults.length}
-						</span>
+						<span className="text-xs font-medium">Matching entities</span>
+						<span className="font-mono text-xs text-muted-foreground">{entityResults.length}</span>
 					</div>
 					{/* Entity rows */}
 					{entityResults.map((entity) => (
@@ -285,15 +283,13 @@ export function SearchPage() {
 				<div className="bg-card border border-border rounded-lg overflow-hidden">
 					{/* Header */}
 					<div className="px-3.5 py-2.5 border-b border-border bg-[#fcfcfb] flex items-center gap-2">
-						<span className="text-[12.5px] font-medium">Text matches</span>
-						<span className="font-mono text-[11.5px] text-muted-foreground">
-							{textResults.length}
-						</span>
+						<span className="text-xs font-medium">Text matches</span>
+						<span className="font-mono text-xs text-muted-foreground">{textResults.length}</span>
 						<div className="flex-1" />
-						<span className="text-[11.5px] text-muted-foreground">Grouped by entity</span>
+						<span className="text-xs text-muted-foreground">Grouped by entity</span>
 					</div>
 					{/* Column headers */}
-					<div className="grid grid-cols-[240px_180px_1fr_80px] px-3.5 py-2 border-b border-border text-[11px] text-muted-foreground uppercase tracking-[0.6px] font-semibold">
+					<div className="grid grid-cols-[240px_180px_1fr_80px] px-3.5 py-2 border-b border-border text-xs text-muted-foreground uppercase tracking-[0.6px] font-semibold">
 						<div>Entity</div>
 						<div>Property</div>
 						<div>Value</div>
@@ -367,21 +363,19 @@ function TextMatchRow({
 		>
 			{/* Entity column */}
 			<div className="min-w-0">
-				<div className="text-[13px] font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+				<div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
 					{result.entityId}
 				</div>
-				<div className="font-mono text-[11px] text-[#a1a1aa] whitespace-nowrap overflow-hidden text-ellipsis">
+				<div className="font-mono text-xs text-[#a1a1aa] whitespace-nowrap overflow-hidden text-ellipsis">
 					{result.entityId.slice(0, 16)}…
 				</div>
 			</div>
 			{/* Property column */}
 			<div>
-				<div className="font-mono text-[11.5px] text-[#3f3f46]">
-					{result.propertyId.slice(0, 12)}…
-				</div>
+				<div className="font-mono text-xs text-[#3f3f46]">{result.propertyId.slice(0, 12)}…</div>
 			</div>
 			{/* Value column with highlighting */}
-			<div className="text-[13px] text-[#3f3f46] leading-snug">
+			<div className="text-sm text-[#3f3f46] leading-snug">
 				<HighlightedText text={valueText} query={query} />
 			</div>
 			{/* Open button */}

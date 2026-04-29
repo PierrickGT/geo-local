@@ -134,7 +134,7 @@ function ValueTypeBadge({ type }: { type: string }) {
 	return (
 		<span
 			data-slot="value-type-badge"
-			className={`inline-flex items-center text-[10.5px] font-mono tracking-wide px-[5px] py-[1px] rounded-[3px] ${cls}`}
+			className={`inline-flex items-center text-xs font-mono tracking-wide px-[5px] py-[1px] rounded-[3px] ${cls}`}
 		>
 			{type}
 		</span>
@@ -422,7 +422,7 @@ function GraphNeighborhood({
 		<Panel
 			title="Graph neighborhood"
 			right={
-				<span className="text-[11px] text-muted-foreground font-mono">
+				<span className="text-xs text-muted-foreground font-mono">
 					{totalRelations > 0 ? `${totalRelations + 1} nodes · ${totalRelations} edges` : '1 node'}
 				</span>
 			}
@@ -435,7 +435,7 @@ function GraphNeighborhood({
 				}}
 			>
 				<div
-					className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-[10.5px] font-medium whitespace-nowrap bg-accent text-white z-10"
+					className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap bg-accent text-white z-10"
 					style={{ boxShadow: '0 2px 8px rgba(47,92,255,.3)' }}
 				>
 					{entityName}
@@ -586,19 +586,19 @@ export function EntityPage() {
 			<div className="bg-card border border-border rounded-lg p-4 mb-3">
 				<div className="flex items-start gap-3.5">
 					{/* Avatar */}
-					<div className="w-10 h-10 rounded-lg bg-accent/10 text-accent grid place-items-center text-[18px] font-semibold border border-accent/[0.13] font-mono flex-shrink-0">
+					<div className="w-10 h-10 rounded-lg bg-accent/10 text-accent grid place-items-center text-[20px] font-semibold border border-accent/[0.13] font-mono flex-shrink-0">
 						{initials}
 					</div>
 
 					<div className="flex-1 min-w-0">
 						<div className="flex items-center gap-2.5 mb-0.5">
 							{entityName && (
-								<span className="text-[22px] font-semibold tracking-tight text-foreground">
+								<span className="text-[24px] font-semibold tracking-tight text-foreground">
 									{entityName}
 								</span>
 							)}
 							<TypePill kind={category} />
-							<span className="text-[11.5px] text-success bg-green-50 px-[7px] py-[2px] rounded font-medium">
+							<span className="text-xs text-success bg-green-50 px-[7px] py-[2px] rounded font-medium">
 								published
 							</span>
 						</div>
@@ -686,7 +686,7 @@ export function EntityPage() {
 					{/* JSON tab */}
 					{activeTab === 'json' && (
 						<div className="bg-card border border-border rounded-lg overflow-hidden">
-							<pre className="p-3.5 font-mono text-[11px] text-[#3f3f46] whitespace-pre-wrap break-all leading-relaxed">
+							<pre className="p-3.5 font-mono text-xs text-[#3f3f46] whitespace-pre-wrap break-all leading-relaxed">
 								{JSON.stringify(entityDetail, null, 2)}
 							</pre>
 						</div>
@@ -714,7 +714,7 @@ export function EntityPage() {
 					</Panel>
 
 					<Panel title="Raw">
-						<pre className="m-0 p-[10px_14px] font-mono text-[11px] text-[#3f3f46] whitespace-pre-wrap break-all leading-relaxed">
+						<pre className="m-0 p-[10px_14px] font-mono text-xs text-[#3f3f46] whitespace-pre-wrap break-all leading-relaxed">
 							{JSON.stringify(
 								{
 									id: entityDetail.id,
@@ -805,7 +805,7 @@ function PropertiesPanel({ triples }: { triples: Triple[] }) {
 						style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-line-soft)' }}
 					>
 						<div className="flex items-center gap-2">
-							<span className="font-mono text-[12.5px] text-foreground">{displayName}</span>
+							<span className="font-mono text-xs text-foreground">{displayName}</span>
 							<ValueTypeBadge type={triple.valueType} />
 						</div>
 						{isReference && rawValue != null ? (
@@ -815,13 +815,13 @@ function PropertiesPanel({ triples }: { triples: Triple[] }) {
 									e.preventDefault()
 									window.location.href = `/entities/${encodeURIComponent(String(rawValue))}`
 								}}
-								className="text-accent hover:underline text-[13px] text-[#3f3f46] leading-relaxed"
+								className="text-accent hover:underline text-sm text-[#3f3f46] leading-relaxed"
 								title={String(rawValue)}
 							>
 								{referenceNames.get(String(rawValue)) ?? truncateEntityId(String(rawValue))}
 							</a>
 						) : (
-							<span className="text-[13px] text-[#3f3f46] leading-relaxed break-all">
+							<span className="text-sm text-[#3f3f46] leading-relaxed break-all">
 								{displayValue.length > 200 ? `${displayValue.slice(0, 200)}…` : displayValue}
 							</span>
 						)}
@@ -874,7 +874,7 @@ function RelationsTab({
 		return (
 			<div className="bg-card border border-border rounded-lg overflow-hidden">
 				<div className="px-3.5 py-2.5 border-b border-border flex items-center">
-					<div className="text-[12.5px] font-medium text-foreground">Relations</div>
+					<div className="text-sm font-medium text-foreground">Relations</div>
 					<div className="flex-1" />
 					<button
 						type="button"
@@ -898,7 +898,7 @@ function RelationsTab({
 	return (
 		<div className="bg-card border border-border rounded-lg overflow-hidden">
 			<div className="px-3.5 py-2.5 border-b border-border flex items-center">
-				<div className="text-[12.5px] font-medium text-foreground">
+				<div className="text-sm font-medium text-foreground">
 					Relations{' '}
 					<span className="text-muted-foreground font-normal font-mono">{allRelations.length}</span>
 				</div>
@@ -928,7 +928,7 @@ function RelationsTab({
 						className="grid grid-cols-[170px_auto_1fr_auto] gap-3 px-3.5 py-[11px] items-center"
 						style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-line-soft)' }}
 					>
-						<span className="font-mono text-[12.5px] text-[#3f3f46]">{displayName}</span>
+						<span className="font-mono text-xs text-[#3f3f46]">{displayName}</span>
 
 						{/* Direction arrow */}
 						<svg
@@ -977,12 +977,12 @@ function RelationsTab({
 									e.preventDefault()
 									navigate(`/entities/${encodeURIComponent(linkedEntityId)}`)
 								}}
-								className="text-accent font-medium text-[13px] cursor-pointer hover:underline truncate"
+								className="text-accent font-medium text-sm cursor-pointer hover:underline truncate"
 								title={linkedEntityId}
 							>
 								{linkedEntityName ?? truncateEntityId(linkedEntityId)}
 							</a>
-							<span className="text-[10.5px] text-muted-foreground bg-line-soft px-1.5 py-[1px] rounded-[3px] font-mono">
+							<span className="text-xs text-muted-foreground bg-line-soft px-1.5 py-[1px] rounded-[3px] font-mono">
 								Entity
 							</span>
 						</div>

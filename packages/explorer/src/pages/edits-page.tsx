@@ -188,20 +188,15 @@ export function EditsPage() {
 			{/* Header: H1 + Stats + Refresh */}
 			<div className="flex items-end mb-4 gap-3.5">
 				<div>
-					<h1 className="text-[22px] font-semibold tracking-[-0.5px]">Edits</h1>
-					<div className="text-[12.5px] text-muted-foreground mt-1">
+					<h1 className="text-[24px] font-semibold tracking-[-0.5px]">Edits</h1>
+					<div className="text-xs text-muted-foreground mt-1">
 						<span className="font-mono text-[#3f3f46]">{stats.pending}</span> pending ·{' '}
 						<span className="font-mono text-[#3f3f46]">{stats.inFlight}</span> in flight ·{' '}
 						<span className="font-mono text-[#3f3f46]">{stats.published}</span> published
 					</div>
 				</div>
 				<div className="flex-1" />
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => refetch()}
-					className="text-[11.5px] gap-1.5"
-				>
+				<Button variant="outline" size="sm" onClick={() => refetch()} className="text-xs gap-1.5">
 					<RefreshCw className="size-3.5" />
 					Refresh
 				</Button>
@@ -304,23 +299,23 @@ function EditCard({ edit }: { edit: Edit }) {
 				{/* Color-coded badge */}
 				<span
 					data-badge-kind={badgeKind}
-					className={`font-mono text-[10.5px] px-[7px] py-[2px] rounded-[3px] font-semibold tracking-[0.5px] ${badgeConfig.className}`}
+					className={`font-mono text-xs px-[7px] py-[2px] rounded-[3px] font-semibold tracking-[0.5px] ${badgeConfig.className}`}
 				>
 					{badgeConfig.label}
 				</span>
 
 				{/* Target entity name */}
-				<span className="font-medium text-[13.5px]">{targetName}</span>
+				<span className="font-medium text-sm">{targetName}</span>
 
 				{/* Field descriptor */}
 				{fieldDescriptor && (
-					<span className="font-mono text-[11.5px] text-muted-foreground">· {fieldDescriptor}</span>
+					<span className="font-mono text-xs text-muted-foreground">· {fieldDescriptor}</span>
 				)}
 
 				<div className="flex-1" />
 
 				{/* Author + relative time */}
-				<span className="text-[11.5px] text-muted-foreground">
+				<span className="text-xs text-muted-foreground">
 					<span className="font-mono text-[#3f3f46]">{edit.author}</span> ·{' '}
 					{relativeTime(edit.createdAt)}
 				</span>
@@ -335,7 +330,7 @@ function EditCard({ edit }: { edit: Edit }) {
 
 			{/* Create entity body - minimal */}
 			{!isPending && firstOp?.kind === 'createEntity' && (
-				<div className="px-3.5 py-3 text-[12.5px] text-muted-foreground bg-[#fafafa]">
+				<div className="px-3.5 py-3 text-xs text-muted-foreground bg-[#fafafa]">
 					New entity to be inserted
 				</div>
 			)}
@@ -344,7 +339,7 @@ function EditCard({ edit }: { edit: Edit }) {
 			{!isPending &&
 				firstOp &&
 				(firstOp.kind === 'createRelation' || firstOp.kind === 'deleteRelation') && (
-					<div className="px-3.5 py-3 text-[12.5px] text-[#3f3f46] bg-[#fafafa] font-mono">
+					<div className="px-3.5 py-3 text-xs text-[#3f3f46] bg-[#fafafa] font-mono">
 						{firstOp.kind === 'createRelation' ? '+ Add' : '- Remove'}{' '}
 						<span className="text-accent">{firstOp.entityId}</span>
 						{firstOp.relationType && (
@@ -358,14 +353,12 @@ function EditCard({ edit }: { edit: Edit }) {
 
 			{/* Failed edit error */}
 			{isFailed && edit.errorMsg && (
-				<div className="px-3.5 py-3 text-[12.5px] text-destructive bg-destructive/5">
-					{edit.errorMsg}
-				</div>
+				<div className="px-3.5 py-3 text-xs text-destructive bg-destructive/5">{edit.errorMsg}</div>
 			)}
 
 			{/* Pending minimal view - no diff, just subtle status */}
 			{isPending && (
-				<div className="px-3.5 py-3 text-[12.5px] text-muted-foreground bg-[#fafafa]">
+				<div className="px-3.5 py-3 text-xs text-muted-foreground bg-[#fafafa]">
 					{edit.status === 'processing' ? 'Processing...' : 'Waiting to be processed'}
 				</div>
 			)}

@@ -183,7 +183,7 @@ function InspectorPanel({
 			<div className="px-4 py-3.5 border-b border-border">
 				<div className="flex items-center gap-2 mb-1.5">
 					<span className={cn('w-[7px] h-[7px] rounded-full', kindDotColor)} />
-					<span className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold">
+					<span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
 						{kind}
 					</span>
 					<div className="flex-1" />
@@ -203,8 +203,8 @@ function InspectorPanel({
 						</svg>
 					</button>
 				</div>
-				<div className="text-[17px] font-semibold tracking-tight">{label ?? truncatedId}</div>
-				<div className="font-mono text-[11px] text-muted-foreground mt-0.5">{truncatedId}</div>
+				<div className="text-[19px] font-semibold tracking-tight">{label ?? truncatedId}</div>
+				<div className="font-mono text-xs text-muted-foreground mt-0.5">{truncatedId}</div>
 				<div className="flex gap-1.5 mt-3">
 					<InspectorButton
 						onClick={onOpen}
@@ -247,7 +247,7 @@ function InspectorPanel({
 
 			{/* Neighbors */}
 			<div className="px-4 py-3 border-b border-border">
-				<div className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+				<div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">
 					Neighbors · {relatedNodeIds.length}
 				</div>
 				{relatedNodeIds.slice(0, 6).map((nid) => {
@@ -263,10 +263,10 @@ function InspectorPanel({
 							className="flex items-center gap-2 py-[5px] w-full text-left cursor-pointer bg-transparent border-none"
 						>
 							<span className={cn('w-[5px] h-[5px] rounded-full flex-shrink-0', nDotColor)} />
-							<span className="text-[12.5px] text-[#3f3f46] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
+							<span className="text-xs text-[#3f3f46] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
 								{nLabel ?? nid}
 							</span>
-							<span className="text-[10.5px] text-muted-foreground/60">{nKind.toLowerCase()}</span>
+							<span className="text-xs text-muted-foreground/60">{nKind.toLowerCase()}</span>
 						</button>
 					)
 				})}
@@ -274,10 +274,10 @@ function InspectorPanel({
 
 			{/* Degree */}
 			<div className="px-4 py-3">
-				<div className="text-[10.5px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+				<div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">
 					Degree
 				</div>
-				<div className="flex gap-3.5 text-[12.5px]">
+				<div className="flex gap-3.5 text-xs">
 					<div>
 						<span className="text-muted-foreground">In </span>
 						<span className="font-mono font-medium">{inDegree}</span>
@@ -305,7 +305,7 @@ function InspectorButton({
 		<button
 			type="button"
 			onClick={onClick}
-			className="flex items-center gap-1.5 px-2 py-[3px] border border-border bg-card text-[#18181b] rounded-md text-[12.5px] cursor-pointer font-medium"
+			className="flex items-center gap-1.5 px-2 py-[3px] border border-border bg-card text-[#18181b] rounded-md text-xs cursor-pointer font-medium"
 		>
 			{icon && <span className="w-3 h-3 flex items-center justify-center">{icon}</span>}
 			{children}
@@ -1068,8 +1068,8 @@ export function GraphPage() {
 					{/* Overlay header */}
 					<div className="absolute top-3 left-3 right-3 flex items-center gap-2.5 z-10">
 						<div className="bg-card border border-border rounded-lg px-3 py-2 flex items-center gap-2.5">
-							<div className="text-[13px] font-semibold">Graph</div>
-							<span className="font-mono text-[11px] text-muted-foreground">
+							<div className="text-[20px] font-semibold">Graph</div>
+							<span className="font-mono text-xs text-muted-foreground">
 								{graphNodes.length} nodes · {graphEdges.length} edges
 							</span>
 						</div>
@@ -1114,14 +1114,14 @@ export function GraphPage() {
 									if (e.key === 'Enter') handleFocusSearch()
 									if (e.key === 'Escape') setFocusInput('')
 								}}
-								className="border-none outline-none bg-transparent text-[12px] w-[120px]"
+								className="border-none outline-none bg-transparent text-xs w-[120px]"
 							/>
 						</div>
 					</div>
 
 					{/* Legend */}
-					<div className="absolute top-[62px] left-3 bg-card border border-border rounded-lg px-2.5 py-2 z-10 text-[11.5px]">
-						<div className="text-muted-foreground text-[10px] uppercase tracking-wider font-semibold mb-1.5">
+					<div className="absolute top-[62px] left-3 bg-card border border-border rounded-lg px-2.5 py-2 z-10 text-xs">
+						<div className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1.5">
 							Legend
 						</div>
 						<div className="flex items-center gap-1.5 py-0.5">

@@ -19,7 +19,7 @@ function Panel({
 			{...props}
 		>
 			<div className="flex items-center px-3.5 py-2.5 border-b border-border">
-				<div className="text-[12.5px] font-medium text-foreground">{title}</div>
+				<div className="text-sm font-medium text-foreground">{title}</div>
 				<div className="flex-1" />
 				{right}
 			</div>

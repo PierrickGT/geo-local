@@ -175,7 +175,7 @@ export function EntityTable({
 					className="grid items-center px-3 py-2 border-b border-border bg-[#fcfcfb]"
 					style={{
 						gridTemplateColumns: '36px 1fr 340px 150px 150px 60px',
-						fontSize: 11,
+						fontSize: 14,
 						color: '#71717a',
 						textTransform: 'uppercase',
 						letterSpacing: 0.6,
@@ -202,7 +202,7 @@ export function EntityTable({
 					</div>
 
 					{/* ID */}
-					<div className="font-mono normal-case tracking-normal" style={{ fontSize: 11.5 }}>
+					<div className="font-mono normal-case tracking-normal" style={{ fontSize: 14 }}>
 						ID
 					</div>
 
@@ -323,7 +323,7 @@ export function EntityTable({
 								</div>
 
 								{/* ID mono + copy */}
-								<div className="flex items-center gap-1.5 text-muted-foreground font-mono text-[11.5px]">
+								<div className="flex items-center gap-1.5 text-muted-foreground font-mono text-xs">
 									<span className="overflow-hidden text-ellipsis whitespace-nowrap">
 										{entity.id}
 									</span>
