@@ -121,7 +121,7 @@ export function SearchPage() {
 	}
 
 	return (
-		<div className="p-[18px_20px_24px] max-w-[1200px] mx-auto">
+		<div className="p-[28px_20px_24px] max-w-[1200px] mx-auto">
 			{/* Header */}
 			<div className="mb-3.5">
 				<div className="text-[24px] font-semibold tracking-[-0.5px]">Search</div>

@@ -192,14 +192,21 @@ export function EntityTable({
 					/>
 
 					{/* Name */}
-					<div className="flex items-center gap-1">
+					<button
+						type="button"
+						className="flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 font-inherit text-inherit"
+						onClick={() => {
+							const dir = getSortDirection('properties_text') === 'asc' ? 'desc' : 'asc'
+							handleSortDirection('properties_text', dir)
+						}}
+					>
 						<span>Name</span>
 						<SortArrow
 							direction={getSortDirection('properties_text')}
 							onDirectionChange={(dir) => handleSortDirection('properties_text', dir)}
 							data-testid="sort-arrow"
 						/>
-					</div>
+					</button>
 
 					{/* ID */}
 					<div className="font-mono normal-case tracking-normal" style={{ fontSize: 14 }}>
@@ -210,14 +217,21 @@ export function EntityTable({
 					<div>Type</div>
 
 					{/* Updated */}
-					<div className="flex items-center gap-1 text-[#3f3f46]">
+					<button
+						type="button"
+						className="flex items-center gap-1 text-[#3f3f46] cursor-pointer bg-transparent border-none p-0 font-inherit text-inherit"
+						onClick={() => {
+							const dir = getSortDirection('updated_at') === 'asc' ? 'desc' : 'asc'
+							handleSortDirection('updated_at', dir)
+						}}
+					>
 						<span>Updated</span>
 						<SortArrow
 							direction={getSortDirection('updated_at')}
 							onDirectionChange={(dir) => handleSortDirection('updated_at', dir)}
 							data-testid="sort-arrow"
 						/>
-					</div>
+					</button>
 
 					<div />
 				</div>

@@ -360,7 +360,7 @@ export function EntitiesPage() {
 	const shownCount = filteredEntities.length
 
 	return (
-		<div className="p-[18px_20px_24px] max-w-[1600px] mx-auto">
+		<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
 			{/* Toolbar */}
 			<div className="flex items-end gap-3.5 mb-3.5">
 				<div>

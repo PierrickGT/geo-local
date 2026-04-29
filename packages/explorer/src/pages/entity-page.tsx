@@ -46,12 +46,12 @@ function getEntityType(
 
 	if (outTypeInfo.includes(DATA_TYPE_ENTITY_ID))
 		return { category: 'Type', rawCategory: 'data type' }
-	if (outTypeInfo.includes(RENDERABLE_TYPE_ENTITY_ID))
-		return { category: 'Type', rawCategory: 'renderable type' }
 	if (outTypeInfo.includes(RELATION_ENTITY_ID))
 		return { category: 'Relation', rawCategory: 'relation' }
 	if (outTypeInfo.includes(PROPERTY_ENTITY_ID))
 		return { category: 'Property', rawCategory: 'property' }
+	if (outTypeInfo.includes(RENDERABLE_TYPE_ENTITY_ID))
+		return { category: 'Type', rawCategory: 'renderable type' }
 	if (incoming.some((r) => r.relationType === TYPES_PROPERTY_ID))
 		return { category: 'Type', rawCategory: 'type' }
 	if (outTypeInfo.includes(TYPE_ENTITY_ID)) return { category: 'Type', rawCategory: 'type' }
@@ -461,7 +461,7 @@ export function EntityPage() {
 	// Loading state
 	if (isLoading) {
 		return (
-			<div className="p-[18px_20px_24px]">
+			<div className="p-[28px_20px_24px]">
 				<div className="bg-card border border-border rounded-lg p-4 mb-3">
 					<div className="flex items-start gap-3.5">
 						<Skeleton className="w-10 h-10 rounded-lg" />
@@ -491,7 +491,7 @@ export function EntityPage() {
 		const isNotFound = error && 'status' in error && (error as { status: number }).status === 404
 
 		return (
-			<div className="p-[18px_20px_24px]">
+			<div className="p-[28px_20px_24px]">
 				<div className="bg-card border border-border rounded-lg p-8 text-center">
 					{isNotFound ? (
 						<>
@@ -581,7 +581,7 @@ export function EntityPage() {
 	)
 
 	return (
-		<div className="p-[18px_20px_24px] max-w-[1600px] mx-auto">
+		<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
 			{/* Header card */}
 			<div className="bg-card border border-border rounded-lg p-4 mb-3">
 				<div className="flex items-start gap-3.5">

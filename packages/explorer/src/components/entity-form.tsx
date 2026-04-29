@@ -102,7 +102,7 @@ function FormSection({
 }) {
 	return (
 		<div
-			className="grid grid-cols-[220px_1fr] gap-6 px-[18px] py-[18px]"
+			className="grid grid-cols-[340px_1fr] gap-6 px-[18px] py-[18px]"
 			style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-line-soft)' }}
 		>
 			<div>

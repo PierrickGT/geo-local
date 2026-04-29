@@ -193,7 +193,7 @@ export function EditEntityPage() {
 		const isNotFound = error && 'status' in error && (error as { status: number }).status === 404
 
 		return (
-			<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+			<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
 				<Card>
 					<CardContent className="py-8">
 						<div className="text-center">
@@ -232,7 +232,7 @@ export function EditEntityPage() {
 	// Loading state
 	if (isLoading || !initialData) {
 		return (
-			<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+			<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
 				<div className="space-y-4">
 					<Skeleton className="h-8 w-48" />
 					<Skeleton className="h-10 w-full" />
@@ -245,7 +245,7 @@ export function EditEntityPage() {
 	}
 
 	return (
-		<div className="p-[18px_20px_24px] max-w-[900px] mx-auto">
+		<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
 			{/* H1 + hint */}
 			<div className="mb-[18px]">
 				<h1 className="text-[24px] font-semibold tracking-[-0.5px] text-foreground">Edit entity</h1>
