@@ -821,8 +821,8 @@ function PropertiesPanel({ triples }: { triples: Triple[] }) {
 								{referenceNames.get(String(rawValue)) ?? truncateEntityId(String(rawValue))}
 							</a>
 						) : (
-							<span className="text-sm text-[#3f3f46] leading-relaxed break-all">
-								{displayValue.length > 200 ? `${displayValue.slice(0, 200)}…` : displayValue}
+							<span className="text-sm text-[#3f3f46] leading-relaxed break-words whitespace-pre-wrap">
+								{displayValue}
 							</span>
 						)}
 					</div>
