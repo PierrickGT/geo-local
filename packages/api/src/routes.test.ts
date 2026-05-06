@@ -180,7 +180,9 @@ describe('GET /api/search', () => {
 		mockQuery = vi
 			.fn()
 			.mockResolvedValueOnce({
-				rows: [{ entity_id: 'abc ', property_id: 'name ', value: { value: 'Test' }, language: '' }],
+				rows: [
+					{ id: 'xyz ', created_at: new Date(), updated_at: new Date(), properties_text: 'Test' },
+				],
 			})
 			.mockResolvedValueOnce({
 				rows: [
@@ -192,8 +194,7 @@ describe('GET /api/search', () => {
 		const res = await (await import('supertest')).default(app).get('/api/search?q=test')
 
 		expect(res.status).toBe(200)
-		expect(res.body.results).toHaveLength(1)
-		expect(res.body.entities).toHaveLength(1)
+		expect(res.body.entities).toHaveLength(2)
 	})
 
 	it('skips entity search when query is shorter than 4 chars', async () => {

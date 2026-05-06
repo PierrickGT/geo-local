@@ -32,15 +32,14 @@ describe('search API', () => {
 	describe('searchEntities', () => {
 		it('searches with query only', async () => {
 			const mockResponse = {
-				results: [
+				entities: [
 					{
-						entityId: 'entity-1',
-						propertyId: 'prop-name',
-						value: { value: 'John Doe' },
-						language: null,
+						id: 'entity-1',
+						createdAt: '2025-01-01T00:00:00Z',
+						updatedAt: '2025-01-02T00:00:00Z',
+						propertiesText: 'John Doe',
 					},
 				],
-				entities: [],
 			}
 			mockGet.mockResolvedValueOnce(mockResponse)
 
@@ -52,7 +51,6 @@ describe('search API', () => {
 
 		it('searches with limit', async () => {
 			const mockResponse = {
-				results: [],
 				entities: [],
 			}
 			mockGet.mockResolvedValueOnce(mockResponse)
@@ -62,8 +60,17 @@ describe('search API', () => {
 			expect(mockGet).toHaveBeenCalledWith('/search?q=test&limit=10')
 		})
 
+		it('passes sort and order params', async () => {
+			const mockResponse = { entities: [] }
+			mockGet.mockResolvedValueOnce(mockResponse)
+
+			await searchEntities({ q: 'test', sort: 'properties_text', order: 'asc' })
+
+			expect(mockGet).toHaveBeenCalledWith('/search?q=test&sort=properties_text&order=asc')
+		})
+
 		it('URL encodes query string', async () => {
-			const mockResponse = { results: [], entities: [] }
+			const mockResponse = { entities: [] }
 			mockGet.mockResolvedValueOnce(mockResponse)
 
 			await searchEntities({ q: 'hello world & more' })

@@ -82,15 +82,7 @@ export interface EntityResponse {
 // Search Types
 // ---------------------------------------------------------------------------
 
-export interface SearchResult {
-	entityId: string
-	propertyId: string
-	value: StoredValue
-	language: string | null
-}
-
 export interface SearchResponse {
-	results: SearchResult[]
 	entities: Entity[]
 }
 

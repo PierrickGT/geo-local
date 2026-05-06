@@ -14,7 +14,8 @@ import type { SearchResponse } from '~/api/types'
 
 export const searchKeys = {
 	all: ['search'] as const,
-	results: (query: string, limit?: number) => [...searchKeys.all, query, limit] as const,
+	results: (query: string, limit?: number, sort?: string, order?: string) =>
+		[...searchKeys.all, query, limit, sort, order] as const,
 }
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,8 @@ export const searchKeys = {
 export interface UseSearchParams {
 	q: string
 	limit?: number
+	sort?: 'updated_at' | 'created_at' | 'properties_text'
+	order?: 'asc' | 'desc'
 	debounceMs?: number
 }
 
@@ -45,7 +48,7 @@ const DEFAULT_DEBOUNCE_MS = 300
  * @returns Query result with results, loading/error states, and debouncing state
  */
 export function useSearch(params: UseSearchParams): UseSearchReturn {
-	const { q, limit, debounceMs = DEFAULT_DEBOUNCE_MS } = params
+	const { q, limit, sort, order, debounceMs = DEFAULT_DEBOUNCE_MS } = params
 
 	// Debounce the query value
 	const [debouncedQuery, setDebouncedQuery] = useState(q)
@@ -68,8 +71,8 @@ export function useSearch(params: UseSearchParams): UseSearchReturn {
 	const isDebouncing = q !== debouncedQuery && q.trim() !== ''
 
 	const query = useQuery({
-		queryKey: searchKeys.results(debouncedQuery, limit),
-		queryFn: () => searchEntities({ q: debouncedQuery, limit }),
+		queryKey: searchKeys.results(debouncedQuery, limit, sort, order),
+		queryFn: () => searchEntities({ q: debouncedQuery, limit, sort, order }),
 		enabled: Boolean(debouncedQuery.trim()),
 	})
 

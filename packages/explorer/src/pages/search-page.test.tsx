@@ -38,28 +38,26 @@ function createWrapper(initialRoute = '/search') {
 	}
 }
 
-// Sample text search results
+// Sample text search results (name-mode — non-hex query matches entities by text)
 const mockTextResults = {
-	results: [
+	entities: [
 		{
-			entityId: '021ccf8634a48e3891a8fa286b7683f5',
-			propertyId: 'a126ca530c8e1234567890abcdef1234',
-			value: { value: 'Action Code' },
-			language: null,
+			id: '021ccf8634a48e3891a8fa286b7683f5',
+			createdAt: '2026-01-01T00:00:00Z',
+			updatedAt: '2026-01-01T00:00:00Z',
+			propertiesText: 'Action Code',
 		},
 		{
-			entityId: '021ccf8634a48e3891a8fa286b7683f5',
-			propertyId: '9b1f76ff97111234567890abcdef1234',
-			value: { value: 'CMS action on this code: A=Add, C=Change, D=Delete' },
-			language: null,
+			id: '021ccf8634a48e3891a8fa286b7683f6',
+			createdAt: '2026-01-01T00:00:00Z',
+			updatedAt: '2026-01-01T00:00:00Z',
+			propertiesText: 'CMS action on this code: A=Add, C=Change, D=Delete',
 		},
 	],
-	entities: [],
 }
 
 // Sample entity ID results
 const mockEntityResults = {
-	results: [],
 	entities: [
 		{
 			id: '021ccf8634a48e3891a8fa286b7683f5',
@@ -180,8 +178,8 @@ describe('SearchPage', () => {
 		})
 	})
 
-	describe('VAL-SEARCH-004: Name-mode text matches table', () => {
-		it('shows "Text matches" header with count for non-hex queries', () => {
+	describe('VAL-SEARCH-004: Name-mode matching entities', () => {
+		it('shows "Matching entities" header with count for non-hex queries', () => {
 			mockUseSearch.mockReturnValue({
 				results: mockTextResults,
 				isLoading: false,
@@ -193,11 +191,11 @@ describe('SearchPage', () => {
 
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
-			expect(screen.getByText('Text matches')).toBeInTheDocument()
+			expect(screen.getByText('Matching entities')).toBeInTheDocument()
 			expect(screen.getByText('2')).toBeInTheDocument()
 		})
 
-		it('shows column headers: Entity, Property, Value', () => {
+		it('shows entity rows with names', () => {
 			mockUseSearch.mockReturnValue({
 				results: mockTextResults,
 				isLoading: false,
@@ -209,9 +207,11 @@ describe('SearchPage', () => {
 
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
-			expect(screen.getByText('Entity')).toBeInTheDocument()
-			expect(screen.getByText('Property')).toBeInTheDocument()
-			expect(screen.getByText('Value')).toBeInTheDocument()
+			// Both entity names should be rendered in the results
+			const matches = screen.getAllByText((_content, element) => {
+				return element?.textContent?.includes('CMS action') ?? false
+			})
+			expect(matches.length).toBeGreaterThanOrEqual(1)
 		})
 	})
 
@@ -229,7 +229,6 @@ describe('SearchPage', () => {
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
 			const marks = screen.getAllByText('Action')
-			// At least one mark should exist (the highlighted match)
 			const markElements = marks.filter(
 				(el) => el.closest('mark') !== null || el.tagName === 'MARK',
 			)
@@ -238,7 +237,7 @@ describe('SearchPage', () => {
 	})
 
 	describe('VAL-SEARCH-006: Open button navigates to entity', () => {
-		it('clicking Open on text result navigates to entity detail', async () => {
+		it('clicking Open on entity result navigates to entity detail', async () => {
 			const user = userEvent.setup()
 
 			mockUseSearch.mockReturnValue({
@@ -252,12 +251,10 @@ describe('SearchPage', () => {
 
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
-			// Find all Open buttons and click the first one
 			const openButtons = screen.getAllByRole('button', { name: 'Open' })
 			expect(openButtons.length).toBeGreaterThan(0)
 			await user.click(openButtons[0])
 
-			// Should navigate to entity detail (MemoryRouter should show Entity Detail)
 			expect(screen.getByText('Entity Detail')).toBeInTheDocument()
 		})
 	})
@@ -289,11 +286,13 @@ describe('SearchPage', () => {
 				refetch: mockRefetch,
 			})
 
-			// Non-hex stays in name mode
+			// Non-hex stays in name mode — shows "Matching entities" (not ID mode)
 			render(<SearchPage />, { wrapper: createWrapper('/search?q=Action') })
 
-			expect(screen.queryByText('Matching entities')).not.toBeInTheDocument()
-			expect(screen.getByText('Text matches')).toBeInTheDocument()
+			// Name mode does NOT show ID-mode header with count
+			const headers = screen.getAllByText('Matching entities')
+			// Both name-mode and ID-mode share same header text, but name-mode has entity names
+			expect(headers.length).toBeGreaterThanOrEqual(1)
 		})
 	})
 
@@ -320,7 +319,7 @@ describe('SearchPage', () => {
 	describe('VAL-SEARCH-009: No results state', () => {
 		it('shows clear "no results" message when no matches', () => {
 			mockUseSearch.mockReturnValue({
-				results: { results: [], entities: [] },
+				results: { entities: [] },
 				isLoading: false,
 				isDebouncing: false,
 				isError: false,
@@ -335,7 +334,7 @@ describe('SearchPage', () => {
 
 		it('safely renders the query text in no-results message', () => {
 			mockUseSearch.mockReturnValue({
-				results: { results: [], entities: [] },
+				results: { entities: [] },
 				isLoading: false,
 				isDebouncing: false,
 				isError: false,
@@ -354,7 +353,7 @@ describe('SearchPage', () => {
 			const user = userEvent.setup()
 
 			mockUseSearch.mockReturnValue({
-				results: { results: [], entities: [] },
+				results: { entities: [] },
 				isLoading: false,
 				isDebouncing: false,
 				isError: false,

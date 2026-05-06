@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import type { Entity, SearchResult } from '~/api/types'
+import type { Entity } from '~/api/types'
 import { Chip } from '~/components/ui/chip'
 import { Kbd } from '~/components/ui/kbd'
 import { useSearch } from '~/hooks/use-search'
@@ -54,21 +54,6 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Format value for display
-// ---------------------------------------------------------------------------
-
-function formatValue(value: { value: unknown }): string {
-	const v = value.value
-	if (typeof v === 'string') {
-		return v.length > 200 ? `${v.slice(0, 200)}…` : v
-	}
-	if (typeof v === 'number' || typeof v === 'boolean') {
-		return String(v)
-	}
-	return JSON.stringify(v)
-}
-
-// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -92,8 +77,7 @@ export function SearchPage() {
 
 	const isSearching = isLoading || isDebouncing
 	const entityResults = results?.entities ?? []
-	const textResults = results?.results ?? []
-	const hasAnyResults = entityResults.length > 0 || textResults.length > 0
+	const hasAnyResults = entityResults.length > 0
 	const hasNoResults = results && !hasAnyResults
 	const isEmptyQuery = !query.trim()
 
@@ -278,31 +262,21 @@ export function SearchPage() {
 				</div>
 			)}
 
-			{/* Name-mode results: "Text matches" */}
-			{isName && textResults.length > 0 && !isSearching && !isError && (
+			{/* Name-mode results: "Matching entities" */}
+			{isName && entityResults.length > 0 && !isSearching && !isError && (
 				<div className="bg-card border border-border rounded-lg overflow-hidden">
 					{/* Header */}
 					<div className="px-3.5 py-2.5 border-b border-border bg-[#fcfcfb] flex items-center gap-2">
-						<span className="text-xs font-medium">Text matches</span>
-						<span className="font-mono text-xs text-muted-foreground">{textResults.length}</span>
-						<div className="flex-1" />
-						<span className="text-xs text-muted-foreground">Grouped by entity</span>
+						<span className="text-xs font-medium">Matching entities</span>
+						<span className="font-mono text-xs text-muted-foreground">{entityResults.length}</span>
 					</div>
-					{/* Column headers */}
-					<div className="grid grid-cols-[240px_180px_1fr_80px] px-3.5 py-2 border-b border-border text-xs text-muted-foreground uppercase tracking-[0.6px] font-semibold">
-						<div>Entity</div>
-						<div>Property</div>
-						<div>Value</div>
-						<div />
-					</div>
-					{/* Result rows */}
-					{textResults.map((result, index) => (
-						<TextMatchRow
-							key={`${result.entityId}-${result.propertyId}-${index}`}
-							result={result}
+					{entityResults.map((entity, index) => (
+						<EntityMatchRow
+							key={entity.id}
+							entity={entity}
 							query={query}
 							onOpen={handleOpenEntity}
-							isLast={index === textResults.length - 1}
+							isLast={index === entityResults.length - 1}
 						/>
 					))}
 				</div>
@@ -344,45 +318,39 @@ function EntityIdRow({
 	)
 }
 
-function TextMatchRow({
-	result,
+function EntityMatchRow({
+	entity,
 	query,
 	onOpen,
 	isLast,
 }: {
-	result: SearchResult
+	entity: Entity
 	query: string
 	onOpen: (id: string) => void
 	isLast: boolean
 }) {
-	const valueText = formatValue(result.value)
-
 	return (
 		<div
-			className={`grid grid-cols-[240px_180px_1fr_80px] px-3.5 py-2.5 items-center gap-2.5 ${isLast ? '' : 'border-b border-line-soft'}`}
+			className={`grid grid-cols-[340px_1fr_80px] px-3.5 py-2.5 items-center gap-2.5 ${isLast ? '' : 'border-b border-line-soft'}`}
 		>
-			{/* Entity column */}
+			{/* ID column */}
 			<div className="min-w-0">
-				<div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-					{result.entityId}
-				</div>
-				<div className="font-mono text-xs text-[#a1a1aa] whitespace-nowrap overflow-hidden text-ellipsis">
-					{result.entityId.slice(0, 16)}…
+				<div className="font-mono text-xs text-[#3f3f46] whitespace-nowrap overflow-hidden text-ellipsis">
+					{entity.id}
 				</div>
 			</div>
-			{/* Property column */}
-			<div>
-				<div className="font-mono text-xs text-[#3f3f46]">{result.propertyId.slice(0, 12)}…</div>
-			</div>
-			{/* Value column with highlighting */}
-			<div className="text-sm text-[#3f3f46] leading-snug">
-				<HighlightedText text={valueText} query={query} />
+			{/* Name column with highlighting */}
+			<div className="flex items-center gap-2 min-w-0">
+				<span className="w-[5px] h-[5px] rounded-full bg-accent shrink-0" />
+				<span className="text-sm text-[#3f3f46] leading-snug">
+					<HighlightedText text={entity.propertiesText ?? entity.id} query={query} />
+				</span>
 			</div>
 			{/* Open button */}
 			<div className="text-right">
 				<button
 					type="button"
-					onClick={() => onOpen(result.entityId)}
+					onClick={() => onOpen(entity.id)}
 					className="border border-border bg-card px-2 py-[3px] rounded-[5px] text-xs cursor-pointer text-[#3f3f46]"
 				>
 					Open

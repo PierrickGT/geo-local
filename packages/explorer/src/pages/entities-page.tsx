@@ -15,6 +15,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 import { Spinner } from '~/components/ui/spinner'
 import { useEntities, useTypes } from '~/hooks/use-entities'
 import { useDeleteEntities } from '~/hooks/use-mutations'
+import { useSearch } from '~/hooks/use-search'
 
 const DEFAULT_LIMIT = 20
 const DEFAULT_OFFSET = 0
@@ -140,16 +141,25 @@ export function EntitiesPage() {
 		return raw === 'asc' || raw === 'desc' ? raw : (DEFAULT_ORDER as SortOrder)
 	}, [searchParams])
 
-	// Fetch entities with current filters
-	// Note: 'entities' is a virtual type filter — don't send it to the API
+	// Search query from URL
+	const searchQuery = searchParams.get('q') ?? ''
+
+	// API-backed search when query is present, otherwise paginated entity list
 	const apiTypeFilter = typeFilter === 'entities' ? undefined : typeFilter
-	const { entities, isLoading, isError, error, refetch } = useEntities({
+	const entitiesResult = useEntities({
 		type: apiTypeFilter,
 		limit,
 		offset,
 		sort,
 		order,
 	})
+	const searchResult = useSearch({ q: searchQuery, sort, order })
+
+	const isSearchMode = searchQuery.trim().length > 0
+	const isLoading = isSearchMode ? searchResult.isLoading : entitiesResult.isLoading
+	const isError = isSearchMode ? searchResult.isError : entitiesResult.isError
+	const error = isSearchMode ? searchResult.error : entitiesResult.error
+	const refetch = isSearchMode ? searchResult.refetch : entitiesResult.refetch
 
 	// Fetch available types for chips
 	const { types } = useTypes()
@@ -158,29 +168,18 @@ export function EntitiesPage() {
 	const entityType = types.find((t) => t.name === 'Entity')
 	const propertyType = types.find((t) => t.name === 'Property')
 
-	// Derive entities from current page
-	const aliveEntities = useMemo(() => entities?.entities ?? [], [entities])
-	const total = entities?.total ?? 0
-
-	// Read search query from URL for client-side filtering
-	const searchQuery = searchParams.get('q') ?? ''
-
-	// Client-side filter: when q param or virtual 'entities' type filter is present
-	const filteredEntities = useMemo(() => {
-		let result = aliveEntities
-
-		// Search filter
-		if (searchQuery) {
-			const q = searchQuery.toLowerCase()
-			result = result.filter((entity) => {
-				const name = (entity.propertiesText ?? '').toLowerCase()
-				const id = entity.id.toLowerCase()
-				return name.includes(q) || id.includes(q)
-			})
+	// Build display entity list
+	const { displayEntities, total } = useMemo(() => {
+		if (isSearchMode) {
+			const searchData = searchResult.results
+			if (!searchData) return { displayEntities: [], total: 0 }
+			return { displayEntities: searchData.entities, total: searchData.entities.length }
 		}
 
-		return result
-	}, [aliveEntities, searchQuery, typeFilter])
+		const alive = entitiesResult.entities?.entities ?? []
+		const count = entitiesResult.entities?.total ?? 0
+		return { displayEntities: alive, total: count }
+	}, [isSearchMode, searchResult.results, entitiesResult.entities])
 
 	// Active filter chip: 'all', 'entities' (virtual), or an actual type ID
 	const activeFilter: FilterType = (() => {
@@ -220,7 +219,7 @@ export function EntitiesPage() {
 				if (shiftKey && lastClickedIndex !== null) {
 					const start = Math.min(lastClickedIndex, index)
 					const end = Math.max(lastClickedIndex, index)
-					const allEntities = entities?.entities ?? []
+					const allEntities = displayEntities
 
 					for (let i = start; i <= end; i++) {
 						const entity = allEntities[i]
@@ -241,11 +240,11 @@ export function EntitiesPage() {
 
 			lastClickedIndexRef.current = index
 		},
-		[entities],
+		[displayEntities],
 	)
 
 	const handleToggleSelectAll = useCallback(() => {
-		const aliveIds = new Set(aliveEntities.map((e) => e.id))
+		const aliveIds = new Set(displayEntities.map((e) => e.id))
 		const allSelected = aliveIds.size > 0 && [...aliveIds].every((id) => selectedIds.has(id))
 
 		if (allSelected) {
@@ -265,7 +264,7 @@ export function EntitiesPage() {
 				return next
 			})
 		}
-	}, [aliveEntities, selectedIds])
+	}, [displayEntities, selectedIds])
 
 	const handleBatchDeleteSuccess = useCallback(() => {
 		setSelectedIds(new Set())
@@ -357,7 +356,7 @@ export function EntitiesPage() {
 		}
 	}, [searchParams, setSearchParams])
 
-	const shownCount = filteredEntities.length
+	const shownCount = displayEntities.length
 
 	return (
 		<div className="p-[28px_20px_24px] max-w-[1600px] mx-auto">
@@ -366,8 +365,17 @@ export function EntitiesPage() {
 				<div>
 					<h1 className="text-[24px] font-semibold tracking-[-0.5px] leading-[1.1]">Entities</h1>
 					<div data-testid="entities-subtitle" className="text-xs text-muted-foreground mt-1">
-						<span className="font-mono text-[#3f3f46]">{shownCount.toLocaleString()}</span> shown ·{' '}
-						<span className="font-mono">{total.toLocaleString()}</span> total
+						{isSearchMode ? (
+							<>
+								<span className="font-mono text-[#3f3f46]">{shownCount.toLocaleString()}</span>{' '}
+								result{shownCount !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;
+							</>
+						) : (
+							<>
+								<span className="font-mono text-[#3f3f46]">{shownCount.toLocaleString()}</span>{' '}
+								shown · <span className="font-mono">{total.toLocaleString()}</span> total
+							</>
+						)}
 					</div>
 				</div>
 				<div className="flex-1" />
@@ -521,10 +529,10 @@ export function EntitiesPage() {
 			)}
 
 			{/* Entity table */}
-			{!isLoading && !isError && entities && (
+			{!isLoading && !isError && (
 				<EntityTable
-					entities={filteredEntities}
-					total={entities.total}
+					entities={displayEntities}
+					total={isSearchMode ? displayEntities.length : total}
 					limit={limit}
 					offset={offset}
 					onPageChange={handlePageChange}

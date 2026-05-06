@@ -211,14 +211,29 @@ export function createRouter(): Router {
 			}
 
 			const limit = clampInt(req.query.limit, 20, 100)
+			const sort = parseSortParam(req.query.sort)
+			const order = parseOrderParam(req.query.order)
+			const orderByClause = buildOrderBy(sort, order)
 
-			// Text search across triples
+			const entitySelect = `SELECT e.id, e.created_at, e.updated_at,
+				(SELECT t.value->>'value' FROM triples t
+				 WHERE t.entity_id = e.id AND t.value_type = 'text'
+				 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text`
+
+			// Text search: find distinct entity IDs whose triples match, then fetch full data
 			const triplesPromise = pool.query(
-				`SELECT entity_id, property_id, value, language
-				 FROM triples
-				 WHERE value_type = 'text'
-				   AND value->>'value' ILIKE '%' || $1 || '%'
-				 LIMIT $2`,
+				`WITH matching_ids AS (
+					SELECT DISTINCT e.id
+					FROM entities e
+					INNER JOIN triples tr ON tr.entity_id = e.id
+					WHERE tr.value_type = 'text'
+					  AND tr.value->>'value' ILIKE '%' || $1 || '%'
+				)
+				${entitySelect}
+				FROM entities e
+				INNER JOIN matching_ids m ON m.id = e.id
+				${orderByClause}
+				LIMIT $2`,
 				[q, limit],
 			)
 
@@ -226,12 +241,10 @@ export function createRouter(): Router {
 			const entityPromise =
 				q.length >= 4
 					? pool.query(
-							`SELECT id, created_at, updated_at,
-								(SELECT t.value->>'value' FROM triples t
-								 WHERE t.entity_id = e.id AND t.value_type = 'text'
-								 ORDER BY (t.property_id = 'a126ca530c8e48d5b88882c734c38935') DESC, t.property_id LIMIT 1) AS properties_text
+							`${entitySelect}
 							 FROM entities e
 							 WHERE e.id ILIKE '%' || $1 || '%'
+							 ${orderByClause}
 							 LIMIT $2`,
 							[q, limit],
 						)
@@ -239,10 +252,18 @@ export function createRouter(): Router {
 
 			const [triplesResult, entityResult] = await Promise.all([triplesPromise, entityPromise])
 
-			res.json({
-				results: triplesResult.rows.map(formatRow),
-				entities: entityResult.rows.map(formatRow),
-			})
+			// Deduplicate: entity ID matches and triple matches may overlap
+			const seen = new Set<string>()
+			const entities: Record<string, unknown>[] = []
+			for (const row of [...entityResult.rows, ...triplesResult.rows]) {
+				const id = row.id as string
+				if (!seen.has(id)) {
+					seen.add(id)
+					entities.push(formatRow(row))
+				}
+			}
+
+			res.json({ entities })
 		} catch (err) {
 			log.error({ err }, 'GET /search failed')
 			res.status(500).json({ error: 'Internal server error' })

@@ -93,8 +93,10 @@ interface EntityTableProps {
 }
 
 function formatRelativeTime(isoString: string): string {
+	if (!isoString) return '—'
 	const now = new Date()
 	const date = new Date(isoString)
+	if (Number.isNaN(date.getTime())) return '—'
 	const diffMs = now.getTime() - date.getTime()
 	const diffSec = Math.floor(diffMs / 1000)
 	const diffMin = Math.floor(diffSec / 60)

@@ -35,6 +35,39 @@ vi.mock('~/api/entities', () => ({
 	]),
 }))
 
+const ALL_ENTITIES = [
+	{
+		id: 'aaaabbbbccccddddeeeeffff11112222',
+		createdAt: '2025-01-01T00:00:00Z',
+		updatedAt: '2025-01-02T00:00:00Z',
+		propertiesText: 'Action Code',
+	},
+	{
+		id: '11112222333344445555666677778888',
+		createdAt: '2025-01-03T00:00:00Z',
+		updatedAt: '2025-01-04T00:00:00Z',
+		propertiesText: 'Description',
+	},
+	{
+		id: 'abcd1234abcd1234abcd1234abcd1234',
+		createdAt: '2025-01-05T00:00:00Z',
+		updatedAt: '2025-01-06T00:00:00Z',
+		propertiesText: 'Entity C',
+	},
+]
+
+vi.mock('~/api/search', () => ({
+	searchEntities: vi.fn().mockImplementation(({ q }: { q: string }) => {
+		const query = q.toLowerCase()
+		const matchedEntities = ALL_ENTITIES.filter(
+			(e) =>
+				e.id.toLowerCase().includes(query) ||
+				(e.propertiesText ?? '').toLowerCase().includes(query),
+		)
+		return Promise.resolve({ entities: matchedEntities })
+	}),
+}))
+
 function renderWithRouter(initialPath: string) {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
@@ -299,8 +332,8 @@ describe('EntitiesPage', () => {
 		})
 	})
 
-	describe('Client-side search filtering', () => {
-		it('filters entities by name when q param is present', async () => {
+	describe('API-backed search', () => {
+		it('queries API and shows matching entities by name when q param is present', async () => {
 			renderWithRouter('/entities?q=Action')
 
 			await waitFor(() => {
@@ -312,7 +345,7 @@ describe('EntitiesPage', () => {
 			expect(screen.queryByText('Entity C')).not.toBeInTheDocument()
 		})
 
-		it('filters entities by ID when q param matches', async () => {
+		it('queries API and shows matching entities by ID when q param matches', async () => {
 			renderWithRouter('/entities?q=aaaabbbb')
 
 			await waitFor(() => {
@@ -335,7 +368,7 @@ describe('EntitiesPage', () => {
 			expect(screen.getByText('Entity C')).toBeInTheDocument()
 		})
 
-		it('shows empty state when no entities match search', async () => {
+		it('shows empty state when API returns no results', async () => {
 			renderWithRouter('/entities?q=zzznonexistent')
 
 			await waitFor(() => {
@@ -343,7 +376,7 @@ describe('EntitiesPage', () => {
 			})
 		})
 
-		it('performs case-insensitive matching', async () => {
+		it('performs case-insensitive matching via API', async () => {
 			renderWithRouter('/entities?q=action')
 
 			await waitFor(() => {
