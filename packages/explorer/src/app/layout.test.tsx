@@ -33,8 +33,8 @@ describe('Layout Shell', () => {
 	describe('Sidebar', () => {
 		it('renders brand block with logo and sub-label', () => {
 			renderLayout()
-			expect(screen.getByText('Lattice')).toBeInTheDocument()
-			expect(screen.getByText('geo · mainnet')).toBeInTheDocument()
+			expect(screen.getByText('Geo')).toBeInTheDocument()
+			expect(screen.getByText('Local')).toBeInTheDocument()
 		})
 
 		it('renders SVG nav icons replacing emoji', () => {
@@ -59,27 +59,6 @@ describe('Layout Shell', () => {
 			expect(within(sidebar).getByText('Search')).toBeInTheDocument()
 			expect(within(sidebar).getByText('Graph')).toBeInTheDocument()
 			expect(within(sidebar).getByText('Edits')).toBeInTheDocument()
-		})
-
-		it('renders Saved views group label', () => {
-			renderLayout()
-			expect(screen.getByText('Saved views')).toBeInTheDocument()
-		})
-
-		it('renders Saved views stub items', () => {
-			renderLayout()
-			expect(screen.getByText('Properties only')).toBeInTheDocument()
-			expect(screen.getByText('Recent edits')).toBeInTheDocument()
-			expect(screen.getByText('Labs ≥ 5')).toBeInTheDocument()
-		})
-
-		it('saved view stubs are non-interactive (no navigation)', async () => {
-			const user = userEvent.setup()
-			renderLayout()
-			const stub = screen.getByText('Properties only')
-			await user.click(stub)
-			// Should still be on /entities
-			expect(screen.getByText('Entities Page')).toBeInTheDocument()
 		})
 
 		it('highlights active nav item', () => {

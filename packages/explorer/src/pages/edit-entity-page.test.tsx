@@ -230,7 +230,7 @@ describe('EditEntityPage', () => {
 		it('shows no-changes message when form is pristine', () => {
 			render(<EditEntityPage />, { wrapper: createWrapper() })
 
-			expect(screen.getByTestId('no-changes-message')).toBeInTheDocument()
+			expect(screen.getByTestId('staging-text')).toHaveTextContent('No changes to save.')
 		})
 
 		it('disables submit button when no changes are made', () => {

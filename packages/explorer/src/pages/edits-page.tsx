@@ -1,25 +1,18 @@
 import { RefreshCw } from 'lucide-react'
 import { useMemo } from 'react'
-import { useSearchParams } from 'react-router'
-import type { DecodedOp, Edit, EditStatus } from '~/api/types'
+import type { DecodedOp, Edit } from '~/api/types'
 import { Button } from '~/components/ui/button'
 import { DiffPane } from '~/components/ui/diff-pane'
 import { Panel } from '~/components/ui/panel'
 import { Skeleton } from '~/components/ui/skeleton'
 import { TabBar } from '~/components/ui/tab-bar'
+import { formatPropertyId } from '~/lib/constants'
 import { useEdits } from '~/hooks/use-edits'
+import { usePropertyNames } from '~/hooks/use-entities'
 
 // ---------------------------------------------------------------------------
 // Tab IDs
 // ---------------------------------------------------------------------------
-
-type EditTab = 'pending' | 'history' | 'conflicts'
-
-const TABS = [
-	{ id: 'pending', label: 'Pending' },
-	{ id: 'history', label: 'History' },
-	{ id: 'conflicts', label: 'Conflicts' },
-] as const
 
 // ---------------------------------------------------------------------------
 // Badge config per decoded op kind
@@ -108,102 +101,35 @@ function relativeTime(dateStr: string): string {
 // ---------------------------------------------------------------------------
 
 export function EditsPage() {
-	const [searchParams, setSearchParams] = useSearchParams()
-
-	// Determine active tab from URL
-	const urlStatus = searchParams.get('status') as EditStatus | null
-	const activeTab: EditTab = useMemo(() => {
-		if (urlStatus === 'pending' || urlStatus === 'processing') return 'pending'
-		if (urlStatus === 'applied' || urlStatus === 'failed') return 'history'
-		if (urlStatus === 'conflicts') return 'conflicts'
-		// Default tab: pending
-		return 'pending'
-	}, [urlStatus])
-
-	// Fetch edits — we fetch ALL edits and filter client-side for tab counts
+	// Fetch edits
 	const { edits: editsData, isLoading, isError, error, refetch } = useEdits()
 
 	const allEdits = editsData?.edits ?? []
 
 	// Compute stats
-	const stats = useMemo(() => {
-		let pending = 0
-		let inFlight = 0
-		let published = 0
-		const conflicts = 0
-
-		for (const edit of allEdits) {
-			if (edit.status === 'pending') pending++
-			else if (edit.status === 'processing') inFlight++
-			else if (edit.status === 'applied') published++
-			// failed edits count as history, not conflicts
-		}
-
-		return { pending, inFlight, published, conflicts }
-	}, [allEdits])
-
-	// Compute tab counts
-	const tabCounts = useMemo(
-		() => ({
-			pending: stats.pending + stats.inFlight,
-			history: allEdits.filter((e) => e.status === 'applied' || e.status === 'failed').length,
-			conflicts: stats.conflicts,
-		}),
-		[stats, allEdits],
+	const publishedCount = useMemo(
+		() => allEdits.filter((e) => e.status === 'applied' || e.status === 'failed').length,
+		[allEdits],
 	)
 
-	// Filter edits by active tab
-	const filteredEdits = useMemo(() => {
-		if (activeTab === 'pending')
-			return allEdits.filter((e) => e.status === 'pending' || e.status === 'processing')
-		if (activeTab === 'history')
-			return allEdits.filter((e) => e.status === 'applied' || e.status === 'failed')
-		return [] // conflicts
-	}, [allEdits, activeTab])
-
-	// Tab change handler
-	const handleTabChange = (tabId: string) => {
-		const tab = tabId as EditTab
-		const newParams = new URLSearchParams(searchParams)
-
-		if (tab === 'pending') {
-			newParams.set('status', 'pending')
-		} else if (tab === 'history') {
-			newParams.set('status', 'applied')
-		} else {
-			newParams.set('status', 'conflicts')
-		}
-
-		setSearchParams(newParams, { replace: true })
-	}
-
-	// Tab labels with counts
-	const tabsWithCounts = TABS.map((t) => ({
-		id: t.id,
-		label: `${t.label} · ${tabCounts[t.id as EditTab]}`,
-	}))
+	// Show all applied/failed edits
+	const filteredEdits = useMemo(
+		() => allEdits.filter((e) => e.status === 'applied' || e.status === 'failed'),
+		[allEdits],
+	)
 
 	return (
 		<div className="p-5 max-w-[1400px] mx-auto space-y-0">
-			{/* Header: H1 + Stats + Refresh */}
-			<div className="flex items-end mb-4 gap-3.5">
-				<div>
-					<h1 className="text-[24px] font-semibold tracking-[-0.5px]">Edits</h1>
-					<div className="text-xs text-muted-foreground mt-1">
-						<span className="font-mono text-[#3f3f46]">{stats.pending}</span> pending ·{' '}
-						<span className="font-mono text-[#3f3f46]">{stats.inFlight}</span> in flight ·{' '}
-						<span className="font-mono text-[#3f3f46]">{stats.published}</span> published
-					</div>
+			{/* Header: H1 + Stats */}
+			<div className="mb-4">
+				<h1 className="text-[24px] font-semibold tracking-[-0.5px]">Edits</h1>
+				<div className="text-xs text-muted-foreground mt-1">
+					{publishedCount} published
 				</div>
-				<div className="flex-1" />
-				<Button variant="outline" size="sm" onClick={() => refetch()} className="text-xs gap-1.5">
-					<RefreshCw className="size-3.5" />
-					Refresh
-				</Button>
 			</div>
 
 			{/* Tabs */}
-			<TabBar tabs={tabsWithCounts} activeTab={activeTab} onTabChange={handleTabChange} />
+			<TabBar tabs={[{ id: 'history', label: `History · ${publishedCount}` }]} activeTab="history" onTabChange={() => {}} />
 
 			{/* Error state */}
 			{isError && (
@@ -233,9 +159,9 @@ export function EditsPage() {
 
 			{/* Empty state */}
 			{!isLoading && !isError && filteredEdits.length === 0 && (
-				<Panel title={activeTab === 'conflicts' ? 'No conflicts' : 'No edits'} className="mt-3">
+				<Panel title="No edits" className="mt-3">
 					<div className="py-6 px-4 text-center text-muted-foreground text-sm">
-						{activeTab === 'conflicts' ? 'No conflicts to resolve.' : 'No edits found.'}
+						No edits found.
 					</div>
 				</Panel>
 			)}
@@ -261,21 +187,36 @@ function EditCard({ edit }: { edit: Edit }) {
 	const badgeKind = getBadgeKind(firstOp)
 	const badgeConfig = BADGE_STYLES[badgeKind]
 
+	// Collect IDs to resolve
+	const idsToResolve = useMemo(() => {
+		const ids: string[] = []
+		if (firstOp?.propertyId) ids.push(firstOp.propertyId)
+		if (firstOp?.toId) ids.push(firstOp.toId)
+		if (firstOp?.fromId) ids.push(firstOp.fromId)
+		if (firstOp?.relationType) ids.push(firstOp.relationType)
+		return ids
+	}, [firstOp])
+	const { names } = usePropertyNames(idsToResolve)
+
 	// Determine target entity name
 	const targetName = edit.name || edit.id
 
 	// Determine field descriptor
 	const fieldDescriptor = useMemo(() => {
 		if (!firstOp) return null
-		if (firstOp.kind === 'updateEntity' && firstOp.propertyId) return firstOp.propertyId
+		if (firstOp.kind === 'updateEntity' && firstOp.propertyId) {
+			return names.get(firstOp.propertyId) ?? formatPropertyId(firstOp.propertyId)
+		}
 		if (firstOp.kind === 'createRelation' && firstOp.relationType) {
-			return `→ ${firstOp.toId ?? firstOp.toId}`
+			const toName = firstOp.toId ? (names.get(firstOp.toId) ?? firstOp.toId) : ''
+			return `→ ${toName}`
 		}
 		if (firstOp.kind === 'deleteRelation' && firstOp.relationType) {
-			return `→ ${firstOp.toId ?? ''}`
+			const toName = firstOp.toId ? (names.get(firstOp.toId) ?? firstOp.toId) : ''
+			return `→ ${toName}`
 		}
 		return null
-	}, [firstOp])
+	}, [firstOp, names])
 
 	// Determine diff values
 	const diffValues = useMemo(() => {
@@ -331,7 +272,7 @@ function EditCard({ edit }: { edit: Edit }) {
 			{/* Create entity body - minimal */}
 			{!isPending && firstOp?.kind === 'createEntity' && (
 				<div className="px-3.5 py-3 text-xs text-muted-foreground bg-[#fafafa]">
-					New entity to be inserted
+					{isFailed ? 'Failed to create entity' : 'Entity created'}
 				</div>
 			)}
 
@@ -341,11 +282,18 @@ function EditCard({ edit }: { edit: Edit }) {
 				(firstOp.kind === 'createRelation' || firstOp.kind === 'deleteRelation') && (
 					<div className="px-3.5 py-3 text-xs text-[#3f3f46] bg-[#fafafa] font-mono">
 						{firstOp.kind === 'createRelation' ? '+ Add' : '- Remove'}{' '}
-						<span className="text-accent">{firstOp.entityId}</span>
+						<span className="text-accent">
+							{firstOp.fromId
+								? (names.get(firstOp.fromId) ?? firstOp.fromId)
+								: firstOp.entityId}
+						</span>
 						{firstOp.relationType && (
 							<>
 								{' '}
-								—[{firstOp.relationType}]→ <span className="text-accent">{firstOp.toId ?? ''}</span>
+								—[{names.get(firstOp.relationType) ?? firstOp.relationType}]→{' '}
+								<span className="text-accent">
+									{firstOp.toId ? (names.get(firstOp.toId) ?? firstOp.toId) : ''}
+								</span>
 							</>
 						)}
 					</div>

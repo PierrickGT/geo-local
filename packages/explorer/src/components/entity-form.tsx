@@ -167,24 +167,27 @@ export function EntityForm({
 
 	const defaultSubmitLabel = mode === 'create' ? 'Create entity' : 'Save changes'
 
-	const isDirty = useMemo(() => {
-		if (!initialData) return true
+	const changeCount = useMemo(() => {
+		if (mode === 'create') return name.trim() ? 1 : 0
+		if (!initialData) return name.trim() ? 1 : 0
 
-		if (name !== initialData.name) return true
-		if (description !== initialData.description) return true
-		if (types !== initialData.types) return true
-		if (properties.length !== initialData.properties.length) return true
-
+		let count = 0
+		if (name !== initialData.name) count++
+		if (description !== initialData.description) count++
+		if (types !== initialData.types) count++
+		if (properties.length !== initialData.properties.length) {
+			count += Math.abs(properties.length - initialData.properties.length)
+		}
 		for (let i = 0; i < properties.length; i++) {
 			const curr = properties[i]
 			const init = initialData.properties[i]
-			if (curr.propertyId !== init.propertyId) return true
-			if (curr.valueType !== init.valueType) return true
-			if (curr.value !== init.value) return true
+			if (!init || curr.propertyId !== init.propertyId || curr.valueType !== init.valueType || curr.value !== init.value) count++
 		}
 
-		return false
-	}, [name, description, types, properties, initialData])
+		return count
+	}, [mode, name, description, types, properties, initialData])
+
+	const isDirty = changeCount > 0
 
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
@@ -436,19 +439,12 @@ export function EntityForm({
 						'No changes to save.'
 					) : name.trim() ? (
 						<>
-							Will stage <span className="font-medium">1 create</span> to the Edits queue
+							<span className="font-medium">{changeCount} {changeCount === 1 ? 'change' : 'changes'}</span> ready to save
 						</>
 					) : (
-						'Nothing staged yet'
+						'Nothing to save yet'
 					)}
 				</span>
-
-				{/* No-op message for edit mode */}
-				{mode === 'edit' && !isDirty && (
-					<span className="text-xs text-muted-foreground" data-testid="no-changes-message">
-						No changes to save.
-					</span>
-				)}
 
 				<div className="flex-1" />
 				<button

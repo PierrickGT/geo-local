@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Outlet, NavLink as RouterNavLink, useLocation, useParams } from 'react-router'
+import { Link, Outlet, NavLink as RouterNavLink, useLocation, useParams } from 'react-router'
 import { getEdits } from '~/api/edits'
 import { getEntities } from '~/api/entities'
 import { Kbd } from '~/components/ui/kbd'
@@ -87,12 +87,35 @@ function EditsIcon({ className }: { className?: string }) {
 
 function LogoIcon() {
 	return (
-		<div className="w-[22px] h-[22px] rounded-[5px] bg-foreground grid place-items-center">
-			<svg width="12" height="12" viewBox="0 0 12 12" role="img" aria-label="Lattice logo">
-				<path d="M2 2h3v3H2zM7 2h3v3H7zM2 7h3v3H2zM7 7h3v3H7z" fill="#fff" opacity=".85" />
-				<path d="M3.5 3.5l5 5M8.5 3.5l-5 5" stroke="#fff" strokeWidth=".8" />
-			</svg>
-		</div>
+		<svg width="20" height="20" viewBox="0 0 20 20" fill="none" role="img" aria-label="Geo logo">
+			<path
+				fillRule="evenodd"
+				clipRule="evenodd"
+				d="M14.3558 14.5685C14.5064 14.824 14.4369 15.1543 14.1838 15.3089C12.9706 16.0499 11.5349 16.4784 9.99619 16.4784C8.46312 16.4784 7.0323 16.053 5.82196 15.3171C5.56819 15.1628 5.49827 14.832 5.64911 14.5761L9.51384 8.02041C9.73427 7.6465 10.2751 7.6465 10.4955 8.02041L14.3558 14.5685ZM4.94964 16.9532C4.66671 16.787 4.29709 16.8695 4.13047 17.1522L2.95809 19.1408C2.73416 19.5207 3.00801 20 3.44895 20H16.5604C17.0014 20 17.2752 19.5207 17.0513 19.1408L15.8745 17.1447C15.7077 16.8618 15.3376 16.7795 15.0546 16.9462C13.5791 17.8155 11.8478 18.3159 9.99619 18.3159C8.14957 18.3159 6.4226 17.8182 4.94964 16.9532Z"
+				fill="currentColor"
+			/>
+			<circle
+				cx="9.99613"
+				cy="8.49619"
+				r="7.4278"
+				transform="rotate(-180 9.99613 8.49619)"
+				stroke="url(#paint0_radial_50332_342693)"
+				strokeWidth="2.13675"
+			/>
+			<defs>
+				<radialGradient
+					id="paint0_radial_50332_342693"
+					cx="0"
+					cy="0"
+					r="1"
+					gradientUnits="userSpaceOnUse"
+					gradientTransform="translate(9.99613 15.4291) rotate(-90) scale(15.4291 55.084)"
+				>
+					<stop stopColor="#FF78E6" />
+					<stop offset="1" stopColor="#9542FF" />
+				</radialGradient>
+			</defs>
+		</svg>
 	)
 }
 
@@ -130,8 +153,6 @@ const navItems = [
 		icon: EditsIcon,
 	},
 ] as const
-
-const savedViews = ['Properties only', 'Recent edits', 'Labs ≥ 5']
 
 // ---------------------------------------------------------------------------
 // Breadcrumb helpers
@@ -216,15 +237,15 @@ function LayoutInner() {
 				className="w-[232px] bg-[var(--sidebar)] border-r border-border flex flex-col shrink-0"
 			>
 				{/* Brand block */}
-				<div className="px-4 pt-[18px] pb-4 border-b border-line-soft">
+				<Link to="/" className="block px-4 pt-[18px] pb-4 border-b border-line-soft no-underline">
 					<div className="flex items-center gap-2">
 						<LogoIcon />
 						<div>
-							<div className="font-semibold text-sm tracking-[-0.2px]">Lattice</div>
-							<div className="text-xs text-muted-foreground font-mono">geo · mainnet</div>
+							<div className="font-semibold text-sm tracking-[-0.2px]">Geo</div>
+							<div className="text-xs text-muted-foreground font-mono">Local</div>
 						</div>
 					</div>
-				</div>
+				</Link>
 
 				{/* Explore group */}
 				<div className="px-2.5 pt-2.5 pb-1">
@@ -272,28 +293,11 @@ function LayoutInner() {
 					})}
 				</div>
 
-				{/* Saved views group */}
-				<div className="px-2.5 pt-3.5 pb-1">
-					<div className="text-xs text-[var(--color-muted-foreground)]/[0.6] uppercase tracking-[1px] px-2 py-1.5 font-semibold">
-						Saved views
-					</div>
-					{savedViews.map((view) => (
-						<button
-							key={view}
-							type="button"
-							className="w-full flex items-center gap-2.5 px-2 py-1.5 border-none bg-transparent text-[#3f3f46] rounded-md cursor-default font-inherit text-xs text-left"
-						>
-							<span className="w-1.5 h-1.5 rounded-[1px] bg-[#a1a1aa]" />
-							{view}
-						</button>
-					))}
-				</div>
-
 				<div className="flex-1" />
 
 				{/* Footer */}
 				<div className="px-3.5 py-2.5 border-t border-line-soft">
-					<span className="text-xs text-muted-foreground font-mono">local · 0.1</span>
+					<span className="text-xs text-muted-foreground font-mono">local · 0.2</span>
 				</div>
 			</aside>
 

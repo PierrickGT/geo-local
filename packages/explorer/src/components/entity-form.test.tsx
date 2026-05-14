@@ -203,7 +203,7 @@ describe('EntityForm', () => {
 		it('shows "No changes to save" when form is untouched', () => {
 			render(<EntityForm mode="edit" initialData={initialData} onSubmit={vi.fn()} />)
 
-			expect(screen.getByTestId('no-changes-message')).toBeInTheDocument()
+			expect(screen.getByTestId('staging-text')).toHaveTextContent('No changes to save.')
 		})
 
 		it('disables submit when no changes detected', () => {
@@ -218,7 +218,7 @@ describe('EntityForm', () => {
 
 			await user.type(screen.getByTestId('entity-name-input'), 'X')
 			expect(screen.getByTestId('entity-submit')).not.toBeDisabled()
-			expect(screen.queryByTestId('no-changes-message')).not.toBeInTheDocument()
+			expect(screen.getByTestId('staging-text')).not.toHaveTextContent('No changes to save.')
 		})
 
 		it('system triples do not appear as dynamic property rows', () => {
