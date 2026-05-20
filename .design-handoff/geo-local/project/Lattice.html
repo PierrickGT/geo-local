@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lattice — Geo Entity Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body { margin:0; padding:0; background:#f0eee9; font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+  * { box-sizing:border-box; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="graphite.jsx"></script>
+<script type="text/babel" src="atlas.jsx"></script>
+<script type="text/babel" src="prism.jsx"></script>
+<script type="text/babel">
+  const { useState } = React;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="graphite" title="Graphite" subtitle="Developer tool · mono-heavy · dense · electric accent">
+          <DCArtboard id="g-shell" label="01 · App shell + Entities list" width={1280} height={820}>
+            <GraphiteApp initial="entities" />
+          </DCArtboard>
+          <DCArtboard id="g-detail" label="02 · Entity detail" width={1280} height={820}>
+            <GraphiteApp initial="detail" />
+          </DCArtboard>
+          <DCArtboard id="g-select" label="03 · Multi-select state" width={1280} height={820}>
+            <GraphiteApp initial="entities" preselect />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="graphite-more" title="Graphite — expanded screens" subtitle="Search, Graph, Edits queue, and Create / Edit forms">
+          <DCArtboard id="g-search-empty" label="04 · Search — empty state" width={1280} height={820}>
+            <GraphiteApp initial="search" />
+          </DCArtboard>
+          <DCArtboard id="g-search-name" label="05 · Search by name — results" width={1280} height={820}>
+            <GraphiteApp initial="search" searchMode="name" />
+          </DCArtboard>
+          <DCArtboard id="g-search-id" label="06 · Search by ID — results" width={1280} height={820}>
+            <GraphiteApp initial="search" searchMode="id" />
+          </DCArtboard>
+          <DCArtboard id="g-graph" label="07 · Graph — overview" width={1280} height={820}>
+            <GraphiteApp initial="graph" />
+          </DCArtboard>
+          <DCArtboard id="g-graph-sel" label="08 · Graph — node selected + relations inspector" width={1280} height={820}>
+            <GraphiteApp initial="graph" graphMode="relations" />
+          </DCArtboard>
+          <DCArtboard id="g-edits" label="09 · Edits queue — pending changes with diffs" width={1280} height={820}>
+            <GraphiteApp initial="edits" />
+          </DCArtboard>
+          <DCArtboard id="g-create-empty" label="10 · Create entity — empty form" width={1280} height={820}>
+            <GraphiteApp initial="create" />
+          </DCArtboard>
+          <DCArtboard id="g-create-filled" label="11 · Create entity — in progress" width={1280} height={820}>
+            <GraphiteApp initial="create" formFilled />
+          </DCArtboard>
+          <DCArtboard id="g-edit" label="12 · Edit existing entity" width={1280} height={820}>
+            <GraphiteApp initial="edit" />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="atlas" title="Atlas" subtitle="Editorial data-explorer · serif + sans · warm paper palette">
+          <DCArtboard id="a-shell" label="01 · App shell + Entities list" width={1280} height={820}>
+            <AtlasApp initial="entities" />
+          </DCArtboard>
+          <DCArtboard id="a-detail" label="02 · Entity detail" width={1280} height={820}>
+            <AtlasApp initial="detail" />
+          </DCArtboard>
+          <DCArtboard id="a-select" label="03 · Multi-select state" width={1280} height={820}>
+            <AtlasApp initial="entities" preselect />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="prism" title="Prism" subtitle="Bold graphic · confident type · high-contrast · saturated accent">
+          <DCArtboard id="p-shell" label="01 · App shell + Entities list" width={1280} height={820}>
+            <PrismApp initial="entities" />
+          </DCArtboard>
+          <DCArtboard id="p-detail" label="02 · Entity detail" width={1280} height={820}>
+            <PrismApp initial="detail" />
+          </DCArtboard>
+          <DCArtboard id="p-select" label="03 · Multi-select state" width={1280} height={820}>
+            <PrismApp initial="entities" preselect />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

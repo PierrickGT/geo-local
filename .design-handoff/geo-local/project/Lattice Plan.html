@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lattice — Implementation Plan</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafaf9; --panel:#ffffff; --ink:#18181b; --ink2:#3f3f46; --muted:#71717a; --faint:#a1a1aa;
+    --line:#e4e4e7; --lineSoft:#f1f1ef; --hover:#f6f6f5;
+    --accent:#2f5cff; --accentBg:#eef2ff;
+    --ok:#0ea34a; --okBg:#ecfdf5; --danger:#dc2626; --dangerBg:#fef2f2; --warn:#d97706; --warnBg:#fffbeb;
+    --purple:#7c3aed; --purpleBg:#f3e8ff;
+    --font:'Inter',-apple-system,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;letter-spacing:-0.01em}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd,.mono{font-family:var(--mono);font-size:0.88em}
+  kbd{background:var(--bg);border:1px solid var(--line);padding:1px 6px;border-radius:4px;color:var(--ink2);font-size:11px}
+
+  /* Layout */
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+  aside.nav{position:sticky;top:0;height:100vh;overflow-y:auto;background:#fcfcfb;border-right:1px solid var(--line);padding:20px 14px 28px;font-size:13px}
+  main{min-width:0;max-width:960px;padding:36px 48px 96px;margin:0 auto 0 0}
+  @media (max-width:900px){
+    .app{grid-template-columns:1fr}
+    aside.nav{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 20px 60px}
+  }
+
+  /* Brand */
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;margin-bottom:8px;border-bottom:1px solid var(--lineSoft)}
+  .brand .logo{width:26px;height:26px;border-radius:6px;background:var(--ink);display:grid;place-items:center;flex-shrink:0}
+  .brand .logo svg{color:#fff}
+  .brand .t{font-weight:600;letter-spacing:-0.2px}
+  .brand .s{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+
+  /* Nav */
+  .nav-group{margin-top:14px}
+  .nav-group .label{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;padding:6px 8px;margin-bottom:2px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:6px 9px;border-radius:5px;color:var(--ink2);cursor:pointer;margin-bottom:1px;border:none;background:transparent;width:100%;font-family:inherit;font-size:13px;text-align:left}
+  .nav-item:hover{background:var(--hover);color:var(--ink)}
+  .nav-item.active{background:var(--hover);color:var(--ink);font-weight:500}
+  .nav-item .num{font-family:var(--mono);font-size:10.5px;color:var(--faint);width:16px;flex-shrink:0}
+  .nav-item.active .num{color:var(--accent)}
+
+  /* Typography */
+  h1,h2,h3,h4{letter-spacing:-0.02em;color:var(--ink);font-weight:600;margin-top:0}
+  h1{font-size:32px;line-height:1.15;margin-bottom:8px}
+  h2{font-size:22px;margin:56px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:16px;margin:28px 0 10px}
+  h4{font-size:13px;margin:16px 0 6px;color:var(--ink2);font-weight:600}
+  p{margin:10px 0;color:var(--ink2)}
+  p.lede{font-size:16px;color:var(--ink2);max-width:68ch}
+  ul,ol{padding-left:22px;margin:10px 0;color:var(--ink2)}
+  li{margin:4px 0}
+  li::marker{color:var(--faint)}
+  strong{color:var(--ink);font-weight:600}
+  em{font-style:normal;color:var(--accent);font-weight:500}
+  hr{border:none;border-top:1px solid var(--line);margin:36px 0}
+
+  /* Document meta */
+  .doc-meta{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--muted);margin-top:6px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+  .doc-meta .dot{width:5px;height:5px;border-radius:3px;background:var(--faint)}
+  .doc-meta .stat{font-family:var(--mono);color:var(--ink2)}
+
+  /* Callout cards */
+  .note{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13.5px}
+  .note.accent{border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--accentBg) 0,var(--panel) 60%)}
+  .note.warn{border-left:3px solid var(--warn);background:linear-gradient(90deg,var(--warnBg) 0,var(--panel) 60%)}
+  .note.ok{border-left:3px solid var(--ok);background:linear-gradient(90deg,var(--okBg) 0,var(--panel) 60%)}
+  .note .title{font-weight:600;color:var(--ink);font-size:12px;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .note.accent .title{color:var(--accent)}
+  .note.warn .title{color:var(--warn)}
+  .note.ok .title{color:var(--ok)}
+  .note p{margin:4px 0}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--lineSoft);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;color:var(--muted);background:#fcfcfb;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  td code{background:var(--bg);padding:1px 6px;border-radius:3px;border:1px solid var(--lineSoft)}
+
+  /* Code blocks */
+  pre{background:#0f0f10;color:#e4e4e7;padding:14px 16px;border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6;margin:12px 0}
+  pre .k{color:#c792ea}
+  pre .s{color:#c3e88d}
+  pre .c{color:#6b7280;font-style:italic}
+  pre .n{color:#82aaff}
+  pre .t{color:#ffcb6b}
+
+  /* Pills / badges */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:var(--mono);letter-spacing:0.3px}
+  .pill.p1{background:var(--accentBg);color:var(--accent)}
+  .pill.p2{background:var(--purpleBg);color:var(--purple)}
+  .pill.p3{background:var(--warnBg);color:var(--warn)}
+  .pill.done{background:var(--okBg);color:var(--ok)}
+  .pill.neutral{background:var(--lineSoft);color:var(--ink2)}
+
+  /* Grid of stat cards */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 8px}
+  @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .stat-card .v{font-size:22px;font-weight:600;letter-spacing:-0.5px;line-height:1.1;font-family:var(--mono)}
+  .stat-card .l{font-size:11.5px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.6px;font-weight:500}
+  .stat-card.accent .v{color:var(--accent)}
+
+  /* Roadmap */
+  .roadmap{display:flex;flex-direction:column;gap:0;margin:18px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+  .week{display:grid;grid-template-columns:90px 1fr auto;gap:18px;padding:16px 18px;border-bottom:1px solid var(--lineSoft);align-items:baseline}
+  .week:last-child{border-bottom:none}
+  .week .w{font-family:var(--mono);font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-weight:600;padding-top:2px}
+  .week .title{font-weight:600;color:var(--ink);font-size:15px;margin-bottom:6px}
+  .week .items{color:var(--ink2);font-size:13px}
+  .week .items li{margin:2px 0}
+  .week .owner{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+
+  /* Ticket list */
+  .tickets{display:flex;flex-direction:column;gap:6px;margin:10px 0 22px}
+  .ticket{display:grid;grid-template-columns:68px 1fr auto auto;gap:12px;padding:9px 12px;background:var(--panel);border:1px solid var(--lineSoft);border-radius:6px;align-items:center;font-size:13px}
+  .ticket .id{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:500}
+  .ticket .label{color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ticket .est{font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  /* Architecture diagram */
+  .arch{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;margin:16px 0;overflow-x:auto}
+  .arch svg{display:block;margin:0 auto;max-width:100%;height:auto}
+
+  /* Risk matrix */
+  .risks{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+  .risk{display:grid;grid-template-columns:84px 1fr;gap:14px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+  .risk .sev{display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:0.6px;padding-top:2px}
+  .risk .sev .dot{width:8px;height:8px;border-radius:4px}
+  .risk.high .sev{color:var(--danger)}
+  .risk.high .sev .dot{background:var(--danger)}
+  .risk.med .sev{color:var(--warn)}
+  .risk.med .sev .dot{background:var(--warn)}
+  .risk.low .sev{color:var(--muted)}
+  .risk.low .sev .dot{background:var(--faint)}
+  .risk h4{margin:0 0 4px;font-size:14px;color:var(--ink)}
+  .risk .mit{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .risk .mit strong{color:var(--ink2)}
+
+  /* Section anchor links */
+  section{scroll-margin-top:20px}
+
+  /* Print */
+  @media print{
+    aside.nav{display:none}
+    .app{grid-template-columns:1fr}
+    main{max-width:none;padding:20px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="nav">
+    <div class="brand">
+      <div class="logo">
+        <svg width="14" height="14" viewBox="0 0 12 12"><path d="M2 2h3v3H2zM7 2h3v3H7zM2 7h3v3H2zM7 7h3v3H7z" fill="#fff" opacity=".85"/><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" stroke="#fff" stroke-width=".8"/></svg>
+      </div>
+      <div>
+        <div class="t">Lattice</div>
+        <div class="s">impl plan · v0.1</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="label">Plan</div>
+      <button class="nav-item active" data-target="overview"><span class="num">01</span>Overview &amp; goals</button>
+      <button class="nav-item" data-target="principles"><span class="num">02</span>Design principles</button>
+      <button class="nav-item" data-target="architecture"><span class="num">03</span>Architecture</button>
+      <button class="nav-item" data-target="data-model"><span class="num">04</span>Data model &amp; GRC20</button>
+      <button class="nav-item" data-target="edits"><span class="num">05</span>Edit queue &amp; publish</button>
+      <button class="nav-item" data-target="ui-impl"><span class="num">06</span>UI implementation</button>
+      <button class="nav-item" data-target="perf"><span class="num">07</span>Performance &amp; scale</button>
+      <button class="nav-item" data-target="testing"><span class="num">08</span>Testing &amp; quality</button>
+      <button class="nav-item" data-target="roadmap"><span class="num">09</span>6-week roadmap</button>
+      <button class="nav-item" data-target="tickets"><span class="num">10</span>Phase-1 tickets</button>
+      <button class="nav-item" data-target="risks"><span class="num">11</span>Risks &amp; open questions</button>
+      <button class="nav-item" data-target="phase2"><span class="num">12</span>Phase 2+ parking lot</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="label">Reference</div>
+      <a class="nav-item" href="Lattice.html" style="color:var(--ink2)"><span class="num">↗</span>Design canvas</a>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ─────────────────────────────────────────── OVERVIEW -->
+    <section id="overview">
+      <h1>Lattice — Implementation Plan</h1>
+      <div class="doc-meta">
+        <span class="stat">v0.1 · draft</span>
+        <span class="dot"></span>
+        <span>6-week Phase 1</span>
+        <span class="dot"></span>
+        <span>2–3 engineers</span>
+        <span class="dot"></span>
+        <span class="stat">~38 tickets</span>
+      </div>
+      <p class="lede">
+        Lattice is a knowledge-graph editor for GRC20 / Geo. Users browse entities, inspect their typed
+        properties and relations, and propose changes — individually or in batches — that get signed and
+        published on-chain. This document is the engineering plan to get the <strong>Graphite</strong>
+        design direction from mockup to shipped Phase 1.
+      </p>
+
+      <div class="stats">
+        <div class="stat-card accent"><div class="v">6</div><div class="l">Target weeks</div></div>
+        <div class="stat-card"><div class="v">12</div><div class="l">Screens in scope</div></div>
+        <div class="stat-card"><div class="v">38</div><div class="l">Phase-1 tickets</div></div>
+        <div class="stat-card"><div class="v">10k+</div><div class="l">Entities / list</div></div>
+      </div>
+
+      <h3>What ships in Phase 1</h3>
+      <ul>
+        <li><strong>Entities list</strong> — virtualized table, filter, multi-select, bulk actions.</li>
+        <li><strong>Entity detail</strong> — identity, types, properties, incoming/outgoing relations.</li>
+        <li><strong>Create &amp; edit forms</strong> — typed property editing, staged as pending edits.</li>
+        <li><strong>Edit queue</strong> — pending changes with diffs; batched publish as a single on-chain transaction.</li>
+        <li><strong>Global search</strong> — by name, property value, and full 32-char id.</li>
+        <li><strong>Graph view</strong> — React Flow canvas with node inspector (basic, not force-clustered).</li>
+        <li><strong>Wallet auth</strong> — wagmi + RainbowKit, sign edits on publish.</li>
+      </ul>
+
+      <h3>What is explicitly <em>not</em> in Phase 1</h3>
+      <ul>
+        <li>Realtime collab / streaming others' edits (Phase 2).</li>
+        <li>Conflict resolution beyond last-write-wins on publish failure.</li>
+        <li>Rich-text descriptions, file/image properties, embedded media.</li>
+        <li>PR-style review workflow. Edits are solo-authored then published.</li>
+        <li>Large-graph rendering beyond ~500 visible nodes.</li>
+      </ul>
+
+      <div class="note accent">
+        <div class="title">→ Guiding principle</div>
+        <p>The core user loop is <strong>browse → stage → publish</strong>. Every screen should make the
+          current state of that loop legible — how many edits are pending, what will change, what's already on-chain.</p>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────── PRINCIPLES -->
+    <section id="principles">
+      <h2>02 · Design principles</h2>
+
+      <h3>Optimistic first, authoritative eventually</h3>
+      <p>Every edit is applied locally the moment the user makes it. The on-chain state is the source of
+        truth; the local cache reconciles against it. This keeps the UI feeling instant even though
+        publishes take seconds.</p>
+
+      <h3>Edits are first-class objects</h3>
+      <p>A pending change is not a dirty form field — it's a record in a queue, with an author, a timestamp,
+        a diff, and a stable id. This lets us show them in the Edits tab, revert individually, and batch-publish.</p>
+
+      <h3>Deep-linkable everything</h3>
+      <p>Every entity, every edit, every graph view is a URL. <code>/e/021ccf86…</code>,
+        <code>/edits/3a2b</code>, <code>/graph?focus=021ccf86…</code>. No modal-only state.</p>
+
+      <h3>Keyboard parity with pointer</h3>
+      <p>⌘K palette, j/k row navigation, <kbd>e</kbd> to edit, <kbd>⌘↵</kbd> to save, <kbd>g d</kbd> go detail.
+        Developer-tool aesthetic demands developer-tool ergonomics.</p>
+
+      <h3>Fail loud, recover cheap</h3>
+      <p>On-chain writes fail. Show the user exactly which edit failed, why, and a one-click retry. Never
+        silently drop a staged edit.</p>
+    </section>
+
+    <!-- ─────────────────────────────────────────── ARCHITECTURE -->
+    <section id="architecture">
+      <h2>03 · Architecture</h2>
+
+      <p>Client-heavy: a Next.js app that reads from a GRC20 indexer and writes on-chain via the user's wallet.
+        The server is minimal — it exists to proxy the indexer, serve static assets, and optionally cache.</p>
+
+      <div class="arch">
+        <svg viewBox="0 0 760 360" width="760">
+          <!-- client -->
+          <rect x="20" y="20" width="340" height="320" rx="10" fill="#fcfcfb" stroke="#e4e4e7"/>
+          <text x="36" y="44" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#71717a" letter-spacing="0.8">BROWSER (NEXT.JS APP)</text>
+
+          <rect x="40" y="62" width="300" height="44" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="54" y="82" font-family="Inter" font-size="13" font-weight="600" fill="#18181b">UI · React 18 + Tailwind</text>
+          <text x="54" y="98" font-family="IBM Plex Mono" font-size="10.5" fill="#71717a">app/ · screens, forms, graph</text>
+
+          <rect x="40" y="118" width="140" height="44" rx="6" fill="#eef2ff" stroke="#2f5cff" stroke-opacity="0.3"/>
+          <text x="54" y="138" font-family="Inter" font-size="12.5" font-weight="600" fill="#2f5cff">Edit queue</text>
+          <text x="54" y="152" font-family="IBM Plex Mono" font-size="10" fill="#2f5cff">Zustand · IDB persist</text>
+
+          <rect x="200" y="118" width="140" height="44" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="214" y="138" font-family="Inter" font-size="12.5" font-weight="600" fill="#18181b">Query cache</text>
+          <text x="214" y="152" font-family="IBM Plex Mono" font-size="10" fill="#71717a">TanStack Query</text>
+
+          <rect x="40" y="174" width="140" height="44" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="54" y="194" font-family="Inter" font-size="12.5" font-weight="600" fill="#18181b">Wallet</text>
+          <text x="54" y="208" font-family="IBM Plex Mono" font-size="10" fill="#71717a">wagmi + RainbowKit</text>
+
+          <rect x="200" y="174" width="140" height="44" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="214" y="194" font-family="Inter" font-size="12.5" font-weight="600" fill="#18181b">Graph view</text>
+          <text x="214" y="208" font-family="IBM Plex Mono" font-size="10" fill="#71717a">React Flow</text>
+
+          <rect x="40" y="230" width="300" height="44" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="54" y="250" font-family="Inter" font-size="12.5" font-weight="600" fill="#18181b">Data layer — <tspan font-family="IBM Plex Mono" font-size="11">lib/grc20/</tspan></text>
+          <text x="54" y="266" font-family="IBM Plex Mono" font-size="10" fill="#71717a">clients · encoders · mappers</text>
+
+          <rect x="40" y="286" width="300" height="40" rx="6" fill="#fff" stroke="#e4e4e7" stroke-dasharray="3 3"/>
+          <text x="54" y="304" font-family="Inter" font-size="12" fill="#71717a">Service worker · offline draft cache</text>
+          <text x="54" y="319" font-family="IBM Plex Mono" font-size="10" fill="#a1a1aa">Phase 2</text>
+
+          <!-- arrows -->
+          <path d="M 360 140 L 410 140" stroke="#71717a" stroke-width="1.4" fill="none" marker-end="url(#arr)"/>
+          <path d="M 410 220 L 360 220" stroke="#71717a" stroke-width="1.4" fill="none" marker-end="url(#arr)"/>
+
+          <!-- server / chain -->
+          <rect x="420" y="20" width="320" height="320" rx="10" fill="#fcfcfb" stroke="#e4e4e7"/>
+          <text x="436" y="44" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#71717a" letter-spacing="0.8">NETWORK</text>
+
+          <rect x="440" y="62" width="280" height="54" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="454" y="82" font-family="Inter" font-size="13" font-weight="600" fill="#18181b">Next API routes (BFF)</text>
+          <text x="454" y="99" font-family="IBM Plex Mono" font-size="10.5" fill="#71717a">/api/entities · /api/search</text>
+          <text x="454" y="112" font-family="IBM Plex Mono" font-size="10" fill="#a1a1aa">reads only · cached 60s</text>
+
+          <rect x="440" y="134" width="280" height="58" rx="6" fill="#fff" stroke="#e4e4e7"/>
+          <text x="454" y="154" font-family="Inter" font-size="13" font-weight="600" fill="#18181b">GRC20 indexer / subgraph</text>
+          <text x="454" y="171" font-family="IBM Plex Mono" font-size="10.5" fill="#71717a">GraphQL · 10k+ entities</text>
+          <text x="454" y="185" font-family="IBM Plex Mono" font-size="10" fill="#a1a1aa">Ponder or The Graph</text>
+
+          <rect x="440" y="210" width="280" height="58" rx="6" fill="#eef2ff" stroke="#2f5cff" stroke-opacity="0.3"/>
+          <text x="454" y="230" font-family="Inter" font-size="13" font-weight="600" fill="#2f5cff">GRC20 contracts</text>
+          <text x="454" y="247" font-family="IBM Plex Mono" font-size="10.5" fill="#2f5cff">Space.setTriple · .setName</text>
+          <text x="454" y="261" font-family="IBM Plex Mono" font-size="10" fill="#2f5cff">Geo · mainnet</text>
+
+          <rect x="440" y="286" width="280" height="40" rx="6" fill="#fff" stroke="#e4e4e7" stroke-dasharray="3 3"/>
+          <text x="454" y="304" font-family="Inter" font-size="12" fill="#71717a">IPFS — image / blob properties</text>
+          <text x="454" y="319" font-family="IBM Plex Mono" font-size="10" fill="#a1a1aa">Phase 2</text>
+
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#71717a"/></marker>
+          </defs>
+        </svg>
+      </div>
+
+      <h3>Stack decisions</h3>
+      <table>
+        <thead><tr><th style="width:160px">Layer</th><th>Choice</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Framework</td><td><code>Next.js 15</code> (App Router)</td><td>Server components for read-heavy list pages; RSC streaming; built-in API routes for the BFF.</td></tr>
+          <tr><td>Language</td><td><code>TypeScript 5.6+</code> strict</td><td>Non-negotiable for graph data.</td></tr>
+          <tr><td>Styling</td><td><code>Tailwind</code> + CSS vars for Graphite palette</td><td>Graphite tokens live as CSS custom properties; Tailwind for layout; no design-system framework.</td></tr>
+          <tr><td>Server state</td><td><code>@tanstack/react-query</code></td><td>Caching, refetch, stale-while-revalidate for indexer queries.</td></tr>
+          <tr><td>Client state</td><td><code>zustand</code> + <code>idb-keyval</code></td><td>Edit queue persists across reloads via IndexedDB.</td></tr>
+          <tr><td>Wallet</td><td><code>wagmi</code> + <code>RainbowKit</code> + <code>viem</code></td><td>Standard stack; viem's typed contract calls match GRC20's strict schema.</td></tr>
+          <tr><td>Table</td><td><code>@tanstack/react-table</code> + <code>react-virtual</code></td><td>Handles 10k rows with column sort/filter out of the box.</td></tr>
+          <tr><td>Graph</td><td><code>reactflow</code> (v12)</td><td>Good-enough interactivity; pan/zoom/minimap free; swap to Sigma only if we exceed a few hundred visible nodes.</td></tr>
+          <tr><td>Forms</td><td><code>react-hook-form</code> + <code>zod</code></td><td>Schema-first validation; types flow from property definitions.</td></tr>
+          <tr><td>Tests</td><td><code>vitest</code> · <code>playwright</code></td><td>Unit for edit-queue logic; E2E for create/publish flows.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Folder structure</h3>
+<pre><span class="c">// Next.js 15 App Router layout</span>
+app/
+  layout.tsx                <span class="c">// Graphite shell + providers</span>
+  page.tsx                  <span class="c">// → redirect /entities</span>
+  entities/
+    page.tsx                <span class="c">// RSC: fetches first page of list</span>
+    [id]/page.tsx           <span class="c">// Entity detail</span>
+    [id]/edit/page.tsx      <span class="c">// Edit form</span>
+    new/page.tsx            <span class="c">// Create form</span>
+  search/page.tsx
+  graph/page.tsx
+  edits/page.tsx            <span class="c">// Pending queue + publish</span>
+  api/
+    entities/route.ts       <span class="c">// BFF proxy to indexer</span>
+    search/route.ts
+
+components/
+  shell/                    <span class="c">// Sidebar, TopBar, KbdHint</span>
+  entities/                 <span class="c">// List, Row, FilterBar</span>
+  entity/                   <span class="c">// Detail, Properties, Relations</span>
+  edits/                    <span class="c">// Card, DiffView, PublishBar</span>
+  forms/                    <span class="c">// Field, PropertyRow, TypeChip</span>
+  graph/                    <span class="c">// Canvas, NodeInspector</span>
+  ui/                       <span class="c">// Button, Chip, Input — Graphite primitives</span>
+
+lib/
+  grc20/
+    client.ts               <span class="c">// Indexer GraphQL client</span>
+    contracts.ts            <span class="c">// viem contract bindings</span>
+    encode.ts               <span class="c">// Edit → on-chain op encoder</span>
+    types.ts                <span class="c">// Entity, Property, Relation, Edit</span>
+  edits/
+    store.ts                <span class="c">// zustand store</span>
+    persist.ts              <span class="c">// IDB adapter</span>
+    diff.ts                 <span class="c">// apply/revert/invert</span>
+  search/
+    index.ts                <span class="c">// query builder, highlight, debounce</span>
+
+hooks/
+  useEntities.ts  useEntity.ts  useEdits.ts  usePublish.ts
+  useKbd.ts  useCommandPalette.ts
+
+styles/
+  tokens.css                <span class="c">// Graphite CSS vars</span>
+  globals.css
+
+tests/
+  unit/     e2e/     fixtures/</pre>
+    </section>
+
+    <!-- ─────────────────────────────────────────── DATA MODEL -->
+    <section id="data-model">
+      <h2>04 · Data model &amp; GRC20 mapping</h2>
+
+      <p>GRC20 is triple-based: every fact is <code>(entity, property, value)</code>. Our UI surfaces this
+        as entities with bags of typed properties and directed relations. The client type system mirrors
+        the protocol closely so the publish step is mostly serialization.</p>
+
+      <h3>Core types</h3>
+<pre><span class="k">type</span> <span class="t">EntityId</span> = <span class="t">string</span>;   <span class="c">// 32-char hex (no 0x prefix)</span>
+<span class="k">type</span> <span class="t">PropertyId</span> = <span class="t">string</span>; <span class="c">// 32-char hex</span>
+
+<span class="k">type</span> <span class="t">DataType</span> =
+  | <span class="s">'text'</span> | <span class="s">'number'</span> | <span class="s">'checkbox'</span>
+  | <span class="s">'url'</span> | <span class="s">'time'</span> | <span class="s">'point'</span>
+  | <span class="s">'relation'</span>;
+
+<span class="k">interface</span> <span class="t">Entity</span> {
+  id: <span class="t">EntityId</span>;
+  name: <span class="t">string</span>;          <span class="c">// resolved via Name property</span>
+  description?: <span class="t">string</span>;
+  types: <span class="t">EntityId</span>[];      <span class="c">// classifying type entities</span>
+  properties: <span class="t">PropertyValue</span>[];
+  relations: <span class="t">Relation</span>[];   <span class="c">// outgoing only; incoming resolved by reverse query</span>
+  space: <span class="t">string</span>;
+  cover?: <span class="t">string</span>;         <span class="c">// Phase 2</span>
+}
+
+<span class="k">interface</span> <span class="t">PropertyValue</span> {
+  propertyId: <span class="t">PropertyId</span>;
+  propertyName: <span class="t">string</span>;   <span class="c">// denormalized for display</span>
+  dataType: <span class="t">DataType</span>;
+  value: <span class="t">string</span> | <span class="t">number</span> | <span class="t">boolean</span> | <span class="t">Date</span>;
+  language?: <span class="t">string</span>;      <span class="c">// e.g. 'en' for text</span>
+}
+
+<span class="k">interface</span> <span class="t">Relation</span> {
+  id: <span class="t">string</span>;
+  typeId: <span class="t">PropertyId</span>;     <span class="c">// 'has property', 'subclass of', etc</span>
+  toEntityId: <span class="t">EntityId</span>;
+  toEntityName: <span class="t">string</span>;
+}</pre>
+
+      <h3>Edit type — the central abstraction</h3>
+
+<pre><span class="k">type</span> <span class="t">Edit</span> =
+  | { kind: <span class="s">'entity.create'</span>; id: <span class="t">string</span>; name: <span class="t">string</span>; description?: <span class="t">string</span>; types: <span class="t">EntityId</span>[]; properties: <span class="t">PropertyValue</span>[] }
+  | { kind: <span class="s">'entity.update'</span>; entityId: <span class="t">EntityId</span>; field: <span class="s">'name'</span>|<span class="s">'description'</span>; before: <span class="t">string</span>; after: <span class="t">string</span> }
+  | { kind: <span class="s">'property.set'</span>;   entityId: <span class="t">EntityId</span>; propertyId: <span class="t">PropertyId</span>; dataType: <span class="t">DataType</span>; before?: <span class="t">any</span>; after: <span class="t">any</span> }
+  | { kind: <span class="s">'property.unset'</span>; entityId: <span class="t">EntityId</span>; propertyId: <span class="t">PropertyId</span>; before: <span class="t">any</span> }
+  | { kind: <span class="s">'relation.add'</span>;   fromId: <span class="t">EntityId</span>; typeId: <span class="t">PropertyId</span>; toId: <span class="t">EntityId</span> }
+  | { kind: <span class="s">'relation.remove'</span>; relationId: <span class="t">string</span>; fromId: <span class="t">EntityId</span>; typeId: <span class="t">PropertyId</span>; toId: <span class="t">EntityId</span> };
+
+<span class="k">interface</span> <span class="t">PendingEdit</span> {
+  id: <span class="t">string</span>;              <span class="c">// local uuid</span>
+  edit: <span class="t">Edit</span>;
+  createdAt: <span class="t">number</span>;
+  author: <span class="t">`0x${string}`</span>;   <span class="c">// wallet address</span>
+  status: <span class="s">'staged'</span> | <span class="s">'publishing'</span> | <span class="s">'published'</span> | <span class="s">'failed'</span>;
+  txHash?: <span class="t">`0x${string}`</span>;
+  error?: <span class="t">string</span>;
+}</pre>
+
+      <h3>Mapping to on-chain ops</h3>
+      <table>
+        <thead><tr><th>Edit kind</th><th>Contract call</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>entity.create</code></td><td>Fan-out: <code>setName</code> + N × <code>setTriple</code> + N × <code>addType</code></td><td>One call per property. Batched via multicall.</td></tr>
+          <tr><td><code>property.set</code></td><td><code>setTriple(entity, property, value)</code></td><td>Overwrites existing triple silently; we derive <code>before</code> from cache for diff display.</td></tr>
+          <tr><td><code>property.unset</code></td><td><code>deleteTriple(entity, property)</code></td><td>—</td></tr>
+          <tr><td><code>relation.add</code></td><td><code>addRelation(from, type, to)</code></td><td>—</td></tr>
+          <tr><td><code>relation.remove</code></td><td><code>removeRelation(id)</code></td><td>—</td></tr>
+          <tr><td><code>entity.update name</code></td><td><code>setName</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note warn">
+        <div class="title">⚠ Assumption to verify</div>
+        <p>This mapping assumes GRC20's <code>Space</code> contract exposes a multicall-compatible batch
+          entry point. If it doesn't, we either (a) submit N transactions sequentially with a progress
+          indicator, or (b) deploy a thin forwarder contract ourselves. <strong>W1 spike</strong> confirms
+          before locking the edit-queue design.</p>
+      </div>
+
+      <h3>Indexer query shape (GraphQL)</h3>
+<pre><span class="c"># List with filter/sort/pagination</span>
+<span class="k">query</span> Entities($space: <span class="t">String!</span>, $first: <span class="t">Int</span>, $after: <span class="t">String</span>, $search: <span class="t">String</span>) {
+  entities(space: $space, first: $first, after: $after, search: $search) {
+    pageInfo { endCursor hasNextPage }
+    edges { node { id name description types { id name } } }
+  }
+}
+
+<span class="c"># Full detail — properties + outgoing + incoming relations</span>
+<span class="k">query</span> Entity($id: <span class="t">ID!</span>) {
+  entity(id: $id) {
+    id name description types { id name }
+    properties { propertyId propertyName dataType value }
+    outgoing: relations { id type { id name } to { id name } }
+    incoming: backlinks { id type { id name } from { id name } }
+  }
+}</pre>
+    </section>
+
+    <!-- ─────────────────────────────────────────── EDIT QUEUE -->
+    <section id="edits">
+      <h2>05 · Edit queue &amp; publish flow</h2>
+      <p>This is the trickiest part of the app and where most of the bugs will live. Spec it carefully.</p>
+
+      <h3>State machine</h3>
+<pre><span class="c">// Per-edit lifecycle</span>
+<span class="n">staged</span>      <span class="c">// in queue, not yet submitted</span>
+  → <span class="n">publishing</span>  <span class="c">// included in an in-flight tx</span>
+  → <span class="n">published</span>   <span class="c">// tx confirmed; reconciled against indexer</span>
+  → <span class="n">failed</span>      <span class="c">// tx reverted OR indexer didn't reflect it within 60s</span>
+
+<span class="c">// Queue-level state</span>
+<span class="n">idle</span> → <span class="n">publishing</span> → (idle | partially-failed)</pre>
+
+      <h3>The publish algorithm</h3>
+      <ol>
+        <li>User clicks <strong>Publish N changes</strong> on the Edits page.</li>
+        <li>We snapshot the current queue — later edits to any of those records don't affect the in-flight batch.</li>
+        <li>Each edit is encoded into a contract call via <code>lib/grc20/encode.ts</code>.</li>
+        <li>Calls are aggregated into a single <code>multicall</code> (or submitted sequentially if unsupported — see W1 spike).</li>
+        <li>Wallet signs; we surface "waiting for signature" state with a cancel option.</li>
+        <li>On tx hash received, all snapshotted edits move to <code>publishing</code>, persisted with txHash.</li>
+        <li>We watch the tx via viem's <code>waitForTransactionReceipt</code>; on success, we <em>don't</em> mark edits published yet.</li>
+        <li>We poll the indexer with an exponential backoff until the new state is reflected (or 60s timeout).</li>
+        <li>On reflection, edits move to <code>published</code> and drop from the pending queue into history.</li>
+        <li>On timeout or tx revert: edits move to <code>failed</code>, remain in queue, show the error inline with a Retry action.</li>
+      </ol>
+
+      <div class="note accent">
+        <div class="title">→ Why the indexer-poll step</div>
+        <p>Tx confirmation is <em>not</em> the same as data visibility. If we mark edits published when the tx confirms,
+          the user's next list refresh may still show stale data and they'll think they hallucinated the change. Wait
+          for the indexer to catch up before declaring victory.</p>
+      </div>
+
+      <h3>Persistence</h3>
+      <p>Queue state lives in <code>zustand</code> with an <code>idb-keyval</code> adapter. Key design points:</p>
+      <ul>
+        <li>Survives hard reload — the user never loses work.</li>
+        <li>Keyed by <code>{walletAddress}:{spaceId}</code> so switching accounts doesn't leak edits.</li>
+        <li>On wallet-disconnect, queue stays in IDB but UI locks.</li>
+        <li>On publish success, entries migrate from "pending" to a bounded "history" bucket (keep last 200).</li>
+      </ul>
+
+      <h3>Optimistic UI rule</h3>
+      <p>Every read selector (<code>useEntity</code>, <code>useEntities</code>, search) composes <strong>indexer data</strong> +
+        <strong>pending edits for that entity</strong>. A component never asks "is this published?" — it asks "what does
+        this entity look like <em>right now from my perspective</em>?" and gets one answer.</p>
+
+<pre><span class="k">function</span> <span class="n">useEntity</span>(id: <span class="t">EntityId</span>) {
+  <span class="k">const</span> remote = useQuery(...);
+  <span class="k">const</span> pending = useEditQueue(s =&gt; s.pendingFor(id));
+  <span class="k">return</span> <span class="n">useMemo</span>(() =&gt; applyEdits(remote.data, pending), [remote.data, pending]);
+}</pre>
+
+      <h3>Concurrency edge cases we <em>will</em> hit</h3>
+      <ul>
+        <li><strong>Two sessions, same wallet.</strong> Both queues diverge. Mitigation: on focus, re-read IDB; last write wins per edit-id.</li>
+        <li><strong>Edit references an entity that gets deleted on-chain.</strong> On publish failure, surface "target no longer exists" with the option to remove the edit.</li>
+        <li><strong>User edits a property, then another user publishes a different value first.</strong> Our edit still applies and overwrites — this is WYSIWYG; the diff shown to them at publish time uses the cached "before" from when they started editing. Acceptable for Phase 1.</li>
+      </ul>
+    </section>
+
+    <!-- ─────────────────────────────────────────── UI IMPL -->
+    <section id="ui-impl">
+      <h2>06 · UI implementation</h2>
+
+      <h3>Design tokens → CSS</h3>
+      <p>The Graphite palette and typography scale lives in one <code>tokens.css</code>, imported in root
+        layout. Tailwind is configured to consume these via <code>theme.extend.colors</code> so component
+        code stays idiomatic.</p>
+
+<pre><span class="c">/* styles/tokens.css */</span>
+:root {
+  --g-bg: #fafaf9;  --g-panel: #fff;  --g-ink: #18181b;  --g-ink2: #3f3f46;
+  --g-muted: #71717a;  --g-line: #e4e4e7;  --g-accent: #2f5cff;
+  --g-mono: 'IBM Plex Mono', ui-monospace;  --g-sans: 'Inter', -apple-system;
+  ...
+}</pre>
+
+      <h3>Component inventory</h3>
+      <p>Twelve screens → roughly <strong>34 React components</strong>. Roughly half are leaves that already exist as styled blocks in the mock.</p>
+
+      <table>
+        <thead><tr><th style="width:200px">Component</th><th>Used on</th><th>Complexity</th></tr></thead>
+        <tbody>
+          <tr><td><code>Shell</code> + <code>Sidebar</code> + <code>TopBar</code></td><td>All</td><td><span class="pill neutral">S</span></td></tr>
+          <tr><td><code>EntitiesTable</code></td><td>List</td><td><span class="pill p3">L · virtualized</span></td></tr>
+          <tr><td><code>EntityRow</code> · <code>SelectableRow</code></td><td>List</td><td><span class="pill neutral">S</span></td></tr>
+          <tr><td><code>BulkActionBar</code></td><td>List</td><td><span class="pill neutral">S</span></td></tr>
+          <tr><td><code>EntityDetail</code></td><td>Detail</td><td><span class="pill p2">M</span></td></tr>
+          <tr><td><code>PropertyTable</code> · <code>RelationList</code></td><td>Detail</td><td><span class="pill p2">M</span></td></tr>
+          <tr><td><code>EntityForm</code> (create + edit)</td><td>Create, Edit</td><td><span class="pill p3">L · rhf+zod</span></td></tr>
+          <tr><td><code>PropertyEditor</code></td><td>Form</td><td><span class="pill p3">L · polymorphic by dataType</span></td></tr>
+          <tr><td><code>EntityPicker</code></td><td>Form (relations)</td><td><span class="pill p2">M · async combobox</span></td></tr>
+          <tr><td><code>SearchPage</code> + <code>SearchResult</code></td><td>Search</td><td><span class="pill p2">M</span></td></tr>
+          <tr><td><code>CommandPalette</code></td><td>Global</td><td><span class="pill p2">M · cmdk</span></td></tr>
+          <tr><td><code>EditCard</code> · <code>DiffView</code></td><td>Edits</td><td><span class="pill p2">M</span></td></tr>
+          <tr><td><code>PublishBar</code></td><td>Edits</td><td><span class="pill p3">L · tx lifecycle</span></td></tr>
+          <tr><td><code>GraphCanvas</code> · <code>NodeInspector</code></td><td>Graph</td><td><span class="pill p3">L · react-flow</span></td></tr>
+          <tr><td><code>Toast</code> · <code>ConfirmDialog</code></td><td>Global</td><td><span class="pill neutral">S</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Routing &amp; data loading</h3>
+      <ul>
+        <li><strong>List page</strong> — RSC fetches first 50 rows during SSR for fast paint; client takes over via TanStack Query for filter/search.</li>
+        <li><strong>Detail page</strong> — RSC fetches entity + relations in parallel; client hydrates pending edits on top.</li>
+        <li><strong>Forms</strong> — fully client; server doesn't need to know about drafts.</li>
+        <li><strong>Edits page</strong> — fully client; pure queue reflection.</li>
+        <li><strong>Graph</strong> — client only; expensive and interactive.</li>
+      </ul>
+    </section>
+
+    <!-- ─────────────────────────────────────────── PERF -->
+    <section id="perf">
+      <h2>07 · Performance &amp; scale</h2>
+
+      <h3>Entities list at 10k+</h3>
+      <ul>
+        <li>Row virtualization via <code>react-virtual</code> (viewport + 10 overscan).</li>
+        <li>Indexer pagination in 200-row pages; TanStack Query infinite query.</li>
+        <li>Sort and type-filter pushed to the indexer, not client-side.</li>
+        <li>Search (name/id) debounced 150ms, cancels in-flight.</li>
+        <li>Target: <strong>first meaningful paint &lt; 600ms</strong> on a warm cache, <strong>60fps scrolling</strong>.</li>
+      </ul>
+
+      <h3>Graph at scale</h3>
+      <p>React Flow degrades past ~500 visible nodes. Strategy:</p>
+      <ul>
+        <li>Default view: only the focused entity + direct neighbors (&lt; 30 nodes). No "load the whole space".</li>
+        <li>"Expand" action on a node adds its neighbors; counter shows total visible nodes with a soft cap at 300.</li>
+        <li>Beyond 300, prompt user to narrow focus or switch to list view.</li>
+        <li>Phase 2 if needed: Sigma.js backend with WebGL for true large-graph.</li>
+      </ul>
+
+      <h3>Bundle budget</h3>
+      <table>
+        <thead><tr><th>Route</th><th>Budget (gzipped)</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Shell + list</td><td>&lt; 180 KB</td><td>Next + React + Tailwind baseline</td></tr>
+          <tr><td>+ Forms</td><td>&lt; 60 KB</td><td>rhf + zod code-split</td></tr>
+          <tr><td>+ Graph</td><td>&lt; 220 KB</td><td>reactflow is ~180KB; lazy-loaded</td></tr>
+          <tr><td>+ Wallet</td><td>&lt; 250 KB</td><td>RainbowKit + wagmi; lazy-loaded on first publish or explicit connect</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note accent">
+        <div class="title">→ Critical path</div>
+        <p>The expensive libraries (reactflow, RainbowKit, cmdk) must all be dynamic imports. The entities list
+          — which is where 80% of traffic lands — should render with nothing past the <em>Shell + list</em> row of the table above.</p>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────── TESTING -->
+    <section id="testing">
+      <h2>08 · Testing &amp; quality</h2>
+
+      <h3>What we test, and with what</h3>
+      <table>
+        <thead><tr><th style="width:180px">Area</th><th>Tool</th><th>Coverage goal</th></tr></thead>
+        <tbody>
+          <tr><td>Edit queue logic</td><td>vitest</td><td><strong>90%+</strong> — every state transition, every edit kind, every failure mode</td></tr>
+          <tr><td>Encoders (<code>lib/grc20/encode.ts</code>)</td><td>vitest + fixtures</td><td><strong>100%</strong> — round-trip every edit kind through encode → decode</td></tr>
+          <tr><td>UI components</td><td>vitest + testing-library</td><td>Smoke only; no full coverage target</td></tr>
+          <tr><td>Critical E2E flows</td><td>playwright</td><td>7 flows (see below)</td></tr>
+          <tr><td>Visual regression</td><td>—</td><td>Deferred to Phase 2</td></tr>
+          <tr><td>Types</td><td>tsc --strict</td><td>CI gate; no errors</td></tr>
+          <tr><td>Lint</td><td>eslint + prettier</td><td>CI gate</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Required E2E flows</h3>
+      <ol>
+        <li>Browse list → filter by type → open entity → scroll properties.</li>
+        <li>Search by id → open result → verify properties match.</li>
+        <li>Create new entity with 2 properties → see it in pending queue → publish → see on-chain → list reflects.</li>
+        <li>Edit an existing property → stage → see diff on Edits page → revert one edit → publish remaining.</li>
+        <li>Add a relation → publish → verify incoming shows on target.</li>
+        <li>Stage 3 edits → lose internet → hard-reload → queue survives → reconnect → publish.</li>
+        <li>Publish that fails → retry → succeeds.</li>
+      </ol>
+
+      <p>E2E runs against a local Anvil node seeded with a fixture space, so tests are deterministic and free.</p>
+
+      <h3>CI shape</h3>
+<pre><span class="c"># .github/workflows/ci.yml</span>
+jobs:
+  check:      <span class="c"># &lt; 3min</span>
+    - tsc --noEmit
+    - eslint .
+    - vitest run --coverage
+  e2e:        <span class="c"># &lt; 8min, blocks merge</span>
+    - pnpm build
+    - spin anvil + seed
+    - playwright test
+  preview:
+    - deploy PR preview to Vercel</pre>
+    </section>
+
+    <!-- ─────────────────────────────────────────── ROADMAP -->
+    <section id="roadmap">
+      <h2>09 · 6-week roadmap</h2>
+
+      <div class="roadmap">
+        <div class="week">
+          <div class="w">W1</div>
+          <div>
+            <div class="title">Foundations &amp; the scariest spike</div>
+            <div class="items">
+              <ul>
+                <li>Next.js scaffold, Graphite tokens, shell + sidebar + topbar.</li>
+                <li><strong>GRC20 write spike</strong> — end-to-end one edit on a local Anvil fork. Confirms multicall, gas shape, revert behavior.</li>
+                <li>Indexer client + read one entity end-to-end.</li>
+                <li>Wallet connect (RainbowKit) gated behind a flag.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2</div>
+        </div>
+
+        <div class="week">
+          <div class="w">W2</div>
+          <div>
+            <div class="title">List + detail, read-only</div>
+            <div class="items">
+              <ul>
+                <li>Entities list: virtualized, sort, type filter.</li>
+                <li>Entity detail: properties + outgoing relations.</li>
+                <li>Deep-link routing (<code>/e/:id</code>).</li>
+                <li>Incoming relations (backlinks) query.</li>
+                <li>First Playwright smoke: browse list → open detail.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2</div>
+        </div>
+
+        <div class="week">
+          <div class="w">W3</div>
+          <div>
+            <div class="title">Edit queue + create form</div>
+            <div class="items">
+              <ul>
+                <li><strong>Edit queue store</strong> (zustand + IDB persist), tested to 90%.</li>
+                <li>Create entity form — name, description, types, N properties.</li>
+                <li>Edit queue tab: pending list with create cards.</li>
+                <li>No publish yet — just local round-tripping.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2</div>
+        </div>
+
+        <div class="week">
+          <div class="w">W4</div>
+          <div>
+            <div class="title">Edit form + publish</div>
+            <div class="items">
+              <ul>
+                <li>Edit entity form: update name, description; set/unset properties.</li>
+                <li>Property editor — polymorphic by dataType.</li>
+                <li><strong>Publish flow</strong> — snapshot queue, encode, sign, wait for tx, poll indexer, reconcile.</li>
+                <li>Diff view on Edits page.</li>
+                <li>Revert individual / discard all.</li>
+                <li>Failure state + retry.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2</div>
+        </div>
+
+        <div class="week">
+          <div class="w">W5</div>
+          <div>
+            <div class="title">Search, graph, command palette</div>
+            <div class="items">
+              <ul>
+                <li>Global search: name, id, property value; highlight.</li>
+                <li>Command palette (⌘K).</li>
+                <li>Relation add/remove UI (entity picker combobox).</li>
+                <li>Graph view with React Flow — focus + neighbors + inspector.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2–3</div>
+        </div>
+
+        <div class="week">
+          <div class="w">W6</div>
+          <div>
+            <div class="title">Harden, polish, ship</div>
+            <div class="items">
+              <ul>
+                <li>All 7 E2E flows green.</li>
+                <li>Bundle-size audit, lazy-load sweep.</li>
+                <li>Accessibility pass (focus, ARIA, keyboard).</li>
+                <li>Error boundaries + toast system.</li>
+                <li>Analytics (Plausible or similar) on key events.</li>
+                <li>Deploy to staging → internal dogfood → prod.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="owner">eng · 2–3</div>
+        </div>
+      </div>
+
+      <h3>Critical path</h3>
+      <p>The <strong>W1 GRC20 write spike</strong> and the <strong>W4 publish flow</strong> are the two
+        critical items. Everything else can slip a few days without moving the ship date; if either of those
+        runs over, <em>publish</em> shifts into W5 and graph/search slip to a Phase 1.5.</p>
+
+      <h3>Parallelism for 2–3 engineers</h3>
+      <ul>
+        <li><strong>Engineer A</strong> owns data/wallet/edit-queue track: W1 spike → W3 queue → W4 publish.</li>
+        <li><strong>Engineer B</strong> owns UI track: W1 shell → W2 list+detail → W3 forms → W5 search/graph.</li>
+        <li><strong>Engineer C (if any)</strong> floats: joins whichever track is behind; owns testing infra and CI from W2.</li>
+      </ul>
+    </section>
+
+    <!-- ─────────────────────────────────────────── TICKETS -->
+    <section id="tickets">
+      <h2>10 · Phase-1 tickets</h2>
+      <p>38 tickets, grouped by epic. Estimates are T-shirt: <span class="pill neutral">S</span> ≤ 1d ·
+        <span class="pill p2">M</span> 1–3d · <span class="pill p3">L</span> 3–5d.</p>
+
+      <h3>EPIC-1 · Foundations</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-001</span><span class="label">Next.js scaffold + strict TS + Tailwind</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+        <div class="ticket"><span class="id">LAT-002</span><span class="label">Graphite tokens.css + Inter/Plex Mono loaded</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+        <div class="ticket"><span class="id">LAT-003</span><span class="label">Shell · Sidebar · TopBar · KbdHint</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+        <div class="ticket"><span class="id">LAT-004</span><span class="label">UI primitives (Button, Chip, Input, Pill, Kbd)</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-005</span><span class="label">CI pipeline: tsc + eslint + vitest</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+      </div>
+
+      <h3>EPIC-2 · Data layer</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-010</span><span class="label">Indexer GraphQL client + types</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-011</span><span class="label">TanStack Query setup + useEntities · useEntity</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-012</span><span class="label">BFF API routes + 60s cache</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+        <div class="ticket"><span class="id">LAT-013</span><span class="label">SPIKE: GRC20 write end-to-end (Anvil)</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-014</span><span class="label">lib/grc20/encode.ts · round-trip unit tests</span><span class="pill p3">L</span><span class="est">3d</span></div>
+      </div>
+
+      <h3>EPIC-3 · Entities list &amp; detail</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-020</span><span class="label">EntitiesTable + virtualization</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-021</span><span class="label">Filter bar + multi-select + bulk action bar</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-022</span><span class="label">EntityDetail + PropertyTable + RelationList</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-023</span><span class="label">Backlinks query + incoming-relations UI</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-024</span><span class="label">Deep-link routing /e/:id</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+      </div>
+
+      <h3>EPIC-4 · Edit queue</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-030</span><span class="label">zustand store + IDB persistence</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-031</span><span class="label">applyEdits selector composing remote + pending</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+        <div class="ticket"><span class="id">LAT-032</span><span class="label">Edits page · pending list · EditCard · DiffView</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-033</span><span class="label">Revert / discard-all</span><span class="pill neutral">S</span><span class="est">1d</span></div>
+      </div>
+
+      <h3>EPIC-5 · Forms</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-040</span><span class="label">EntityForm shell (rhf + zod)</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+        <div class="ticket"><span class="id">LAT-041</span><span class="label">PropertyEditor polymorphic by dataType</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-042</span><span class="label">Type chips + type suggest</span><span class="pill neutral">S</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-043</span><span class="label">EntityPicker async combobox (for relations)</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-044</span><span class="label">Create → stage → visible in Edits</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-045</span><span class="label">Edit → stage → diff → revert</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+      </div>
+
+      <h3>EPIC-6 · Publish</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-050</span><span class="label">Wallet connect (RainbowKit + wagmi)</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-051</span><span class="label">PublishBar with tx lifecycle states</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-052</span><span class="label">Indexer poll + reconcile</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-053</span><span class="label">Failure + retry UX</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+      </div>
+
+      <h3>EPIC-7 · Search &amp; graph</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-060</span><span class="label">Search page · debounced · by name/id/value</span><span class="pill p2">M</span><span class="est">2d</span></div>
+        <div class="ticket"><span class="id">LAT-061</span><span class="label">Command palette (cmdk) with global actions</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+        <div class="ticket"><span class="id">LAT-062</span><span class="label">Graph page · React Flow + focus+neighbors</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-063</span><span class="label">Node inspector + expand neighbors</span><span class="pill p2">M</span><span class="est">2d</span></div>
+      </div>
+
+      <h3>EPIC-8 · Polish &amp; ship</h3>
+      <div class="tickets">
+        <div class="ticket"><span class="id">LAT-070</span><span class="label">Toast system + ConfirmDialog</span><span class="pill neutral">S</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-071</span><span class="label">Error boundaries + empty states</span><span class="pill neutral">S</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-072</span><span class="label">Playwright E2E — 7 critical flows</span><span class="pill p3">L</span><span class="est">3d</span></div>
+        <div class="ticket"><span class="id">LAT-073</span><span class="label">Accessibility audit + fixes</span><span class="pill p2">M</span><span class="est">1.5d</span></div>
+        <div class="ticket"><span class="id">LAT-074</span><span class="label">Bundle audit + lazy-load sweep</span><span class="pill p2">M</span><span class="est">1d</span></div>
+        <div class="ticket"><span class="id">LAT-075</span><span class="label">Analytics hooks + prod deploy</span><span class="pill neutral">S</span><span class="est">0.5d</span></div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────── RISKS -->
+    <section id="risks">
+      <h2>11 · Risks &amp; open questions</h2>
+
+      <div class="risks">
+        <div class="risk high">
+          <div class="sev"><span class="dot"></span>High</div>
+          <div>
+            <h4>GRC20 batch semantics are unclear</h4>
+            <p>We've assumed multicall-style batching. If it's not supported, <em>every</em> edit is a separate
+              signed tx — terrible UX for a 10-edit publish.</p>
+            <div class="mit"><strong>Mitigation:</strong> W1 spike (LAT-013) resolves this in week one. Fallback: ship sequential with per-edit progress, investigate forwarder contract in Phase 1.5.</div>
+          </div>
+        </div>
+
+        <div class="risk high">
+          <div class="sev"><span class="dot"></span>High</div>
+          <div>
+            <h4>Indexer lag creates "did my edit land?" confusion</h4>
+            <p>Tx confirms in 2s; indexer may take 15-60s. Users will refresh and see stale data and think publish failed.</p>
+            <div class="mit"><strong>Mitigation:</strong> Optimistic rendering from the edit queue means the user never sees stale data as long as the queue knows about the edit. Publish bar shows "waiting for indexer" phase distinct from "waiting for tx".</div>
+          </div>
+        </div>
+
+        <div class="risk med">
+          <div class="sev"><span class="dot"></span>Medium</div>
+          <div>
+            <h4>Schema drift — new dataType added by protocol</h4>
+            <p>If GRC20 adds a new dataType (e.g. <code>markdown</code>), our PropertyEditor crashes on unknowns.</p>
+            <div class="mit"><strong>Mitigation:</strong> PropertyEditor falls back to a raw-text editor with a "Unsupported type — advanced" warning. Never crash.</div>
+          </div>
+        </div>
+
+        <div class="risk med">
+          <div class="sev"><span class="dot"></span>Medium</div>
+          <div>
+            <h4>Large graphs overwhelm React Flow</h4>
+            <p>Users may load spaces with thousands of entities and try to view the whole graph.</p>
+            <div class="mit"><strong>Mitigation:</strong> Never default to whole-space view. Soft cap at 300 nodes with clear "narrow focus" CTA. Sigma.js is a Phase 2 option.</div>
+          </div>
+        </div>
+
+        <div class="risk med">
+          <div class="sev"><span class="dot"></span>Medium</div>
+          <div>
+            <h4>Wallet UX friction on every publish</h4>
+            <p>If every publish requires a signature prompt + gas, users rage-quit.</p>
+            <div class="mit"><strong>Mitigation:</strong> Encourage batching (publish bar says "3 changes · 1 signature"). Investigate session keys / smart wallets in Phase 2.</div>
+          </div>
+        </div>
+
+        <div class="risk low">
+          <div class="sev"><span class="dot"></span>Low</div>
+          <div>
+            <h4>Name collisions — two entities with same name</h4>
+            <p>Display is ambiguous.</p>
+            <div class="mit"><strong>Mitigation:</strong> When duplicates detected in a result set, append disambiguator (first 6 chars of id) in mono font.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Open questions for product</h3>
+      <ul>
+        <li><strong>Spaces</strong> — does the UI need a space switcher, or is there one space per deployment?</li>
+        <li><strong>Permissions</strong> — can anyone with a wallet stage+publish, or does the space contract gate writers?</li>
+        <li><strong>Rollback</strong> — if a published edit was wrong, do we offer a "revert published edit" flow, or is that a user-owned operation (make a new inverse edit)?</li>
+        <li><strong>Descriptions</strong> — plain text only, or Markdown? Materially changes the editor and detail view.</li>
+        <li><strong>Images / files</strong> — are any properties binary in Phase 1, or can we defer to Phase 2?</li>
+      </ul>
+    </section>
+
+    <!-- ─────────────────────────────────────────── PHASE 2 -->
+    <section id="phase2">
+      <h2>12 · Phase 2+ parking lot</h2>
+      <p>Explicitly out of Phase 1, tracked here so they don't get lost.</p>
+
+      <ul>
+        <li><strong>Realtime collab</strong> — subscribe to indexer, stream others' published edits into list/detail without refresh.</li>
+        <li><strong>Session keys / smart wallets</strong> — publish N edits without N signatures.</li>
+        <li><strong>Rich descriptions</strong> — Markdown editor, embedded links to other entities.</li>
+        <li><strong>Binary properties</strong> — images, files, via IPFS.</li>
+        <li><strong>PR-style review</strong> — propose edits that a space admin approves before on-chain publish.</li>
+        <li><strong>Large-graph mode</strong> — Sigma.js + WebGL for 10k-node views.</li>
+        <li><strong>Visual regression testing</strong> — Percy or Chromatic once UI stabilizes.</li>
+        <li><strong>Bulk import</strong> — CSV → staged edits.</li>
+        <li><strong>Schema-aware autocomplete</strong> — property suggestions based on declared types.</li>
+        <li><strong>Graph queries</strong> — "all entities of type X with property Y > Z".</li>
+        <li><strong>Activity feed</strong> — per-entity timeline of edits (who / when / what).</li>
+        <li><strong>Mobile</strong> — read-only first, then a tighter edit experience.</li>
+      </ul>
+
+      <hr>
+      <p style="color:var(--faint);font-size:12px;margin-top:32px">
+        <span class="mono">Lattice · implementation plan v0.1 · drafted for Phase 1 kickoff</span>
+      </p>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Nav highlight on scroll
+  const items = document.querySelectorAll('.nav-item[data-target]');
+  const sections = [...items].map(i => document.getElementById(i.dataset.target)).filter(Boolean);
+
+  items.forEach(it => it.addEventListener('click', () => {
+    const t = document.getElementById(it.dataset.target);
+    if (t) t.scrollIntoView({behavior:'smooth', block:'start'});
+  }));
+
+  const setActive = (id) => {
+    items.forEach(i => i.classList.toggle('active', i.dataset.target === id));
+  };
+
+  const obs = new IntersectionObserver((entries) => {
+    const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    if (visible) setActive(visible.target.id);
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
