@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS edits (
   op_count    integer NOT NULL DEFAULT 0,
   created_at  timestamptz NOT NULL DEFAULT now(),
   applied_at  timestamptz,
-  error_msg   text
+  error_msg   text,
+  decoded_ops jsonb
 );
 CREATE INDEX IF NOT EXISTS idx_edits_status ON edits (status) WHERE status = 'pending';
 
